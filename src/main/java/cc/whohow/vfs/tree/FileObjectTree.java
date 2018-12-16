@@ -7,10 +7,11 @@ import java.io.UncheckedIOException;
 import java.util.Iterator;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 public class FileObjectTree extends Tree<FileObject> {
     public FileObjectTree(FileObject root,
-                    BiFunction<Function<FileObject, ? extends Iterator<? extends FileObject>>, FileObject, Iterator<FileObject>> traverse) {
+                          BiFunction<Function<FileObject, ? extends Stream<? extends FileObject>>, FileObject, Iterator<FileObject>> traverse) {
         super(root, FileObjectTree::hasChildren, FileObjectTree::getChildren, traverse);
     }
 

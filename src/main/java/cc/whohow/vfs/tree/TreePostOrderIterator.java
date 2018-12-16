@@ -2,16 +2,17 @@ package cc.whohow.vfs.tree;
 
 import java.util.*;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 /**
  * 树遍历器，深度优先，后序遍历
  */
 public class TreePostOrderIterator<T> implements Iterator<T> {
-    private final Function<T, ? extends Iterator<? extends T>> getChildren;
+    private final Function<T, ? extends Stream<? extends T>> getChildren;
     private final T root;
     private final Deque<Queue<T>> stack = new ArrayDeque<>();
 
-    public TreePostOrderIterator(Function<T, ? extends Iterator<? extends T>> getChildren, T root) {
+    public TreePostOrderIterator(Function<T, ? extends Stream<? extends T>> getChildren, T root) {
         this.getChildren = getChildren;
         this.root = root;
         this.stack.push(new ArrayDeque<>(Collections.singleton(root)));
@@ -48,14 +49,13 @@ public class TreePostOrderIterator<T> implements Iterator<T> {
                 return;
             }
 
-            Iterator<? extends T> children = getChildren.apply(left);
-            if (children == null) {
-                return;
-            }
-
             Queue<T> newTop = new ArrayDeque<>();
-            while (children.hasNext()) {
-                newTop.offer(children.next());
+            try (Stream<? extends T> children = getChildren.apply(left)) {
+                if (children != null) {
+                    children.forEach(newTop::offer);
+                } else {
+                    return;
+                }
             }
             if (newTop.isEmpty()) {
                 return;

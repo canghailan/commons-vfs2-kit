@@ -6,12 +6,12 @@ import org.apache.commons.vfs2.FileSelector;
 public class AndFileSelector implements FileSelector {
     private final FileSelector[] fileSelectors;
 
-    public static FileSelector of(FileSelector... fileSelectors) {
-        return new AndFileSelector(fileSelectors);
-    }
-
     private AndFileSelector(FileSelector... fileSelectors) {
         this.fileSelectors = fileSelectors;
+    }
+
+    public static FileSelector of(FileSelector... fileSelectors) {
+        return new AndFileSelector(fileSelectors);
     }
 
     @Override

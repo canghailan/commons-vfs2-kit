@@ -1,51 +1,41 @@
 package cc.whohow.vfs.tree;
 
+import cc.whohow.vfs.selector.FileSelectorFilter;
+import cc.whohow.vfs.selector.ImmutableFileSelectInfo;
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSelectInfo;
 import org.apache.commons.vfs2.FileSelector;
 
 import java.lang.reflect.UndeclaredThrowableException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 public class FileObjectFindTree extends Tree<FileSelectInfo> {
+    private final FileSelectorFilter filter;
+
     public FileObjectFindTree(FileObject root,
                               FileSelector selector,
-                              BiFunction<Function<FileSelectInfo, ? extends Iterator<? extends FileSelectInfo>>, FileSelectInfo, Iterator<FileSelectInfo>> traverse) {
+                              BiFunction<Function<FileSelectInfo, ? extends Stream<? extends FileSelectInfo>>, FileSelectInfo, Iterator<FileSelectInfo>> traverse) {
         super(new ImmutableFileSelectInfo<>(root, root, 0), new FindChildren(selector), traverse);
+        this.filter = new FileSelectorFilter(selector);
     }
 
-    private static final class ImmutableFileSelectInfo<T extends FileObject> implements FileSelectInfo {
-        private final T baseFolder;
-        private final T file;
-        private final int depth;
-
-        public ImmutableFileSelectInfo(T baseFolder, T file, int depth) {
-            this.baseFolder = baseFolder;
-            this.file = file;
-            this.depth = depth;
-        }
-
-        @Override
-        public T getBaseFolder() {
-            return baseFolder;
-        }
-
-        @Override
-        public T getFile() {
-            return file;
-        }
-
-        @Override
-        public int getDepth() {
-            return depth;
-        }
+    @Override
+    public Iterator<FileSelectInfo> iterator() {
+        return stream().iterator();
     }
 
-    private static final class FindChildren implements Function<FileSelectInfo, Iterator<FileSelectInfo>> {
+    @Override
+    public Stream<FileSelectInfo> stream() {
+        return StreamSupport.stream(Spliterators.spliteratorUnknownSize(
+                traverse.apply(getChildren, root), 0), false)
+                .filter(filter::accept);
+    }
+
+    private static final class FindChildren implements Function<FileSelectInfo, Stream<FileSelectInfo>> {
         private final FileSelector selector;
 
         private FindChildren(FileSelector selector) {
@@ -53,20 +43,13 @@ public class FileObjectFindTree extends Tree<FileSelectInfo> {
         }
 
         @Override
-        public Iterator<FileSelectInfo> apply(FileSelectInfo selectInfo) {
+        public Stream<FileSelectInfo> apply(FileSelectInfo selectInfo) {
             try {
                 FileObject file = selectInfo.getFile();
                 if (file.getType().hasChildren() && selector.traverseDescendents(selectInfo)) {
-                    FileObject[] children = file.getChildren();
-                    List<FileSelectInfo> list = new ArrayList<>(children.length);
-                    for (FileObject child : children) {
-                        FileSelectInfo childSelectInfo = new ImmutableFileSelectInfo<>(
-                                selectInfo.getBaseFolder(), child, selectInfo.getDepth() + 1);
-                        if (selector.includeFile(childSelectInfo)) {
-                            list.add(childSelectInfo);
-                        }
-                    }
-                    return list.iterator();
+                   return Arrays.stream(file.getChildren())
+                            .map(child -> new ImmutableFileSelectInfo<>(
+                                    selectInfo.getBaseFolder(), child, selectInfo.getDepth() + 1));
                 }
                 return null;
             } catch (Exception e) {
