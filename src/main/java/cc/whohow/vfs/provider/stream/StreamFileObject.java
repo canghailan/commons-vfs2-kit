@@ -135,7 +135,7 @@ public class StreamFileObject implements DataFileObject, FreeFileObject, Readonl
 
     @Override
     public URL getURL() throws FileSystemException {
-        throw  new UnsupportedOperationException();
+        throw new UnsupportedOperationException();
     }
 
     @Override

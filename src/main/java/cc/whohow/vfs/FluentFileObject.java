@@ -365,4 +365,9 @@ public class FluentFileObject implements Closeable {
             throw new UncheckedIOException(e);
         }
     }
+
+    @Override
+    public String toString() {
+        return fileObject.toString();
+    }
 }

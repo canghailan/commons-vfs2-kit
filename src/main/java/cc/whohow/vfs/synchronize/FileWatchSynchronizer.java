@@ -21,12 +21,12 @@ public class FileWatchSynchronizer extends FileSynchronizer implements FileListe
     private ScheduledFuture<?> future;
     private Duration delay = Duration.ofSeconds(1L);
 
-    public FileWatchSynchronizer(ScheduledExecutorService executor,FileObject source, FileObject target) {
+    public FileWatchSynchronizer(ScheduledExecutorService executor, FileObject source, FileObject target) {
         super(source, target);
         this.executor = executor;
     }
 
-    public FileWatchSynchronizer(ScheduledExecutorService executor,FileObject source, FileObject target, FileVersionProvider<?> fileVersionProvider) {
+    public FileWatchSynchronizer(ScheduledExecutorService executor, FileObject source, FileObject target, FileVersionProvider<?> fileVersionProvider) {
         super(source, target, fileVersionProvider);
         this.executor = executor;
     }

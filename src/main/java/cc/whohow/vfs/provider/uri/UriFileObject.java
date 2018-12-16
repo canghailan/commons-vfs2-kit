@@ -1,14 +1,19 @@
 package cc.whohow.vfs.provider.uri;
 
-import cc.whohow.vfs.*;
+import cc.whohow.vfs.DataFileObject;
+import cc.whohow.vfs.FreeFileObject;
+import cc.whohow.vfs.ReadonlyFileObject;
+import cc.whohow.vfs.StatelessFileObject;
 import cc.whohow.vfs.operations.ProviderFileOperations;
-import org.apache.commons.vfs2.*;
+import org.apache.commons.vfs2.FileContent;
+import org.apache.commons.vfs2.FileName;
+import org.apache.commons.vfs2.FileSystemException;
 import org.apache.commons.vfs2.operations.FileOperations;
 
 import java.net.MalformedURLException;
 import java.net.URL;
 
-public class UriFileObject implements DataFileObject, FreeFileObject, ReadonlyFileObject, StatelessFileObject  {
+public class UriFileObject implements DataFileObject, FreeFileObject, ReadonlyFileObject, StatelessFileObject {
     private final String uri;
 
     public UriFileObject(String uri) {

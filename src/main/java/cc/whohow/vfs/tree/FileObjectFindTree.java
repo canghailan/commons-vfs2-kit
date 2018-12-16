@@ -7,7 +7,9 @@ import org.apache.commons.vfs2.FileSelectInfo;
 import org.apache.commons.vfs2.FileSelector;
 
 import java.lang.reflect.UndeclaredThrowableException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.Spliterators;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -47,7 +49,7 @@ public class FileObjectFindTree extends Tree<FileSelectInfo> {
             try {
                 FileObject file = selectInfo.getFile();
                 if (file.getType().hasChildren() && selector.traverseDescendents(selectInfo)) {
-                   return Arrays.stream(file.getChildren())
+                    return Arrays.stream(file.getChildren())
                             .map(child -> new ImmutableFileSelectInfo<>(
                                     selectInfo.getBaseFolder(), child, selectInfo.getDepth() + 1));
                 }

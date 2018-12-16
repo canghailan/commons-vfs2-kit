@@ -11,7 +11,7 @@ public class FreeFileSystem implements FileSystem {
     public static FreeFileSystem getInstance() {
         return INSTANCE;
     }
-    
+
     @Override
     public FileObject getRoot() throws FileSystemException {
         return null;

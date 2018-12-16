@@ -53,7 +53,11 @@ public class ProviderFileOperations implements FileOperations {
     }
 
     private FileOperationProvider getProvider(Class<? extends FileOperation> operationClass) throws FileSystemException {
-        for (FileOperationProvider provider : getProviders()) {
+        FileOperationProvider[] providers = getProviders();
+        if (providers == null || providers.length == 0) {
+            return null;
+        }
+        for (FileOperationProvider provider : providers) {
             if (provider.getOperation(fileObject, operationClass) != null) {
                 return provider;
             }

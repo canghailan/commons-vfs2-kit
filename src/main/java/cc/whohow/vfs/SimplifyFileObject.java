@@ -1,6 +1,5 @@
 package cc.whohow.vfs;
 
-import cc.whohow.vfs.selector.FileSelectorFilter;
 import cc.whohow.vfs.tree.FileObjectFindTree;
 import cc.whohow.vfs.tree.TreeBreadthFirstIterator;
 import cc.whohow.vfs.tree.TreePostOrderIterator;
