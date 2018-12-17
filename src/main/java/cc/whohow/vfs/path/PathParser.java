@@ -1,5 +1,9 @@
 package cc.whohow.vfs.path;
 
+import org.apache.commons.vfs2.FileName;
+
+import java.net.URI;
+
 public class PathParser {
     private NameIterator iterator;
 
@@ -49,5 +53,22 @@ public class PathParser {
             return 0;
         }
         return iterator.afterLast().currentIndex();
+    }
+
+    /**
+     * 是否是相对路径
+     */
+    public static boolean isRelative(String path) {
+        return isRelative(URI.create(path));
+    }
+
+    /**
+     * 是否是相对路径
+     */
+    public static boolean isRelative(URI uri) {
+        return uri.getScheme() == null &&
+                uri.getHost() == null &&
+                uri.getPath() != null &&
+                !uri.getPath().startsWith(FileName.SEPARATOR);
     }
 }

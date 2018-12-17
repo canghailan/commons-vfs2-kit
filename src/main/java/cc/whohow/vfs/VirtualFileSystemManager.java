@@ -2,29 +2,40 @@ package cc.whohow.vfs;
 
 import cc.whohow.vfs.provider.uri.UriFileName;
 import cc.whohow.vfs.provider.uri.UriFileObject;
+import cc.whohow.vfs.provider.uri.UriFileProvider;
 import org.apache.commons.vfs2.*;
+import org.apache.commons.vfs2.impl.FileContentInfoFilenameFactory;
 import org.apache.commons.vfs2.operations.FileOperationProvider;
 import org.apache.commons.vfs2.operations.FileOperations;
-import org.apache.commons.vfs2.provider.AbstractVfsComponent;
-import org.apache.commons.vfs2.provider.FileProvider;
+import org.apache.commons.vfs2.provider.*;
+import org.apache.commons.vfs2.provider.local.DefaultLocalFileProvider;
 
+import java.io.Closeable;
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Constructor;
-import java.net.URI;
-import java.net.URL;
-import java.net.URLStreamHandlerFactory;
+import java.net.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
-import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
-public class RootFileSystem extends AbstractVfsComponent implements FileSystemManager, FileProvider, FileSystem, FileObject {
+public class VirtualFileSystemManager extends AbstractVfsComponent implements FileSystemManager, FileProvider, FileSystem, FileObject, VfsComponentContext {
+    protected final Pattern RESERVED = Pattern.compile("[@#&*?]");
     protected final Map<String, Object> attributes = new ConcurrentHashMap<>();
     protected final NavigableMap<String, FileObject> junctions = new ConcurrentSkipListMap<>(Comparator.reverseOrder());
+    protected final Map<String, FileProvider> providers = new ConcurrentHashMap<>();
     protected final Map<String, List<FileOperationProvider>> operationProviders = new ConcurrentHashMap<>();
-    protected volatile Map<String, ?> schemes = new ConcurrentHashMap<>();
-    protected volatile Set<Capability> capabilities = new CopyOnWriteArraySet<>();
-    protected volatile Map<String, Set<Capability>> providerCapabilities = new ConcurrentHashMap<>();
+    protected final LocalFileProvider localFileProvider;
+
+    public VirtualFileSystemManager() {
+        this.localFileProvider = new DefaultLocalFileProvider();
+        UriFileProvider uriFileProvider = new UriFileProvider();
+        this.providers.put("file", localFileProvider);
+        this.providers.put("http", uriFileProvider);
+        this.providers.put("https", uriFileProvider);
+    }
 
     @Override
     public FileObject getBaseFile() throws FileSystemException {
@@ -68,7 +79,7 @@ public class RootFileSystem extends AbstractVfsComponent implements FileSystemMa
 
     @Override
     public FileObject resolveFile(FileName name) throws FileSystemException {
-        return resolveFile(name.toString());
+        return resolveFile(name.getURI());
     }
 
     @Override
@@ -223,10 +234,25 @@ public class RootFileSystem extends AbstractVfsComponent implements FileSystemMa
 
     @Override
     public FileObject resolveFile(String name) throws FileSystemException {
+        URI uri = URI.create(name);
+        if (uri.getScheme() != null) {
+            if (uri.getQuery() != null || uri.getFragment() != null) {
+                return new UriFileObject(name);
+            }
+            if (uri.getPath() != null && RESERVED.matcher(uri.getPath()).find()) {
+                return new UriFileObject(name);
+            }
+        }
         for (Map.Entry<String, FileObject> junction : junctions.tailMap(name).entrySet()) {
             if (name.startsWith(junction.getKey())) {
                 return junction.getValue().resolveFile(
-                        name.substring(junction.getKey().length()));
+                        name.substring(junction.getKey().length()), NameScope.DESCENDENT_OR_SELF);
+            }
+        }
+        if (uri.getScheme() != null) {
+            FileProvider provider = providers.get(uri.getScheme());
+            if (provider != null) {
+                return provider.findFile(this, name, null);
             }
         }
         return new UriFileObject(name);
@@ -262,14 +288,30 @@ public class RootFileSystem extends AbstractVfsComponent implements FileSystemMa
         throw new FileSystemException("vfs.provider/set-writeable.error", this);
     }
 
+    public void addJunction(String junctionPoint, String targetFile) throws FileSystemException {
+        addJunction(junctionPoint, resolveFile(targetFile));
+    }
+
     @Override
     public void addJunction(String junctionPoint, FileObject targetFile) throws FileSystemException {
         junctions.put(junctionPoint, targetFile);
+        if (targetFile instanceof CanonicalNameFileObject) {
+            CanonicalNameFileObject cname = (CanonicalNameFileObject) targetFile;
+            for (String junction : cname.getCanonicalNames()) {
+                junctions.put(junction, targetFile);
+            }
+        }
     }
 
     @Override
     public void removeJunction(String junctionPoint) throws FileSystemException {
-        junctions.remove(junctionPoint);
+        FileObject targetFile = junctions.remove(junctionPoint);
+        if (targetFile instanceof CanonicalNameFileObject) {
+            CanonicalNameFileObject cname = (CanonicalNameFileObject) targetFile;
+            for (String junction : cname.getCanonicalNames()) {
+                junctions.remove(junction);
+            }
+        }
     }
 
     @Override
@@ -289,12 +331,36 @@ public class RootFileSystem extends AbstractVfsComponent implements FileSystemMa
 
     @Override
     public double getLastModTimeAccuracy() {
-        return 0;
+        return junctions.values().stream()
+                .map(FileObject::getFileSystem)
+                .mapToDouble(FileSystem::getLastModTimeAccuracy)
+                .max()
+                .orElse(0);
+    }
+
+    @Override
+    public FileObject resolveFile(FileObject baseFile, String name, FileSystemOptions fileSystemOptions) throws FileSystemException {
+        return baseFile.resolveFile(name);
     }
 
     @Override
     public FileObject resolveFile(String name, FileSystemOptions fileSystemOptions) throws FileSystemException {
         return resolveFile(name);
+    }
+
+    @Override
+    public FileName parseURI(String uri) throws FileSystemException {
+        return resolveFile(uri).getName();
+    }
+
+    @Override
+    public FileReplicator getReplicator() throws FileSystemException {
+        throw new FileSystemException("");
+    }
+
+    @Override
+    public TemporaryFileStore getTemporaryFileStore() throws FileSystemException {
+        throw new FileSystemException("");
     }
 
     @Override
@@ -304,22 +370,22 @@ public class RootFileSystem extends AbstractVfsComponent implements FileSystemMa
 
     @Override
     public FileObject resolveFile(File baseFile, String name) throws FileSystemException {
-        throw new FileSystemException("");
+        return resolveFile(toFileObject(baseFile), name);
     }
 
     @Override
     public FileName resolveName(FileName root, String name) throws FileSystemException {
-        throw new FileSystemException("");
+        return resolveName(root, name, NameScope.FILE_SYSTEM);
     }
 
     @Override
     public FileName resolveName(FileName root, String name, NameScope scope) throws FileSystemException {
-        throw new FileSystemException("");
+        return resolveFile(root).resolveFile(name, scope).getName();
     }
 
     @Override
     public FileObject toFileObject(File file) throws FileSystemException {
-        throw new FileSystemException("");
+        return localFileProvider.findLocalFile(file);
     }
 
     @Override
@@ -329,6 +395,13 @@ public class RootFileSystem extends AbstractVfsComponent implements FileSystemMa
 
     @Override
     public void closeFileSystem(FileSystem filesystem) {
+        if (filesystem instanceof Closeable) {
+            try {
+                Closeable closeable = (Closeable) filesystem;
+                closeable.close();
+            } catch (IOException ignore) {
+            }
+        }
     }
 
     @Override
@@ -348,7 +421,18 @@ public class RootFileSystem extends AbstractVfsComponent implements FileSystemMa
 
     @Override
     public URLStreamHandlerFactory getURLStreamHandlerFactory() {
-        return null;
+        return protocol -> {
+            FileProvider provider = providers.get(protocol);
+            if (provider != null) {
+                return new DefaultURLStreamHandler(VirtualFileSystemManager.this);
+            }
+            return new URLStreamHandler() {
+                @Override
+                protected URLConnection openConnection(URL u) throws IOException {
+                    return u.openConnection();
+                }
+            };
+        };
     }
 
     @Override
@@ -363,7 +447,7 @@ public class RootFileSystem extends AbstractVfsComponent implements FileSystemMa
 
     @Override
     public CacheStrategy getCacheStrategy() {
-        return null;
+        return CacheStrategy.MANUAL;
     }
 
     @Override
@@ -378,7 +462,7 @@ public class RootFileSystem extends AbstractVfsComponent implements FileSystemMa
 
     @Override
     public FileContentInfoFactory getFileContentInfoFactory() {
-        return null;
+        return new FileContentInfoFilenameFactory();
     }
 
     @Override
@@ -388,22 +472,46 @@ public class RootFileSystem extends AbstractVfsComponent implements FileSystemMa
 
     @Override
     public String[] getSchemes() {
-        return schemes.keySet().toArray(new String[0]);
+        Set<String> schemes = junctions.values().stream()
+                .map(FileObject::getName)
+                .map(FileName::getScheme)
+                .collect(Collectors.toCollection(TreeSet::new));
+        schemes.add("http");
+        schemes.add("https");
+        return schemes.toArray(new String[0]);
     }
 
     @Override
     public Collection<Capability> getProviderCapabilities(String scheme) throws FileSystemException {
-        return Collections.unmodifiableCollection(providerCapabilities.computeIfAbsent(scheme, (k) -> Collections.emptySet()));
+        FileProvider provider = providers.get(scheme);
+        if (provider != null) {
+            return provider.getCapabilities();
+        }
+        throw new FileSystemException("");
     }
 
     @Override
     public FileSystemConfigBuilder getFileSystemConfigBuilder(String scheme) throws FileSystemException {
-        return null;
+        FileProvider provider = providers.get(scheme);
+        if (provider != null) {
+            return provider.getConfigBuilder();
+        }
+        throw new FileSystemException("");
     }
 
     @Override
     public FileName resolveURI(String uri) throws FileSystemException {
         return resolveFile(uri).getName();
+    }
+
+    public void addProvider(String scheme, FileProvider provider) {
+        providers.put(scheme, provider);
+    }
+
+    public void addProvider(String[] schemes, FileProvider provider) {
+        for (String scheme : schemes) {
+            providers.put(scheme, provider);
+        }
     }
 
     @Override
@@ -460,15 +568,21 @@ public class RootFileSystem extends AbstractVfsComponent implements FileSystemMa
 
     @Override
     public Collection<Capability> getCapabilities() {
-        return Collections.unmodifiableCollection(capabilities);
+        return providers.values().stream()
+                .map(FileProvider::getCapabilities)
+                .flatMap(Collection::stream)
+                .collect(Collectors.toSet());
     }
 
     @Override
     public FileName parseUri(FileName root, String uri) throws FileSystemException {
-        throw new FileSystemException("");
+        return resolveFile(root).resolveFile(uri).getName();
     }
 
-    public Map<String, FileObject> getJunctions() {
-        return Collections.unmodifiableMap(junctions);
+    @Override
+    public String toString() {
+        return junctions.entrySet().stream()
+                .map(self -> self.getKey() + " --> " + self.getValue())
+                .collect(Collectors.joining("\n"));
     }
 }
