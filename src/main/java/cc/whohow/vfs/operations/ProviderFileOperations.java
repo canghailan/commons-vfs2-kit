@@ -42,7 +42,7 @@ public class ProviderFileOperations implements FileOperations {
                     }
                 });
         if (provider == null) {
-            throw new IllegalArgumentException();
+            throw new FileSystemException("vfs.operation/operation-not-supported.error", operationClass.getCanonicalName());
         }
         return provider.getOperation(fileObject, operationClass);
     }
