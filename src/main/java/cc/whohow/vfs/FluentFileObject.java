@@ -14,6 +14,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.BiFunction;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -21,10 +23,16 @@ import java.util.stream.StreamSupport;
  * @see java.nio.file.Files
  */
 public class FluentFileObject implements Closeable {
+    private static final Pattern EXTENSION = Pattern.compile(".+(?<extension>\\.[a-zA-Z0-9]{1,8})$");
+
     private FileObject fileObject;
 
-    public FluentFileObject(FileObject fileObject) {
+    private FluentFileObject(FileObject fileObject) {
         this.fileObject = fileObject;
+    }
+
+    public static FluentFileObject of(FileObject fileObject) {
+        return new FluentFileObject(fileObject);
     }
 
     public static FluentFileObject resolve(String name) {
@@ -79,7 +87,6 @@ public class FluentFileObject implements Closeable {
         String name = prefix + UUID.randomUUID() + suffix;
         try (FileObject f = fileObject) {
             fileObject = f.getChild(name);
-            fileObject.createFile();
             return this;
         } catch (FileSystemException e) {
             throw new UncheckedIOException(e);
@@ -87,19 +94,27 @@ public class FluentFileObject implements Closeable {
     }
 
     public FluentFileObject randomChildLike(String uri) {
-        // TODO
-        return randomChild("", "");
+        String suffix = "";
+        Matcher matcher = EXTENSION.matcher(uri);
+        if (matcher.find()) {
+            suffix = matcher.group("extension");
+        }
+        return randomChild("", suffix);
     }
 
     @SuppressWarnings("unchecked")
-    public <OP extends FileOperation> FluentFileObject apply(Class<OP> operation,
-                                                             BiFunction<FileObject, OP, FileObject> function) {
+    public <OP extends FileOperation> OP getOperation(Class<OP> operation) {
         try {
-            FileObject f = function.apply(fileObject, (OP) fileObject.getFileOperations().getOperation(operation));
-            if (fileObject != f) {
-                fileObject.close();
-            }
-            fileObject = f;
+            return (OP) fileObject.getFileOperations().getOperation(operation);
+        } catch (FileSystemException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    public  <OP extends FileOperation> FluentFileObject doOperation(Class<OP> operation, BiFunction<FileObject, OP, FileObject> callback) {
+        try {
+            fileObject = callback.apply(fileObject, (OP) fileObject.getFileOperations().getOperation(operation));
             return this;
         } catch (FileSystemException e) {
             throw new UncheckedIOException(e);

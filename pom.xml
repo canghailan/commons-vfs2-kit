@@ -6,7 +6,7 @@
 
     <groupId>cc.whohow</groupId>
     <artifactId>commons-vfs2-kit</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
 
     <build>
         <plugins>
@@ -57,4 +57,12 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <distributionManagement>
+        <repository>
+            <id>yitong</id>
+            <name>yitong</name>
+            <url>http://nexus.dev.yitong.com/repository/maven-releases/</url>
+        </repository>
+    </distributionManagement>
 </project>
