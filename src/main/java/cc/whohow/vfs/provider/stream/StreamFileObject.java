@@ -69,7 +69,6 @@ public class StreamFileObject implements DataFileObject, FreeFileObject, Readonl
         return new FilterInputStream(stream) {
             @Override
             public void close() throws IOException {
-                super.close();
                 open = false;
             }
         };
@@ -87,15 +86,7 @@ public class StreamFileObject implements DataFileObject, FreeFileObject, Readonl
 
     @Override
     public void close() throws FileSystemException {
-        if (open) {
-            try {
-                stream.close();
-            } catch (IOException e) {
-                throw new FileSystemException(e);
-            } finally {
-                open = false;
-            }
-        }
+        open = false;
     }
 
     @Override

@@ -2,6 +2,7 @@ package cc.whohow.vfs;
 
 import cc.whohow.vfs.io.ResourceInputStream;
 import cc.whohow.vfs.io.ResourceOutputStream;
+import cc.whohow.vfs.path.PathParser;
 import cc.whohow.vfs.provider.stream.StreamFileObject;
 import cc.whohow.vfs.selector.AndFileSelector;
 import org.apache.commons.vfs2.*;
@@ -14,8 +15,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.BiFunction;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -23,8 +22,6 @@ import java.util.stream.StreamSupport;
  * @see java.nio.file.Files
  */
 public class FluentFileObject implements Closeable {
-    private static final Pattern EXTENSION = Pattern.compile(".+(?<extension>\\.[a-zA-Z0-9]{1,8})$");
-
     private FileObject fileObject;
 
     private FluentFileObject(FileObject fileObject) {
@@ -94,12 +91,8 @@ public class FluentFileObject implements Closeable {
     }
 
     public FluentFileObject randomChildLike(String uri) {
-        String suffix = "";
-        Matcher matcher = EXTENSION.matcher(uri);
-        if (matcher.find()) {
-            suffix = matcher.group("extension");
-        }
-        return randomChild("", suffix);
+        String extension = PathParser.getExtension(uri);
+        return randomChild("", extension.isEmpty() ? "" : "." + extension);
     }
 
     @SuppressWarnings("unchecked")

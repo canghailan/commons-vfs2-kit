@@ -58,8 +58,8 @@ public class PathParser {
     /**
      * 是否是相对路径
      */
-    public static boolean isRelative(String path) {
-        return isRelative(URI.create(path));
+    public static boolean isRelative(String uri) {
+        return isRelative(URI.create(uri));
     }
 
     /**
@@ -70,5 +70,13 @@ public class PathParser {
                 uri.getHost() == null &&
                 uri.getPath() != null &&
                 !uri.getPath().startsWith(FileName.SEPARATOR);
+    }
+
+    public static String getLastName(String uri) {
+        return new PathParser(uri).getLastName();
+    }
+
+    public static String getExtension(String uri) {
+        return new PathParser(uri).getExtension();
     }
 }
