@@ -17,6 +17,38 @@ public class PathParser {
         }
     }
 
+    /**
+     * 是否是相对路径
+     */
+    public static boolean isRelative(String uri) {
+        return isRelative(URI.create(uri));
+    }
+
+    /**
+     * 计算两个URI的相对路径
+     */
+    public static String relativize(URI ancestor, URI descendant) {
+        return ancestor.relativize(descendant).normalize().getPath();
+    }
+
+    /**
+     * 是否是相对路径
+     */
+    public static boolean isRelative(URI uri) {
+        return uri.getScheme() == null &&
+                uri.getHost() == null &&
+                uri.getPath() != null &&
+                !uri.getPath().startsWith(FileName.SEPARATOR);
+    }
+
+    public static String getLastName(String uri) {
+        return new PathParser(uri).getLastName();
+    }
+
+    public static String getExtension(String uri) {
+        return new PathParser(uri).getExtension();
+    }
+
     public String getLastName() {
         if (iterator == null) {
             return "";
@@ -53,30 +85,5 @@ public class PathParser {
             return 0;
         }
         return iterator.afterLast().currentIndex();
-    }
-
-    /**
-     * 是否是相对路径
-     */
-    public static boolean isRelative(String uri) {
-        return isRelative(URI.create(uri));
-    }
-
-    /**
-     * 是否是相对路径
-     */
-    public static boolean isRelative(URI uri) {
-        return uri.getScheme() == null &&
-                uri.getHost() == null &&
-                uri.getPath() != null &&
-                !uri.getPath().startsWith(FileName.SEPARATOR);
-    }
-
-    public static String getLastName(String uri) {
-        return new PathParser(uri).getLastName();
-    }
-
-    public static String getExtension(String uri) {
-        return new PathParser(uri).getExtension();
     }
 }

@@ -15,16 +15,16 @@ import java.net.URL;
 import java.util.Collections;
 import java.util.Map;
 
-public class StreamFileObject implements DataFileObject, FreeFileObject, ReadonlyFileObject, SimplifyFileContent {
+public class StreamFileObjectAdapter implements DataFileObject, FreeFileObject, ReadonlyFileObject, SimpleFileContent {
     private final InputStream stream;
     private final Map<String, Object> attributes;
     private volatile boolean open = true;
 
-    public StreamFileObject(InputStream stream) {
+    public StreamFileObjectAdapter(InputStream stream) {
         this(stream, Collections.emptyMap());
     }
 
-    public StreamFileObject(InputStream stream, Map<String, Object> attributes) {
+    public StreamFileObjectAdapter(InputStream stream, Map<String, Object> attributes) {
         this.stream = stream;
         this.attributes = attributes;
     }

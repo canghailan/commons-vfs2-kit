@@ -1,9 +1,9 @@
 package cc.whohow.vfs;
 
-import cc.whohow.vfs.io.ResourceInputStream;
-import cc.whohow.vfs.io.ResourceOutputStream;
+import cc.whohow.vfs.io.CloseHookInputStream;
+import cc.whohow.vfs.io.CloseHookOutputStream;
 import cc.whohow.vfs.path.PathParser;
-import cc.whohow.vfs.provider.stream.StreamFileObject;
+import cc.whohow.vfs.provider.stream.StreamFileObjectAdapter;
 import cc.whohow.vfs.selector.AndFileSelector;
 import org.apache.commons.vfs2.*;
 import org.apache.commons.vfs2.FileFilter;
@@ -48,12 +48,8 @@ public class FluentFileObject implements Closeable {
         }
     }
 
-    private static long getSize(FileObject fileObject) {
-        try (FileContent content = fileObject.getContent()) {
-            return content.getSize();
-        } catch (FileSystemException e) {
-            throw new UncheckedIOException(e);
-        }
+    private ListableFileObject listableFileObject() {
+        return (ListableFileObject) fileObject;
     }
 
     public FluentFileObject parent() {
@@ -105,7 +101,7 @@ public class FluentFileObject implements Closeable {
     }
 
     @SuppressWarnings("unchecked")
-    public  <OP extends FileOperation> FluentFileObject doOperation(Class<OP> operation, BiFunction<FileObject, OP, FileObject> callback) {
+    public <OP extends FileOperation> FluentFileObject doOperation(Class<OP> operation, BiFunction<FileObject, OP, FileObject> callback) {
         try {
             fileObject = callback.apply(fileObject, (OP) fileObject.getFileOperations().getOperation(operation));
             return this;
@@ -132,7 +128,7 @@ public class FluentFileObject implements Closeable {
     }
 
     public FluentFileObject copyFrom(String source) {
-        try (FileObject f = fileObject.getFileSystem().getFileSystemManager().resolveFile(source)) {
+        try (FileObject f = fileObject.resolveFile(source)) {
             return copyFrom(f);
         } catch (FileSystemException e) {
             throw new UncheckedIOException(e);
@@ -151,14 +147,14 @@ public class FluentFileObject implements Closeable {
 
     public FluentFileObject copyTo(String target) {
         try {
-            return copyTo(fileObject.getFileSystem().getFileSystemManager().resolveFile(target));
+            return copyTo(fileObject.resolveFile(target));
         } catch (FileSystemException e) {
             throw new UncheckedIOException(e);
         }
     }
 
     public FluentFileObject transferFrom(InputStream stream) {
-        return copyFrom(new StreamFileObject(stream));
+        return copyFrom(new StreamFileObjectAdapter(stream));
     }
 
     public FluentFileObject transferTo(OutputStream stream) {
@@ -224,8 +220,7 @@ public class FluentFileObject implements Closeable {
     public Stream<FileObject> list() {
         try {
             if (fileObject instanceof ListableFileObject) {
-                ListableFileObject listableFileObject = (ListableFileObject) fileObject;
-                return listableFileObject.list();
+                return listableFileObject().list();
             } else {
                 return Arrays.stream(fileObject.getChildren());
             }
@@ -237,8 +232,7 @@ public class FluentFileObject implements Closeable {
     public Stream<FileObject> list(FileFilter filter) {
         try {
             if (fileObject instanceof ListableFileObject) {
-                ListableFileObject listableFileObject = (ListableFileObject) fileObject;
-                return listableFileObject.list(filter);
+                return listableFileObject().list(filter);
             } else {
                 return Arrays.stream(fileObject.findFiles(
                         AndFileSelector.of(Selectors.SELECT_CHILDREN, new FileFilterSelector(filter))));
@@ -251,8 +245,7 @@ public class FluentFileObject implements Closeable {
     public Stream<FileObject> listRecursively() {
         try {
             if (fileObject instanceof ListableFileObject) {
-                ListableFileObject listableFileObject = (ListableFileObject) fileObject;
-                return listableFileObject.listRecursively();
+                return listableFileObject().listRecursively();
             } else {
                 return Arrays.stream(fileObject.findFiles(Selectors.EXCLUDE_SELF));
             }
@@ -264,8 +257,7 @@ public class FluentFileObject implements Closeable {
     public Stream<FileObject> listRecursively(FileSelector selector) {
         try {
             if (fileObject instanceof ListableFileObject) {
-                ListableFileObject listableFileObject = (ListableFileObject) fileObject;
-                return listableFileObject.listRecursively(selector);
+                return listableFileObject().listRecursively(selector);
             } else {
                 return Arrays.stream(fileObject.findFiles(AndFileSelector.of(Selectors.EXCLUDE_SELF, selector)));
             }
@@ -277,8 +269,7 @@ public class FluentFileObject implements Closeable {
     public Stream<FileObject> listRecursively(FileSelector selector, boolean depthwise) {
         try {
             if (fileObject instanceof ListableFileObject) {
-                ListableFileObject listableFileObject = (ListableFileObject) fileObject;
-                return listableFileObject.listRecursively(selector, depthwise);
+                return listableFileObject().listRecursively(selector, depthwise);
             } else {
                 List<FileObject> list = new ArrayList<>();
                 fileObject.findFiles(AndFileSelector.of(Selectors.EXCLUDE_SELF, selector), depthwise, list);
@@ -292,8 +283,7 @@ public class FluentFileObject implements Closeable {
     public Stream<FileObject> find() {
         try {
             if (fileObject instanceof ListableFileObject) {
-                ListableFileObject listableFileObject = (ListableFileObject) fileObject;
-                return listableFileObject.find();
+                return listableFileObject().find();
             } else {
                 return StreamSupport.stream(fileObject.spliterator(), false);
             }
@@ -305,8 +295,7 @@ public class FluentFileObject implements Closeable {
     public Stream<FileObject> find(FileSelector selector) {
         try {
             if (fileObject instanceof ListableFileObject) {
-                ListableFileObject listableFileObject = (ListableFileObject) fileObject;
-                return listableFileObject.find(selector);
+                return listableFileObject().find(selector);
             } else {
                 return Arrays.stream(fileObject.findFiles(selector));
             }
@@ -318,8 +307,7 @@ public class FluentFileObject implements Closeable {
     public Stream<FileObject> find(FileSelector selector, boolean depthwise) {
         try {
             if (fileObject instanceof ListableFileObject) {
-                ListableFileObject listableFileObject = (ListableFileObject) fileObject;
-                return listableFileObject.find(selector, depthwise);
+                return listableFileObject().find(selector, depthwise);
             } else {
                 List<FileObject> list = new ArrayList<>();
                 fileObject.findFiles(selector, depthwise, list);
@@ -335,11 +323,11 @@ public class FluentFileObject implements Closeable {
             if (fileObject.isFolder()) {
                 try (Stream<FileObject> list = listRecursively(Selectors.SELECT_FILES)) {
                     return list
-                            .mapToLong(FluentFileObject::getSize)
+                            .mapToLong(FileObjectFns::getSize)
                             .sum();
                 }
             } else {
-                return getSize(fileObject);
+                return FileObjectFns.getSize(fileObject);
             }
         } catch (FileSystemException e) {
             throw new UncheckedIOException(e);
@@ -353,10 +341,10 @@ public class FluentFileObject implements Closeable {
     /**
      * 获取输入流
      */
-    public InputStream newInputStream(String uri) {
+    public InputStream newInputStream() {
         try {
             FileContent fileContent = fileObject.getContent();
-            return new ResourceInputStream(fileContent, fileContent.getInputStream());
+            return new CloseHookInputStream(fileContent.getInputStream(), fileContent);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -365,10 +353,10 @@ public class FluentFileObject implements Closeable {
     /**
      * 获取输出流
      */
-    public OutputStream newOutputStream(FileObject fileObject) {
+    public OutputStream newOutputStream() {
         try {
             FileContent fileContent = fileObject.getContent();
-            return new ResourceOutputStream(fileContent, fileContent.getOutputStream());
+            return new CloseHookOutputStream(fileContent.getOutputStream(), fileContent);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }

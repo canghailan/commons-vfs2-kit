@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.security.cert.Certificate;
 
-public interface SimplifyFileContent extends FileContent {
+public interface SimpleFileContent extends FileContent {
     @Override
     default boolean hasAttribute(String attrName) throws FileSystemException {
         return getAttributes().containsKey(attrName);

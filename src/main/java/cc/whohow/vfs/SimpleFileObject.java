@@ -8,7 +8,7 @@ import org.apache.commons.vfs2.*;
 import java.util.Iterator;
 import java.util.List;
 
-public interface SimplifyFileObject extends FileObject {
+public interface SimpleFileObject extends FileObject {
     @Override
     default boolean canRenameTo(FileObject newfile) {
         return true;

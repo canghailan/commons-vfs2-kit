@@ -2,11 +2,9 @@ package cc.whohow.vfs.operations;
 
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemException;
-import org.apache.commons.vfs2.VFS;
 import org.apache.commons.vfs2.operations.FileOperation;
 import org.apache.commons.vfs2.operations.FileOperationProvider;
 
-import java.io.UncheckedIOException;
 import java.util.Collection;
 import java.util.function.Function;
 
@@ -19,14 +17,6 @@ public class FileOperationFactoryProvider<F extends FileObject, O extends FileOp
         this.fileType = fileType;
         this.operationType = operationType;
         this.factory = factory;
-    }
-
-    public void register(String... schemes) {
-        try {
-            VFS.getManager().addOperationProvider(schemes, this);
-        } catch (FileSystemException e) {
-            throw new UncheckedIOException(e);
-        }
     }
 
     @Override

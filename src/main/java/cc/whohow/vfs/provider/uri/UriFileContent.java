@@ -1,6 +1,6 @@
 package cc.whohow.vfs.provider.uri;
 
-import cc.whohow.vfs.SimplifyFileContent;
+import cc.whohow.vfs.SimpleFileContent;
 import cc.whohow.vfs.StatelessFileContent;
 import org.apache.commons.vfs2.FileContentInfo;
 import org.apache.commons.vfs2.FileObject;
@@ -13,7 +13,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Map;
 
-public class UriFileContent implements SimplifyFileContent, StatelessFileContent {
+public class UriFileContent implements SimpleFileContent, StatelessFileContent {
     private final UriFileObject file;
 
     public UriFileContent(UriFileObject file) {

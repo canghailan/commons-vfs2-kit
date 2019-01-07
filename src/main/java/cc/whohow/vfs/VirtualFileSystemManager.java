@@ -1,8 +1,11 @@
 package cc.whohow.vfs;
 
+import cc.whohow.vfs.configuration.ConfigurationFile;
+import cc.whohow.vfs.configuration.ProviderConfiguration;
 import cc.whohow.vfs.provider.uri.UriFileName;
-import cc.whohow.vfs.provider.uri.UriFileObject;
 import cc.whohow.vfs.provider.uri.UriFileProvider;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.commons.vfs2.*;
 import org.apache.commons.vfs2.impl.FileContentInfoFilenameFactory;
 import org.apache.commons.vfs2.operations.FileOperationProvider;
@@ -10,10 +13,11 @@ import org.apache.commons.vfs2.operations.FileOperations;
 import org.apache.commons.vfs2.provider.*;
 import org.apache.commons.vfs2.provider.local.DefaultLocalFileProvider;
 
-import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.UndeclaredThrowableException;
 import java.net.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -21,20 +25,87 @@ import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-public class VirtualFileSystemManager extends AbstractVfsComponent implements FileSystemManager, FileProvider, FileSystem, FileObject, VfsComponentContext {
-    protected final Pattern RESERVED = Pattern.compile("[@#&*?]");
+public class VirtualFileSystemManager implements FileSystemManager, FileProvider, FileSystem, FileObject, VfsComponentContext {
+    protected static final Pattern RESERVED = Pattern.compile("[@#&*?]");
+
+    protected final Log log = LogFactory.getLog(VirtualFileSystemManager.class);
     protected final Map<String, Object> attributes = new ConcurrentHashMap<>();
-    protected final NavigableMap<String, FileObject> junctions = new ConcurrentSkipListMap<>(Comparator.reverseOrder());
     protected final Map<String, FileProvider> providers = new ConcurrentHashMap<>();
     protected final Map<String, List<FileOperationProvider>> operationProviders = new ConcurrentHashMap<>();
-    protected final LocalFileProvider localFileProvider;
+    protected final NavigableMap<String, FileObject> junctions = new ConcurrentSkipListMap<>(Comparator.reverseOrder());
+    protected final ConfigurationFile configuration;
+    protected UriFileProvider uriFileProvider;
+    protected LocalFileProvider localFileProvider;
 
-    public VirtualFileSystemManager() {
-        this.localFileProvider = new DefaultLocalFileProvider();
-        UriFileProvider uriFileProvider = new UriFileProvider();
-        this.providers.put("file", localFileProvider);
-        this.providers.put("http", uriFileProvider);
-        this.providers.put("https", uriFileProvider);
+    public VirtualFileSystemManager(ConfigurationFile configuration) {
+        this.configuration = configuration;
+        try {
+            init();
+        } catch (FileSystemException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    protected void init() throws FileSystemException {
+        uriFileProvider = new UriFileProvider();
+        localFileProvider = new DefaultLocalFileProvider();
+
+        addProvider("conf", configuration);
+        addProvider("file", localFileProvider);
+        addProvider("http", uriFileProvider);
+        addProvider("https", uriFileProvider);
+
+        ProviderConfiguration[] providers = configuration.getProviderConfigurations(ProviderConfiguration[].class);
+        if (providers != null) {
+            for (ProviderConfiguration providerConfiguration : providers) {
+                FileProvider provider = (FileProvider) newInstance(providerConfiguration.getClassName());
+                initVfsComponent(provider);
+                for (String scheme : providerConfiguration.getSchemes()) {
+                    addProvider(scheme, provider);
+                }
+            }
+        }
+
+        ProviderConfiguration[] operationProviders = configuration.getOperationProviderConfigurations(ProviderConfiguration[].class);
+        if (operationProviders != null) {
+            for (ProviderConfiguration providerConfiguration : operationProviders) {
+                FileOperationProvider provider = (FileOperationProvider) newInstance(providerConfiguration.getClassName());
+                for (String scheme : providerConfiguration.getSchemes()) {
+                    addOperationProvider(scheme, provider);
+                }
+            }
+        }
+
+        Map<String, String> junctions = configuration.getJunctions();
+        if (junctions != null) {
+            for (Map.Entry<String, String> junction : junctions.entrySet()) {
+                addJunction(junction.getKey(), junction.getValue());
+            }
+        }
+    }
+
+    protected Object newInstance(String className) {
+        try {
+            return Class.forName(className).newInstance();
+        } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
+            throw new UndeclaredThrowableException(e);
+        }
+    }
+
+    protected void initVfsComponent(Object object) throws FileSystemException {
+        if (object instanceof VfsComponent) {
+            VfsComponent vfsComponent = (VfsComponent) object;
+            vfsComponent.setLogger(log);
+            vfsComponent.setContext(this);
+            vfsComponent.init();
+        }
+    }
+
+    protected void closeVfsComponent(Object object) {
+        if (object instanceof VfsComponent) {
+            VfsComponent vfsComponent = (VfsComponent) object;
+            vfsComponent.close();
+        }
     }
 
     @Override
@@ -85,6 +156,11 @@ public class VirtualFileSystemManager extends AbstractVfsComponent implements Fi
     @Override
     public boolean canRenameTo(FileObject newFile) {
         return false;
+    }
+
+    @Override
+    public void close() throws FileSystemException {
+        providers.values().forEach(this::closeVfsComponent);
     }
 
     @Override
@@ -234,28 +310,26 @@ public class VirtualFileSystemManager extends AbstractVfsComponent implements Fi
 
     @Override
     public FileObject resolveFile(String name) throws FileSystemException {
-        URI uri = URI.create(name);
-        if (uri.getScheme() != null) {
-            if (uri.getQuery() != null || uri.getFragment() != null) {
-                return new UriFileObject(name);
-            }
-            if (uri.getPath() != null && RESERVED.matcher(uri.getPath()).find()) {
-                return new UriFileObject(name);
-            }
-        }
-        for (Map.Entry<String, FileObject> junction : junctions.tailMap(name).entrySet()) {
-            if (name.startsWith(junction.getKey())) {
-                return junction.getValue().resolveFile(
-                        name.substring(junction.getKey().length()), NameScope.DESCENDENT_OR_SELF);
+        if (isJunction(name)) {
+            for (Map.Entry<String, FileObject> junction : junctions.tailMap(name).entrySet()) {
+                if (name.startsWith(junction.getKey())) {
+                    return junction.getValue().resolveFile(
+                            name.substring(junction.getKey().length()), NameScope.DESCENDENT_OR_SELF);
+                }
             }
         }
-        if (uri.getScheme() != null) {
-            FileProvider provider = providers.get(uri.getScheme());
+        String scheme = UriParser.extractScheme(name);
+        if (scheme != null) {
+            FileProvider provider = providers.get(scheme);
             if (provider != null) {
                 return provider.findFile(this, name, null);
             }
         }
-        return new UriFileObject(name);
+        throw new FileSystemException("vfs.provider/resolve-file.error", name);
+    }
+
+    protected boolean isJunction(String name) {
+        return !RESERVED.matcher(name).find();
     }
 
     @Override
@@ -395,13 +469,7 @@ public class VirtualFileSystemManager extends AbstractVfsComponent implements Fi
 
     @Override
     public void closeFileSystem(FileSystem filesystem) {
-        if (filesystem instanceof Closeable) {
-            try {
-                Closeable closeable = (Closeable) filesystem;
-                closeable.close();
-            } catch (IOException ignore) {
-            }
-        }
+        closeVfsComponent(filesystem);
     }
 
     @Override
@@ -472,13 +540,7 @@ public class VirtualFileSystemManager extends AbstractVfsComponent implements Fi
 
     @Override
     public String[] getSchemes() {
-        Set<String> schemes = junctions.values().stream()
-                .map(FileObject::getName)
-                .map(FileName::getScheme)
-                .collect(Collectors.toCollection(TreeSet::new));
-        schemes.add("http");
-        schemes.add("https");
-        return schemes.toArray(new String[0]);
+        return providers.keySet().toArray(new String[0]);
     }
 
     @Override
@@ -488,6 +550,11 @@ public class VirtualFileSystemManager extends AbstractVfsComponent implements Fi
             return provider.getCapabilities();
         }
         throw new FileSystemException("");
+    }
+
+    @Override
+    public void setLogger(Log log) {
+
     }
 
     @Override

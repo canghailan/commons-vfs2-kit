@@ -4,10 +4,10 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 
-public class UncheckedRunnable implements Runnable {
+public class UncheckedCloseable implements Runnable {
     private final Closeable closeable;
 
-    public UncheckedRunnable(Closeable closeable) {
+    public UncheckedCloseable(Closeable closeable) {
         this.closeable = closeable;
     }
 

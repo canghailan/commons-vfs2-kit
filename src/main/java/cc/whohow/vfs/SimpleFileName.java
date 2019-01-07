@@ -8,7 +8,7 @@ import org.apache.commons.vfs2.NameScope;
 
 import java.net.URI;
 
-public interface SimplifyFileName extends FileName {
+public interface SimpleFileName extends FileName {
     @Override
     default FileType getType() {
         return getPath().endsWith(SEPARATOR) ? FileType.FOLDER : FileType.FILE;

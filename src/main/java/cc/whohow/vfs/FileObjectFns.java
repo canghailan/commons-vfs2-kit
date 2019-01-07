@@ -1,5 +1,6 @@
 package cc.whohow.vfs;
 
+import org.apache.commons.vfs2.FileContent;
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemException;
 import org.apache.commons.vfs2.FileType;
@@ -120,6 +121,14 @@ public abstract class FileObjectFns {
     public static boolean isFolder(FileObject fileObject) {
         try {
             return fileObject.isFolder();
+        } catch (FileSystemException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    public static long getSize(FileObject fileObject) {
+        try (FileContent content = fileObject.getContent()) {
+            return content.getSize();
         } catch (FileSystemException e) {
             throw new UncheckedIOException(e);
         }

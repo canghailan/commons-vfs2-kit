@@ -22,7 +22,7 @@ public class UriFileObject implements DataFileObject, FreeFileObject, ReadonlyFi
 
     @Override
     public boolean exists() throws FileSystemException {
-        return false;
+        return true;
     }
 
     @Override

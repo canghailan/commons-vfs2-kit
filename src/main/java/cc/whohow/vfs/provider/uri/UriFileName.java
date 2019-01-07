@@ -10,10 +10,10 @@ import java.net.URI;
 import java.util.Objects;
 
 public class UriFileName implements FileName {
-    private final String uri;
+    private final URI uri;
 
     public UriFileName(String uri) {
-        this.uri = uri;
+        this.uri = URI.create(uri).normalize();
     }
 
     @Override
@@ -23,7 +23,7 @@ public class UriFileName implements FileName {
 
     @Override
     public String getPath() {
-        return URI.create(uri).normalize().getPath();
+        return uri.getPath();
     }
 
     @Override
@@ -43,12 +43,12 @@ public class UriFileName implements FileName {
 
     @Override
     public String getScheme() {
-        return URI.create(uri).getScheme();
+        return uri.getScheme();
     }
 
     @Override
     public String getURI() {
-        return uri;
+        return uri.toString();
     }
 
     @Override
@@ -98,7 +98,7 @@ public class UriFileName implements FileName {
 
     @Override
     public String getFriendlyURI() {
-        return uri;
+        return uri.toString();
     }
 
     @Override
@@ -122,6 +122,6 @@ public class UriFileName implements FileName {
 
     @Override
     public String toString() {
-        return uri;
+        return uri.toString();
     }
 }

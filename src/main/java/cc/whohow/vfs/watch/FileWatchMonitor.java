@@ -1,5 +1,7 @@
 package cc.whohow.vfs.watch;
 
+import cc.whohow.vfs.version.FileLastModifiedTimeVersionProvider;
+import cc.whohow.vfs.version.FileVersionProvider;
 import org.apache.commons.vfs2.*;
 
 import java.time.Duration;
@@ -26,28 +28,34 @@ public class FileWatchMonitor implements FileMonitor, FileListener {
     }
 
     public void addListener(FileObject file, FileListener listener) {
-        addListener(new FileWatcher(file), listener);
+        addListener(file, listener, new FileLastModifiedTimeVersionProvider());
     }
 
-    public synchronized void addListener(FileWatcher watcher, FileListener listener) {
-        FileName fileName = watcher.getWatchable().getName();
-        ScheduledFutureTask futureTask = tasks.get(fileName);
+    public synchronized void addListener(FileObject file, FileListener listener, FileVersionProvider<?> fileVersionProvider) {
+        FileName fileName = file.getName();
+        ScheduledFutureTask futureTask = getTask(file);
         if (futureTask == null) {
-            for (Map.Entry<FileName, ScheduledFutureTask> e : tasks.tailMap(fileName).entrySet()) {
-                if (e.getKey().isDescendent(fileName)) {
-                    futureTask = e.getValue();
-                    break;
-                }
-            }
-            if (futureTask == null) {
-                FileWatchTask task = new FileWatchTask(watcher);
-                ScheduledFuture<?> future = executor.scheduleWithFixedDelay(task, 0L, delay.toMillis(), TimeUnit.MILLISECONDS);
-                futureTask = new ScheduledFutureTask(task, future);
-                tasks.put(fileName, futureTask);
-            }
+            FileWatchTask task = new FileWatchTask(new FileWatcher(file, fileVersionProvider));
+            ScheduledFuture<?> future = executor.scheduleWithFixedDelay(task, 0L, delay.toMillis(), TimeUnit.MILLISECONDS);
+            futureTask = new ScheduledFutureTask(task, future);
+            tasks.put(fileName, futureTask);
         }
         FileWatchTask task = futureTask.task;
         task.addListener(FileWatchListener.create(task.getWatcher().getWatchable().getName(), fileName, listener));
+    }
+
+    private ScheduledFutureTask getTask(FileObject fileObject) {
+        FileName fileName = fileObject.getName();
+        ScheduledFutureTask futureTask = tasks.get(fileName);
+        if (futureTask != null) {
+            return futureTask;
+        }
+        for (Map.Entry<FileName, ScheduledFutureTask> e : tasks.tailMap(fileName).entrySet()) {
+            if (e.getKey().isDescendent(fileName)) {
+                return e.getValue();
+            }
+        }
+        return null;
     }
 
     public synchronized void removeListener(FileObject file, FileListener listener) {
