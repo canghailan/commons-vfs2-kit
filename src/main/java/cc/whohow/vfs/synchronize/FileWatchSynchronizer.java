@@ -1,51 +1,34 @@
 package cc.whohow.vfs.synchronize;
 
 import cc.whohow.vfs.version.FileVersionProvider;
-import cc.whohow.vfs.watch.FileWatchListener;
-import cc.whohow.vfs.watch.FileWatchTask;
-import cc.whohow.vfs.watch.FileWatcher;
 import org.apache.commons.vfs2.FileChangeEvent;
 import org.apache.commons.vfs2.FileListener;
 import org.apache.commons.vfs2.FileObject;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.time.Duration;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 
 public class FileWatchSynchronizer extends FileSynchronizer implements FileListener, Closeable {
-    private final ScheduledExecutorService executor;
-    private FileWatchTask task;
-    private ScheduledFuture<?> future;
-    private Duration delay = Duration.ofSeconds(1L);
-
-    public FileWatchSynchronizer(ScheduledExecutorService executor, FileObject source, FileObject target) {
+    public FileWatchSynchronizer(FileObject source, FileObject target) {
         super(source, target);
-        this.executor = executor;
+        initialize();
     }
 
-    public FileWatchSynchronizer(ScheduledExecutorService executor, FileObject source, FileObject target, FileVersionProvider<?> fileVersionProvider) {
+    public FileWatchSynchronizer(FileObject source, FileObject target, FileVersionProvider<?> fileVersionProvider) {
         super(source, target, fileVersionProvider);
-        this.executor = executor;
+        initialize();
     }
 
-    public FileWatchSynchronizer(ScheduledExecutorService executor,
-                                 FileObject source,
+    public FileWatchSynchronizer(FileObject source,
                                  FileObject target,
                                  FileVersionProvider<?> sourceVersionProvider,
                                  FileVersionProvider<?> targetVersionProvider) {
         super(source, target, sourceVersionProvider, targetVersionProvider);
-        this.executor = executor;
+        initialize();
     }
 
-    @Override
-    public synchronized void run() {
-        task = new FileWatchTask(new FileWatcher(source, sourceVersionProvider));
-        task.addListener(FileWatchListener.create(sourceFileName, this));
-        future = executor.scheduleWithFixedDelay(task, 0, delay.toMillis(), TimeUnit.MILLISECONDS);
-        super.run();
+    protected void initialize() {
+        source.getFileSystem().addListener(source, this);
     }
 
     @Override
@@ -68,6 +51,6 @@ public class FileWatchSynchronizer extends FileSynchronizer implements FileListe
 
     @Override
     public void close() throws IOException {
-        future.cancel(true);
+        source.getFileSystem().removeListener(source, this);
     }
 }

@@ -76,23 +76,23 @@ public class FileSynchronizer implements Runnable, Callable<Map<String, String>>
                     .collect(Collectors.toMap(self -> sourceKey(self.getFileObject().getName()), self -> self));
             Iterator<? extends FileVersion<?>> iterator = targetVersions.iterator();
 
-            Map<String, String> status = new LinkedHashMap<>();
+            Map<String, String> diff = new LinkedHashMap<>();
             while (iterator.hasNext()) {
                 FileVersion<?> targetVersion = iterator.next();
                 String key = targetKey(targetVersion.getFileObject().getName());
                 FileVersion<?> sourceVersion = index.remove(key);
                 if (sourceVersion == null) {
-                    status.put(key, "-");
+                    diff.put(key, "-");
                 } else if (!Objects.equals(sourceVersion.getVersion(), targetVersion.getVersion())) {
-                    status.put(key, "*");
+                    diff.put(key, "*");
                 } else {
-                    status.put(key, "=");
+                    diff.put(key, "=");
                 }
             }
             for (Map.Entry<String, FileVersion<?>> e : index.entrySet()) {
-                status.put(e.getKey(), "+");
+                diff.put(e.getKey(), "+");
             }
-            return status;
+            return diff;
         }
     }
 

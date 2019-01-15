@@ -16,17 +16,20 @@ import java.util.Collections;
 import java.util.Map;
 
 public class StreamFileObjectAdapter implements DataFileObject, FreeFileObject, ReadonlyFileObject, SimpleFileContent {
+    private static final FileContentInfo DEFAULT_CONTENT_INFO = new DefaultFileContentInfo(null, null);
     private final InputStream stream;
     private final Map<String, Object> attributes;
+    private final FileContentInfo contentInfo;
     private volatile boolean open = true;
 
     public StreamFileObjectAdapter(InputStream stream) {
-        this(stream, Collections.emptyMap());
+        this(stream, Collections.emptyMap(), DEFAULT_CONTENT_INFO);
     }
 
-    public StreamFileObjectAdapter(InputStream stream, Map<String, Object> attributes) {
+    public StreamFileObjectAdapter(InputStream stream, Map<String, Object> attributes, FileContentInfo contentInfo) {
         this.stream = stream;
         this.attributes = attributes;
+        this.contentInfo = contentInfo;
     }
 
     @Override
@@ -91,7 +94,7 @@ public class StreamFileObjectAdapter implements DataFileObject, FreeFileObject, 
 
     @Override
     public FileContentInfo getContentInfo() throws FileSystemException {
-        return new DefaultFileContentInfo(null, null);
+        return contentInfo;
     }
 
     @Override

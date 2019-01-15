@@ -16,6 +16,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * 配置文件：配置以文件格式接口提供，类似Linux /proc，计划提供查询及修改功能
+ */
 public interface ConfigurationFile extends Configuration, FileProvider, FileSystem, FileObject, FileContent {
     @Override
     default FileObject getFile() {
