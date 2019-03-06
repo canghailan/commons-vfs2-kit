@@ -5,6 +5,10 @@ import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
+/**
+ * @see cc.whohow.vfs.FileObjectOutputStream
+ */
+@Deprecated
 public class CloseHookOutputStream extends FilterOutputStream {
     protected final Runnable closeHook;
 

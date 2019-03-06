@@ -1,8 +1,6 @@
 package cc.whohow.vfs;
 
 import cc.whohow.vfs.io.ByteBufferInputStream;
-import cc.whohow.vfs.io.CloseHookInputStream;
-import cc.whohow.vfs.io.CloseHookOutputStream;
 import cc.whohow.vfs.io.Java9InputStream;
 import cc.whohow.vfs.path.PathParser;
 import cc.whohow.vfs.provider.stream.StreamFileObjectAdapter;
@@ -347,8 +345,7 @@ public class FluentFileObject implements Closeable {
      */
     public InputStream newInputStream() {
         try {
-            FileContent fileContent = fileObject.getContent();
-            return new CloseHookInputStream(fileContent.getInputStream(), fileContent);
+            return new FileObjectInputStream(fileObject.getContent());
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -359,8 +356,7 @@ public class FluentFileObject implements Closeable {
      */
     public OutputStream newOutputStream() {
         try {
-            FileContent fileContent = fileObject.getContent();
-            return new CloseHookOutputStream(fileContent.getOutputStream(), fileContent);
+            return new FileObjectOutputStream(fileObject.getContent());
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -371,8 +367,7 @@ public class FluentFileObject implements Closeable {
      */
     public OutputStream newAppendOutputStream() {
         try {
-            FileContent fileContent = fileObject.getContent();
-            return new CloseHookOutputStream(fileContent.getOutputStream(true), fileContent);
+            return new FileObjectOutputStream(fileObject.getContent(), true);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }

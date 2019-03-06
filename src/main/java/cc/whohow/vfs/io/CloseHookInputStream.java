@@ -5,6 +5,10 @@ import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
+/**
+ * @see cc.whohow.vfs.FileObjectInputStream
+ */
+@Deprecated
 public class CloseHookInputStream extends FilterInputStream {
     protected final Runnable closeHook;
 
