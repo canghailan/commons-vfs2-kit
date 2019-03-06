@@ -1,7 +1,9 @@
 package cc.whohow.vfs;
 
+import cc.whohow.vfs.io.ByteBufferInputStream;
 import cc.whohow.vfs.io.CloseHookInputStream;
 import cc.whohow.vfs.io.CloseHookOutputStream;
+import cc.whohow.vfs.io.Java9InputStream;
 import cc.whohow.vfs.path.PathParser;
 import cc.whohow.vfs.provider.stream.StreamFileObjectAdapter;
 import cc.whohow.vfs.selector.AndFileSelector;
@@ -10,6 +12,8 @@ import org.apache.commons.vfs2.FileFilter;
 import org.apache.commons.vfs2.operations.FileOperation;
 
 import java.io.*;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -360,6 +364,46 @@ public class FluentFileObject implements Closeable {
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
+    }
+
+    public byte[] readBytes() {
+        try (FileContent fileContent = fileObject.getContent()) {
+            try (Java9InputStream stream = new Java9InputStream(fileContent.getInputStream())) {
+                return stream.readAllBytes();
+            }
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    public void writeBytes(byte[] bytes) {
+        try {
+            fileObject.copyFrom(new StreamFileObjectAdapter(new ByteArrayInputStream(bytes)), Selectors.SELECT_ALL);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    public void writeBytes(ByteBuffer byteBuffer) {
+        try {
+            fileObject.copyFrom(new StreamFileObjectAdapter(new ByteBufferInputStream(byteBuffer)), Selectors.SELECT_ALL);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    public String readUtf8() {
+        try (FileContent fileContent = fileObject.getContent()) {
+            try (Java9InputStream stream = new Java9InputStream(fileContent.getInputStream())) {
+                return StandardCharsets.UTF_8.decode(stream.readAllBytes(8 * 1024)).toString();
+            }
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    public void writeUtf8(String text) {
+        writeBytes(StandardCharsets.UTF_8.encode(text));
     }
 
     @Override
