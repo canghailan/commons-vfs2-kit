@@ -366,6 +366,18 @@ public class FluentFileObject implements Closeable {
         }
     }
 
+    /**
+     * 获取输出流
+     */
+    public OutputStream newAppendOutputStream() {
+        try {
+            FileContent fileContent = fileObject.getContent();
+            return new CloseHookOutputStream(fileContent.getOutputStream(true), fileContent);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
     public byte[] readBytes() {
         try (FileContent fileContent = fileObject.getContent()) {
             try (Java9InputStream stream = new Java9InputStream(fileContent.getInputStream())) {
