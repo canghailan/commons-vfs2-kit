@@ -40,6 +40,7 @@ public class JsonVirtualFileSystemConfiguration {
                 Map.Entry<String, JsonNode> i = vfs.next();
                 virtualFileSystem.addJunction(i.getKey(), virtualFileSystem.resolveFile(i.getValue().textValue()));
             }
+
             return virtualFileSystem;
         } catch (FileSystemException e) {
             throw new IllegalStateException(e);

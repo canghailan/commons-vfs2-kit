@@ -14,6 +14,9 @@ public class VfsConfigurationManager implements FileBasedConfigurationManager {
 
     @Override
     public FileObject get(String key) {
+        if (key.startsWith("/") || key.endsWith("/")) {
+            throw new IllegalArgumentException();
+        }
         try {
             return fileObject.resolveFile(key);
         } catch (FileSystemException e) {

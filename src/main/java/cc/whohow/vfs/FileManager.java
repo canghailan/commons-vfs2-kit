@@ -2,6 +2,7 @@ package cc.whohow.vfs;
 
 import cc.whohow.vfs.operations.Copy;
 import cc.whohow.vfs.operations.Move;
+import cc.whohow.vfs.type.DataType;
 import org.apache.commons.vfs2.FileSystemException;
 
 import java.io.InputStream;
@@ -32,7 +33,7 @@ public class FileManager {
         return FileObjects.exists(resolve(path));
     }
 
-    public String getName(String path) {
+    public String getBaseName(String path) {
         return FileObjects.getBaseName(resolve(path));
     }
 
@@ -62,6 +63,14 @@ public class FileManager {
 
     public void writeUtf8(String path, String text) {
         write(path, StandardCharsets.UTF_8.encode(text));
+    }
+
+    public <T> T read(String path, DataType<T> type) {
+        return FileObjects.read(resolve(path), type);
+    }
+
+    public <T> void write(String path, DataType<T> type, T value) {
+        FileObjects.write(resolve(path), type, value);
     }
 
     public void delete(String path) {
