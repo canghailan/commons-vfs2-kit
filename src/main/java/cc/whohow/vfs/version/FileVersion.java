@@ -1,6 +1,6 @@
 package cc.whohow.vfs.version;
 
-import org.apache.commons.vfs2.FileObject;
+import cc.whohow.vfs.FileObject;
 
 public class FileVersion<V> {
     private final FileObject fileObject;

@@ -1,7 +1,6 @@
 package cc.whohow.vfs.version;
 
-import org.apache.commons.vfs2.FileContent;
-import org.apache.commons.vfs2.FileObject;
+import cc.whohow.vfs.FileObject;
 import org.apache.commons.vfs2.FileSystemException;
 
 import java.io.UncheckedIOException;
@@ -15,8 +14,8 @@ public class FileAttributeVersionProvider implements FileVersionProvider<Object>
 
     @Override
     public FileVersion<Object> getVersion(FileObject fileObject) {
-        try (FileContent fileContent = fileObject.getContent()) {
-            return new FileVersion<>(fileObject, fileContent.getAttribute(attribute));
+        try {
+            return new FileVersion<>(fileObject, fileObject.getAttribute(attribute));
         } catch (FileSystemException e) {
             throw new UncheckedIOException(e);
         }

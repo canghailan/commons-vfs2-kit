@@ -12,7 +12,7 @@ public class FileSelectors {
             return selector == Selectors.SELECT_SELF ||
                     selector == Selectors.SELECT_ALL ||
                     selector == Selectors.SELECT_SELF_AND_CHILDREN ||
-                    selector.includeFile(new ImmutableFileSelectInfo<>(file, file, 0));
+                    selector.includeFile(new ImmutableFileSelectInfo(file, file, 0));
         } catch (Exception e) {
             throw new UndeclaredThrowableException(e);
         }

@@ -25,13 +25,6 @@ public class PathParser {
     }
 
     /**
-     * 计算两个URI的相对路径
-     */
-    public static String relativize(URI ancestor, URI descendant) {
-        return ancestor.relativize(descendant).normalize().getPath();
-    }
-
-    /**
      * 是否是相对路径
      */
     public static boolean isRelative(URI uri) {

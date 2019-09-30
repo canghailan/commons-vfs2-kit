@@ -1,9 +1,9 @@
 package cc.whohow.vfs.synchronize;
 
+import cc.whohow.vfs.FileObject;
 import cc.whohow.vfs.version.FileVersionProvider;
 import org.apache.commons.vfs2.FileChangeEvent;
 import org.apache.commons.vfs2.FileListener;
-import org.apache.commons.vfs2.FileObject;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -34,7 +34,7 @@ public class FileWatchSynchronizer extends FileSynchronizer implements FileListe
     @Override
     public void fileCreated(FileChangeEvent event) {
         String key = sourceKey(event.getFile().getName());
-        create(key, event.getFile());
+        create(key, (FileObject) event.getFile());
     }
 
     @Override
@@ -46,7 +46,7 @@ public class FileWatchSynchronizer extends FileSynchronizer implements FileListe
     @Override
     public void fileChanged(FileChangeEvent event) {
         String key = sourceKey(event.getFile().getName());
-        change(key, event.getFile(), targetFile(key));
+        change(key, (FileObject) event.getFile(), targetFile(key));
     }
 
     @Override

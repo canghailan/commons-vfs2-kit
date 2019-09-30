@@ -1,9 +1,13 @@
 package cc.whohow.vfs.synchronize;
 
+import cc.whohow.vfs.FileObject;
 import cc.whohow.vfs.version.FileLastModifiedTimeVersionProvider;
 import cc.whohow.vfs.version.FileVersion;
 import cc.whohow.vfs.version.FileVersionProvider;
-import org.apache.commons.vfs2.*;
+import org.apache.commons.vfs2.FileName;
+import org.apache.commons.vfs2.FileNotFoundException;
+import org.apache.commons.vfs2.FileSystemException;
+import org.apache.commons.vfs2.Selectors;
 
 import java.io.UncheckedIOException;
 import java.util.Iterator;
@@ -114,7 +118,7 @@ public class FileSynchronizer implements Runnable, Callable<Map<String, String>>
 
     protected FileObject targetFile(String key) {
         try {
-            return target.resolveFile(key, NameScope.DESCENDENT);
+            return target.resolveFile(key);
         } catch (FileSystemException e) {
             throw new UncheckedIOException(e);
         }

@@ -1,5 +1,6 @@
 package cc.whohow.vfs.path;
 
+import java.net.URI;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -316,6 +317,10 @@ public class PathBuilder implements Iterable<CharSequence> {
         return names.get(index);
     }
 
+    public CharSequence getLastName() {
+        return names.getLast();
+    }
+
     public LinkedList<CharSequence> getNames() {
         return names;
     }
@@ -344,5 +349,19 @@ public class PathBuilder implements Iterable<CharSequence> {
         pathBuilder.endsWithSeparator = endsWithSeparator;
         pathBuilder.names = new LinkedList<>(names);
         return pathBuilder;
+    }
+
+    /**
+     * 计算两个URI的相对路径
+     */
+    public static String relativize(URI ancestor, URI descendant) {
+        return ancestor.relativize(descendant).normalize().getPath();
+    }
+
+    /**
+     * 计算两个URI的相对路径
+     */
+    public static String relativize(String ancestor, String descendant) {
+        return relativize(URI.create(ancestor), URI.create(descendant));
     }
 }

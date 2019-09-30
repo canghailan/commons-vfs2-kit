@@ -1,8 +1,12 @@
 package cc.whohow.vfs.watch;
 
+import cc.whohow.vfs.FileObject;
 import cc.whohow.vfs.version.FileLastModifiedTimeVersionProvider;
 import cc.whohow.vfs.version.FileVersionProvider;
-import org.apache.commons.vfs2.*;
+import org.apache.commons.vfs2.FileChangeEvent;
+import org.apache.commons.vfs2.FileListener;
+import org.apache.commons.vfs2.FileMonitor;
+import org.apache.commons.vfs2.FileName;
 
 import java.time.Duration;
 import java.util.Map;
@@ -33,7 +37,7 @@ public class FileWatchMonitor implements FileMonitor, FileListener {
 
     public synchronized void addListener(FileObject file, FileListener listener, FileVersionProvider<?> fileVersionProvider) {
         FileName fileName = file.getName();
-        ScheduledFutureTask futureTask = getTask(file);
+        ScheduledFutureTask futureTask = getTask(fileName);
         if (futureTask == null) {
             FileWatchTask task = new FileWatchTask(new FileWatcher(file, fileVersionProvider));
             ScheduledFuture<?> future = executor.scheduleWithFixedDelay(task, 0L, delay.toMillis(), TimeUnit.MILLISECONDS);
@@ -44,8 +48,7 @@ public class FileWatchMonitor implements FileMonitor, FileListener {
         task.addListener(FileWatchListener.create(task.getWatcher().getWatchable().getName(), fileName, listener));
     }
 
-    private ScheduledFutureTask getTask(FileObject fileObject) {
-        FileName fileName = fileObject.getName();
+    private ScheduledFutureTask getTask(FileName fileName) {
         ScheduledFutureTask futureTask = tasks.get(fileName);
         if (futureTask != null) {
             return futureTask;
@@ -58,8 +61,7 @@ public class FileWatchMonitor implements FileMonitor, FileListener {
         return null;
     }
 
-    public synchronized void removeListener(FileObject file, FileListener listener) {
-        FileName fileName = file.getName();
+    public synchronized void removeListener(FileName fileName, FileListener listener) {
         FileWatchListener fileWatchListener = FileWatchListener.create(fileName, listener);
         ScheduledFutureTask futureTask = tasks.get(fileName);
         if (futureTask != null) {
@@ -75,13 +77,13 @@ public class FileWatchMonitor implements FileMonitor, FileListener {
     }
 
     @Override
-    public void addFile(FileObject file) {
-        addListener(file, this);
+    public void addFile(org.apache.commons.vfs2.FileObject file) {
+        addListener((FileObject) file, this);
     }
 
     @Override
-    public void removeFile(FileObject file) {
-        removeListener(file, this);
+    public void removeFile(org.apache.commons.vfs2.FileObject file) {
+        removeListener(file.getName(), this);
     }
 
     @Override

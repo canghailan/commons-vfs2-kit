@@ -5,24 +5,30 @@ import org.apache.commons.vfs2.FileSelectInfo;
 
 import java.util.Objects;
 
-public class ImmutableFileSelectInfo<T extends FileObject> implements FileSelectInfo {
-    private final T baseFolder;
-    private final T file;
+public class ImmutableFileSelectInfo implements FileSelectInfo {
+    private final FileObject baseFolder;
+    private final FileObject file;
     private final int depth;
 
-    public ImmutableFileSelectInfo(T baseFolder, T file, int depth) {
+    public ImmutableFileSelectInfo(FileObject baseFolder, FileObject file, int depth) {
         this.baseFolder = baseFolder;
         this.file = file;
         this.depth = depth;
     }
 
+    public ImmutableFileSelectInfo(FileSelectInfo parent, FileObject file) {
+        this.baseFolder = parent.getBaseFolder();
+        this.file = file;
+        this.depth = parent.getDepth() + 1;
+    }
+
     @Override
-    public T getBaseFolder() {
+    public FileObject getBaseFolder() {
         return baseFolder;
     }
 
     @Override
-    public T getFile() {
+    public FileObject getFile() {
         return file;
     }
 
@@ -35,7 +41,7 @@ public class ImmutableFileSelectInfo<T extends FileObject> implements FileSelect
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof ImmutableFileSelectInfo)) return false;
-        ImmutableFileSelectInfo<?> that = (ImmutableFileSelectInfo<?>) o;
+        ImmutableFileSelectInfo that = (ImmutableFileSelectInfo) o;
         return depth == that.depth &&
                 Objects.equals(baseFolder, that.baseFolder) &&
                 Objects.equals(file, that.file);
