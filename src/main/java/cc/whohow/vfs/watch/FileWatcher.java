@@ -1,6 +1,6 @@
 package cc.whohow.vfs.watch;
 
-import cc.whohow.vfs.FileObject;
+import cc.whohow.vfs.CloudFileObject;
 import cc.whohow.vfs.version.FileLastModifiedTimeVersionProvider;
 import cc.whohow.vfs.version.FileVersion;
 import cc.whohow.vfs.version.FileVersionProvider;
@@ -20,20 +20,20 @@ import java.util.stream.Stream;
 
 public class FileWatcher implements Callable<Iterable<? extends AbstractFileChangeEvent>> {
     private final Lock lock = new ReentrantLock();
-    private final FileObject watchable;
+    private final CloudFileObject watchable;
     private final FileVersionProvider<?> fileVersionProvider;
     private volatile Map<FileName, FileVersion<?>> fileVersions;
 
-    public FileWatcher(FileObject watchable) {
+    public FileWatcher(CloudFileObject watchable) {
         this(watchable, new FileLastModifiedTimeVersionProvider());
     }
 
-    public FileWatcher(FileObject watchable, FileVersionProvider<?> fileVersionProvider) {
+    public FileWatcher(CloudFileObject watchable, FileVersionProvider<?> fileVersionProvider) {
         this.watchable = watchable;
         this.fileVersionProvider = fileVersionProvider;
     }
 
-    public FileObject getWatchable() {
+    public CloudFileObject getWatchable() {
         return watchable;
     }
 

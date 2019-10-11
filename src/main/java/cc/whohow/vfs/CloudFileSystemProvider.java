@@ -10,22 +10,20 @@ import org.apache.commons.vfs2.FileSystemOptions;
 import org.apache.commons.vfs2.provider.FileProvider;
 import org.apache.commons.vfs2.provider.VfsComponent;
 
-public interface FileSystemProvider extends FileProvider, VfsComponent {
-    FileObject getConfiguration();
-
+public interface CloudFileSystemProvider extends FileProvider, VfsComponent {
     String getScheme();
 
-    FileSystem getFileSystem(String uri) throws FileSystemException;
+    CloudFileSystem getFileSystem(String uri) throws FileSystemException;
 
-    FileSystem findFileSystem(String uri) throws FileSystemException;
+    CloudFileSystem findFileSystem(String uri) throws FileSystemException;
 
     FileName getFileName(String uri) throws FileSystemException;
 
-    default FileObject getFileObject(String uri) throws FileSystemException {
+    default CloudFileObject getFileObject(String uri) throws FileSystemException {
         return findFileSystem(uri).resolveFile(uri);
     }
 
-    FileOperations getFileOperations() throws FileSystemException;
+    CloudFileOperations getFileOperations() throws FileSystemException;
 
     default void copy(Copy.Options options) throws FileSystemException {
         getFileOperations().getOperation(Copy.class, options).call();
@@ -36,12 +34,12 @@ public interface FileSystemProvider extends FileProvider, VfsComponent {
     }
 
     @Override
-    default FileObject findFile(org.apache.commons.vfs2.FileObject baseFile, String uri, FileSystemOptions fileSystemOptions) throws FileSystemException {
+    default CloudFileObject findFile(org.apache.commons.vfs2.FileObject baseFile, String uri, FileSystemOptions fileSystemOptions) throws FileSystemException {
         return getFileObject(URIBuilder.resolve(baseFile.getName().getURI(), uri));
     }
 
     @Override
-    default FileObject createFileSystem(String scheme, org.apache.commons.vfs2.FileObject file, FileSystemOptions fileSystemOptions) throws FileSystemException {
+    default CloudFileObject createFileSystem(String scheme, org.apache.commons.vfs2.FileObject file, FileSystemOptions fileSystemOptions) throws FileSystemException {
         throw new FileSystemException("");
     }
 

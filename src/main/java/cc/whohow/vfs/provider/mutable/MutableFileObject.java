@@ -1,8 +1,12 @@
 package cc.whohow.vfs.provider.mutable;
 
-import cc.whohow.vfs.FileObject;
-import cc.whohow.vfs.FileObjectList;
-import cc.whohow.vfs.FileSystem;
+import cc.whohow.vfs.CloudFileObject;
+import cc.whohow.vfs.CloudFileObjectList;
+import cc.whohow.vfs.CloudFileSystem;
+import cc.whohow.vfs.io.ReadableChannel;
+import cc.whohow.vfs.io.ReadableChannelAdapter;
+import cc.whohow.vfs.io.WritableChannel;
+import cc.whohow.vfs.io.WritableChannelAdapter;
 import cc.whohow.vfs.tree.FileObjectListAdapter;
 import org.apache.commons.vfs2.FileName;
 import org.apache.commons.vfs2.FileSystemException;
@@ -12,16 +16,16 @@ import java.io.OutputStream;
 import java.util.Collections;
 import java.util.Map;
 
-public class MutableFileObject implements FileObject {
-    private FileSystem fileSystem;
+public class MutableFileObject implements CloudFileObject {
+    private CloudFileSystem fileSystem;
     private FileName name;
-    private FileObject parent;
-    private Map<String, FileObject> children = Collections.emptyMap();
+    private CloudFileObject parent;
+    private Map<String, CloudFileObject> children = Collections.emptyMap();
     private Map<String, Object> attributes = Collections.emptyMap();
-    private InputStream inputStream;
-    private OutputStream outputStream;
+    private ReadableChannel readableChannel;
+    private WritableChannel writableChannel;
 
-    public void setFileSystem(FileSystem fileSystem) {
+    public void setFileSystem(CloudFileSystem fileSystem) {
         this.fileSystem = fileSystem;
     }
 
@@ -29,11 +33,11 @@ public class MutableFileObject implements FileObject {
         this.name = name;
     }
 
-    public void setParent(FileObject parent) {
+    public void setParent(CloudFileObject parent) {
         this.parent = parent;
     }
 
-    public void setChildren(Map<String, FileObject> children) {
+    public void setChildren(Map<String, CloudFileObject> children) {
         this.children = children;
     }
 
@@ -42,11 +46,11 @@ public class MutableFileObject implements FileObject {
     }
 
     public void setInputStream(InputStream inputStream) {
-        this.inputStream = inputStream;
+        this.readableChannel = new ReadableChannelAdapter(inputStream);
     }
 
     public void setOutputStream(OutputStream outputStream) {
-        this.outputStream = outputStream;
+        this.writableChannel = new WritableChannelAdapter(outputStream);
     }
 
     @Override
@@ -65,16 +69,11 @@ public class MutableFileObject implements FileObject {
     }
 
     @Override
-    public InputStream getInputStream() throws FileSystemException {
-        return inputStream;
-    }
-
-    @Override
     public OutputStream getOutputStream(boolean bAppend) throws FileSystemException {
         if (bAppend) {
             throw new FileSystemException("vfs.provider/write-append-not-supported.error");
         }
-        return outputStream;
+        return writableChannel;
     }
 
     @Override
@@ -87,7 +86,7 @@ public class MutableFileObject implements FileObject {
     }
 
     @Override
-    public FileSystem getFileSystem() {
+    public CloudFileSystem getFileSystem() {
         return fileSystem;
     }
 
@@ -97,12 +96,12 @@ public class MutableFileObject implements FileObject {
     }
 
     @Override
-    public FileObject getParent() throws FileSystemException {
+    public CloudFileObject getParent() throws FileSystemException {
         return parent;
     }
 
     @Override
-    public FileObject getChild(String name) throws FileSystemException {
+    public CloudFileObject getChild(String name) throws FileSystemException {
         if (children == null) {
             return null;
         }
@@ -110,13 +109,18 @@ public class MutableFileObject implements FileObject {
     }
 
     @Override
-    public FileObject resolveFile(String path) throws FileSystemException {
-        return null;
+    public CloudFileObjectList list() throws FileSystemException {
+        return new FileObjectListAdapter(children.values());
     }
 
     @Override
-    public FileObjectList list() throws FileSystemException {
-        return new FileObjectListAdapter(children.values());
+    public ReadableChannel getReadableChannel() throws FileSystemException {
+        return readableChannel;
+    }
+
+    @Override
+    public WritableChannel getWritableChannel() throws FileSystemException {
+        return writableChannel;
     }
 
     @Override

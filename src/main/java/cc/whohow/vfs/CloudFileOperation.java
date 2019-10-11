@@ -5,8 +5,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.function.Function;
 
-public interface FileOperation<T, R> extends org.apache.commons.vfs2.operations.FileOperation, Function<T, R>, Runnable, Callable<R> {
-    FileOperation<T, R> with(T options);
+public interface CloudFileOperation<T, R> extends org.apache.commons.vfs2.operations.FileOperation, Function<T, R>, Runnable, Callable<R> {
+    CloudFileOperation<T, R> with(T options);
 
     T getOptions();
 

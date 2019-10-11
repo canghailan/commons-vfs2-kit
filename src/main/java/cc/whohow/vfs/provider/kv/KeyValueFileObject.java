@@ -1,15 +1,13 @@
 package cc.whohow.vfs.provider.kv;
 
-import cc.whohow.vfs.FileObject;
-import cc.whohow.vfs.FileObjectList;
-import cc.whohow.vfs.FileSystem;
-import cc.whohow.vfs.FileSystemProvider;
+import cc.whohow.vfs.*;
+import cc.whohow.vfs.io.ReadableChannel;
+import cc.whohow.vfs.io.WritableChannel;
 import cc.whohow.vfs.provider.uri.SimpleUriFileName;
 import cc.whohow.vfs.type.DataType;
 import org.apache.commons.logging.Log;
 import org.apache.commons.vfs2.FileName;
 import org.apache.commons.vfs2.FileSystemException;
-import org.apache.commons.vfs2.FileSystemManager;
 import org.apache.commons.vfs2.FileSystemOptions;
 import org.apache.commons.vfs2.provider.VfsComponentContext;
 
@@ -19,14 +17,14 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.NavigableMap;
 
-public class KeyValueFileObject<T> implements FileObject, FileSystem {
-    protected final FileSystemProvider fileSystemProvider;
+public class KeyValueFileObject<T> implements CloudFileObject, CloudFileSystem {
+    protected final CloudFileSystemProvider fileSystemProvider;
     protected final DataType<T> type;
     protected final NavigableMap<String, T> data;
     protected final String key;
 
     public KeyValueFileObject(
-            FileSystemProvider fileSystemProvider,
+            CloudFileSystemProvider fileSystemProvider,
             DataType<T> type,
             NavigableMap<String, T> data,
             String key) {
@@ -57,7 +55,7 @@ public class KeyValueFileObject<T> implements FileObject, FileSystem {
     }
 
     @Override
-    public FileSystem getFileSystem() {
+    public CloudFileSystem getFileSystem() {
         return null;
     }
 
@@ -67,7 +65,17 @@ public class KeyValueFileObject<T> implements FileObject, FileSystem {
     }
 
     @Override
-    public FileObjectList list() throws FileSystemException {
+    public CloudFileObjectList list() throws FileSystemException {
+        return null;
+    }
+
+    @Override
+    public ReadableChannel getReadableChannel() throws FileSystemException {
+        return null;
+    }
+
+    @Override
+    public WritableChannel getWritableChannel() throws FileSystemException {
         return null;
     }
 
@@ -115,12 +123,17 @@ public class KeyValueFileObject<T> implements FileObject, FileSystem {
     }
 
     @Override
-    public FileSystemProvider getFileSystemProvider() {
+    public CloudFileSystemProvider getFileSystemProvider() {
         return null;
     }
 
     @Override
-    public FileObject resolve(CharSequence name) throws FileSystemException {
+    public VirtualFileSystem getFileSystemManager() {
+        return null;
+    }
+
+    @Override
+    public CloudFileObject resolve(CharSequence name) throws FileSystemException {
         return null;
     }
 
@@ -130,27 +143,17 @@ public class KeyValueFileObject<T> implements FileObject, FileSystem {
     }
 
     @Override
-    public FileSystemOptions getFileSystemOptions() {
-        return null;
-    }
-
-    @Override
-    public FileSystemManager getFileSystemManager() {
-        return null;
-    }
-
-    @Override
     public void setAttribute(String attrName, Object value) throws FileSystemException {
 
     }
 
     @Override
-    public FileObject resolveFile(FileName name) throws FileSystemException {
+    public CloudFileObject resolveFile(FileName name) throws FileSystemException {
         return null;
     }
 
     @Override
-    public FileObject resolveFile(String path) throws FileSystemException {
+    public CloudFileObject resolveFile(String path) throws FileSystemException {
         return null;
     }
 

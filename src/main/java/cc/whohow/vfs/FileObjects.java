@@ -1,8 +1,11 @@
 package cc.whohow.vfs;
 
+import cc.whohow.vfs.io.ReadableChannel;
+import cc.whohow.vfs.io.WritableChannel;
 import cc.whohow.vfs.type.DataType;
 import org.apache.commons.vfs2.FileNotFoundException;
 import org.apache.commons.vfs2.FileSystemException;
+import org.apache.commons.vfs2.operations.FileOperation;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -13,15 +16,15 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
 public class FileObjects {
-    public static String getBaseName(FileObject fileObject) {
+    public static String getBaseName(org.apache.commons.vfs2.FileObject fileObject) {
         return fileObject.getName().getBaseName();
     }
 
-    public static String getPublicURIString(FileObject fileObject) {
+    public static String getPublicURIString(org.apache.commons.vfs2.FileObject fileObject) {
         return fileObject.getPublicURIString();
     }
 
-    public static boolean exists(FileObject fileObject) {
+    public static boolean exists(org.apache.commons.vfs2.FileObject fileObject) {
         try {
             return fileObject.exists();
         } catch (FileNotFoundException e) {
@@ -31,7 +34,7 @@ public class FileObjects {
         }
     }
 
-    public static boolean isFile(FileObject fileObject) {
+    public static boolean isFile(org.apache.commons.vfs2.FileObject fileObject) {
         try {
             return fileObject.isFile();
         } catch (FileSystemException e) {
@@ -39,7 +42,7 @@ public class FileObjects {
         }
     }
 
-    public static boolean isFolder(FileObject fileObject) {
+    public static boolean isFolder(org.apache.commons.vfs2.FileObject fileObject) {
         try {
             return fileObject.isFolder();
         } catch (FileSystemException e) {
@@ -47,10 +50,10 @@ public class FileObjects {
         }
     }
 
-    public static long getSize(FileObject fileObject) {
+    public static long getSize(CloudFileObject fileObject) {
         try {
             if (fileObject.isFolder()) {
-                try (FileObjectList list = fileObject.listRecursively()) {
+                try (CloudFileObjectList list = fileObject.listRecursively()) {
                     return list.stream()
                             .filter(FileObjects::isFile)
                             .mapToLong(FileObjects::getFileSize)
@@ -64,7 +67,7 @@ public class FileObjects {
         }
     }
 
-    private static long getFileSize(FileObject fileObject) {
+    private static long getFileSize(CloudFileObject fileObject) {
         try {
             return fileObject.getSize();
         } catch (FileSystemException e) {
@@ -72,7 +75,7 @@ public class FileObjects {
         }
     }
 
-    public static long getLastModifiedTime(FileObject fileObject) {
+    public static long getLastModifiedTime(CloudFileObject fileObject) {
         try {
             return fileObject.getLastModifiedTime();
         } catch (FileSystemException e) {
@@ -80,7 +83,7 @@ public class FileObjects {
         }
     }
 
-    public static FileObjectList list(FileObject fileObject) {
+    public static CloudFileObjectList list(CloudFileObject fileObject) {
         try {
             return fileObject.list();
         } catch (FileSystemException e) {
@@ -88,7 +91,7 @@ public class FileObjects {
         }
     }
 
-    public static FileObjectList listRecursively(FileObject fileObject) {
+    public static CloudFileObjectList listRecursively(CloudFileObject fileObject) {
         try {
             return fileObject.listRecursively();
         } catch (FileSystemException e) {
@@ -96,7 +99,7 @@ public class FileObjects {
         }
     }
 
-    public static InputStream getInputStream(FileObject fileObject) {
+    public static InputStream getInputStream(CloudFileObject fileObject) {
         try {
             return fileObject.getInputStream();
         } catch (FileSystemException e) {
@@ -104,7 +107,7 @@ public class FileObjects {
         }
     }
 
-    public static OutputStream getOutputStream(FileObject fileObject) {
+    public static OutputStream getOutputStream(CloudFileObject fileObject) {
         try {
             return fileObject.getOutputStream();
         } catch (FileSystemException e) {
@@ -112,57 +115,58 @@ public class FileObjects {
         }
     }
 
-    public static ByteBuffer read(FileObject fileObject) {
-        try {
-            return fileObject.read();
+    public static ByteBuffer read(CloudFileObject fileObject) {
+        try (ReadableChannel channel = fileObject.getReadableChannel()) {
+            return channel.readAll();
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
     }
 
-    public static void write(FileObject fileObject, ByteBuffer buffer) {
-        try {
-            fileObject.write(buffer);
+    public static void write(CloudFileObject fileObject, ByteBuffer buffer) {
+        try (WritableChannel channel = fileObject.getWritableChannel()) {
+            channel.writeAll(buffer);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
     }
 
-    public static String read(FileObject fileObject, Charset charset) {
+    public static String read(CloudFileObject fileObject, Charset charset) {
         return charset.decode(read(fileObject)).toString();
     }
 
-    public static void write(FileObject fileObject, Charset charset, String text) {
+    public static void write(CloudFileObject fileObject, Charset charset, String text) {
         write(fileObject, charset.encode(text));
     }
 
-    public static String readUtf8(FileObject fileObject) {
+    public static String readUtf8(CloudFileObject fileObject) {
         return read(fileObject, StandardCharsets.UTF_8);
     }
 
-    public static void writeUtf8(FileObject fileObject, String text) {
+    public static void writeUtf8(CloudFileObject fileObject, String text) {
         write(fileObject, StandardCharsets.UTF_8, text);
     }
 
-    public static <T> T read(FileObject fileObject, DataType<T> type) {
-        try (InputStream stream = fileObject.getInputStream()) {
-            return type.deserialize(stream);
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
+    public static <T> T read(CloudFileObject fileObject, DataType<T> type) {
+        return new FileValue<>(fileObject, type).get();
     }
 
-    public static <T> void write(FileObject fileObject, DataType<T> type, T value) {
-        try (OutputStream stream = fileObject.getOutputStream()) {
-            type.serialize(stream, value);
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
+    public static <T> void write(CloudFileObject fileObject, DataType<T> type, T value) {
+        new FileValue<>(fileObject, type).accept(value);
     }
 
-    public static void delete(FileObject fileObject) {
+    public static void delete(CloudFileObject fileObject) {
         try {
             fileObject.delete();
+        } catch (FileSystemException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    public static  <T extends FileOperation> T getOperation(org.apache.commons.vfs2.FileObject fileObject, Class<T> fileOperation) {
+        try {
+            return (T) fileObject.getFileOperations().getOperation(fileOperation);
         } catch (FileSystemException e) {
             throw new UncheckedIOException(e);
         }

@@ -81,16 +81,16 @@ public class ByteBufferReadableChannel extends ReadableChannel {
     public ByteBuffer readAll() throws IOException {
         return byteBuffer;
     }
-
-    @Override
-    public long transferTo(WritableChannel channel) throws IOException {
-        return channel.write(byteBuffer);
-    }
-
-    @Override
-    public long transferTo(WritableChannel channel, int bufferSize) throws IOException {
-        return channel.write(byteBuffer);
-    }
+//
+//    @Override
+//    public long transferTo(WritableChannel channel) throws IOException {
+//        return channel.write(byteBuffer);
+//    }
+//
+//    @Override
+//    public long transferTo(WritableChannel channel, int bufferSize) throws IOException {
+//        return channel.write(byteBuffer);
+//    }
 
     @Override
     public boolean isOpen() {

@@ -1,4 +1,8 @@
 package cc.whohow.vfs.operations;
 
-public interface ListRecursively {
+import cc.whohow.vfs.CloudFileObject;
+import cc.whohow.vfs.CloudFileObjectList;
+import cc.whohow.vfs.CloudFileOperation;
+
+public interface ListRecursively extends CloudFileOperation<CloudFileObject, CloudFileObjectList> {
 }

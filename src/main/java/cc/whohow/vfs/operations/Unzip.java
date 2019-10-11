@@ -1,6 +1,6 @@
 package cc.whohow.vfs.operations;
 
-import cc.whohow.vfs.FileObject;
+import cc.whohow.vfs.CloudFileObject;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -8,9 +8,9 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.zip.ZipInputStream;
 
-public class Unzip extends AbstractFileOperation<Unzip.Options, FileObject> {
+public class Unzip extends AbstractFileOperation<Unzip.Options, CloudFileObject> {
     @Override
-    public FileObject apply(Options options) {
+    public CloudFileObject apply(Options options) {
         try (ZipInputStream stream = new ZipInputStream(options.getFile().getInputStream())) {
             return options.getDirectory();
         } catch (IOException e) {
@@ -19,25 +19,25 @@ public class Unzip extends AbstractFileOperation<Unzip.Options, FileObject> {
     }
 
     public static class Options {
-        private final FileObject file;
-        private final FileObject directory;
+        private final CloudFileObject file;
+        private final CloudFileObject directory;
         private final Map<String, Object> options;
 
-        public Options(FileObject file, FileObject directory) {
+        public Options(CloudFileObject file, CloudFileObject directory) {
             this(file, directory, Collections.emptyMap());
         }
 
-        public Options(FileObject file, FileObject directory, Map<String, Object> options) {
+        public Options(CloudFileObject file, CloudFileObject directory, Map<String, Object> options) {
             this.file = file;
             this.directory = directory;
             this.options = options;
         }
 
-        public FileObject getFile() {
+        public CloudFileObject getFile() {
             return file;
         }
 
-        public FileObject getDirectory() {
+        public CloudFileObject getDirectory() {
             return directory;
         }
 

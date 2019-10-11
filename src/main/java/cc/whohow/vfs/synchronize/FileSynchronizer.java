@@ -1,6 +1,6 @@
 package cc.whohow.vfs.synchronize;
 
-import cc.whohow.vfs.FileObject;
+import cc.whohow.vfs.CloudFileObject;
 import cc.whohow.vfs.version.FileLastModifiedTimeVersionProvider;
 import cc.whohow.vfs.version.FileVersion;
 import cc.whohow.vfs.version.FileVersionProvider;
@@ -19,26 +19,26 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class FileSynchronizer implements Runnable, Callable<Map<String, String>> {
-    protected final FileObject source;
-    protected final FileObject target;
+    protected final CloudFileObject source;
+    protected final CloudFileObject target;
     protected final FileVersionProvider<?> sourceVersionProvider;
     protected final FileVersionProvider<?> targetVersionProvider;
     protected final FileName sourceFileName;
     protected final FileName targetFileName;
 
-    public FileSynchronizer(FileObject source,
-                            FileObject target) {
+    public FileSynchronizer(CloudFileObject source,
+                            CloudFileObject target) {
         this(source, target, new FileLastModifiedTimeVersionProvider());
     }
 
-    public FileSynchronizer(FileObject source,
-                            FileObject target,
+    public FileSynchronizer(CloudFileObject source,
+                            CloudFileObject target,
                             FileVersionProvider<?> fileVersionProvider) {
         this(source, target, fileVersionProvider, fileVersionProvider);
     }
 
-    public FileSynchronizer(FileObject source,
-                            FileObject target,
+    public FileSynchronizer(CloudFileObject source,
+                            CloudFileObject target,
                             FileVersionProvider<?> sourceVersionProvider,
                             FileVersionProvider<?> targetVersionProvider) {
         this.source = source;
@@ -116,7 +116,7 @@ public class FileSynchronizer implements Runnable, Callable<Map<String, String>>
         }
     }
 
-    protected FileObject targetFile(String key) {
+    protected CloudFileObject targetFile(String key) {
         try {
             return target.resolveFile(key);
         } catch (FileSystemException e) {
@@ -124,7 +124,7 @@ public class FileSynchronizer implements Runnable, Callable<Map<String, String>>
         }
     }
 
-    protected void create(String key, FileObject source) {
+    protected void create(String key, CloudFileObject source) {
         try {
             targetFile(key).copyFrom(source, Selectors.SELECT_SELF);
             log("+", key);
@@ -133,7 +133,7 @@ public class FileSynchronizer implements Runnable, Callable<Map<String, String>>
         }
     }
 
-    protected void delete(String key, FileObject target) {
+    protected void delete(String key, CloudFileObject target) {
         try {
             target.deleteAll();
             log("-", key);
@@ -143,7 +143,7 @@ public class FileSynchronizer implements Runnable, Callable<Map<String, String>>
         }
     }
 
-    protected void change(String key, FileObject source, FileObject target) {
+    protected void change(String key, CloudFileObject source, CloudFileObject target) {
         try {
             target.copyFrom(source, Selectors.SELECT_SELF);
             log("*", key);

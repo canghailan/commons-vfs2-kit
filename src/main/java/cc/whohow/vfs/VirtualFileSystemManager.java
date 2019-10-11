@@ -12,7 +12,6 @@ import org.apache.commons.vfs2.provider.FileReplicator;
 import org.apache.commons.vfs2.provider.TemporaryFileStore;
 import org.apache.commons.vfs2.provider.VfsComponentContext;
 
-import java.io.UncheckedIOException;
 import java.net.URLStreamHandlerFactory;
 import java.util.*;
 import java.util.concurrent.ConcurrentSkipListMap;
@@ -20,8 +19,8 @@ import java.util.concurrent.ConcurrentSkipListMap;
 public class VirtualFileSystemManager implements VirtualFileSystem {
     private NavigableMap<String, String> conf = new ConcurrentSkipListMap<>();
     private NavigableMap<String, String> data = new ConcurrentSkipListMap<>();
-    private NavigableMap<String, FileObject> vfs = new ConcurrentSkipListMap<>(Comparator.reverseOrder());
-    private NavigableMap<String, FileSystemProvider> providers = new ConcurrentSkipListMap<>();
+    private NavigableMap<String, CloudFileObject> vfs = new ConcurrentSkipListMap<>(Comparator.reverseOrder());
+    private NavigableMap<String, CloudFileSystemProvider> providers = new ConcurrentSkipListMap<>();
 
     public VirtualFileSystemManager() {
         vfs.put("/", this);
@@ -29,6 +28,7 @@ public class VirtualFileSystemManager implements VirtualFileSystem {
         vfs.put("vfm:/", new KeyValueFileObject<>(this, TextType.utf8(), data, "/"));
         vfs.put("conf:/", new KeyValueFileObject<>(this, TextType.utf8(), conf, "/"));
         providers.put("vfs", this);
+        providers.put("vfm", this);
         providers.put("conf", this);
     }
 
@@ -52,31 +52,22 @@ public class VirtualFileSystemManager implements VirtualFileSystem {
     }
 
     @Override
-    public FileObjectList list() throws FileSystemException {
+    public CloudFileObjectList list() throws FileSystemException {
         return new FileObjectListAdapter(vfs.values());
     }
 
     @Override
-    public FileObject resolve(CharSequence name) throws FileSystemException {
+    public CloudFileObject resolve(CharSequence name) throws FileSystemException {
         return null;
     }
 
     @Override
-    public FileObject getConfiguration() {
-        try {
-            return resolve("conf:/");
-        } catch (FileSystemException e) {
-            throw new UncheckedIOException(e);
-        }
-    }
-
-    @Override
-    public FileSystem getFileSystem(String uri) throws FileSystemException {
+    public CloudFileSystem getFileSystem(String uri) throws FileSystemException {
         return null;
     }
 
     @Override
-    public FileOperations getFileOperations() throws FileSystemException {
+    public CloudFileOperations getFileOperations() throws FileSystemException {
         return null;
     }
 

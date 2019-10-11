@@ -62,7 +62,36 @@ public class IO {
         }
     }
 
-    public static long write(OutputStream stream, ByteBuffer buffer) throws IOException {
+    public static int read(InputStream input, ByteBuffer buffer) throws IOException {
+        if (!buffer.hasRemaining()) {
+            return 0;
+        }
+        if (buffer.hasArray()) {
+            int n = input.read(buffer.array(), buffer.arrayOffset() + buffer.position(), buffer.remaining());
+            if (n > 0) {
+                buffer.position(buffer.position() + n);
+            }
+            return n;
+        } else {
+            int n = buffer.remaining();
+            while (buffer.hasRemaining()) {
+                int b = input.read();
+                if (b < 0) {
+                    if (buffer.remaining() == n) {
+                        return b;
+                    }
+                    break;
+                }
+                buffer.put((byte) b);
+            }
+            return n - buffer.remaining();
+        }
+    }
+
+    public static int write(OutputStream stream, ByteBuffer buffer) throws IOException {
+        if (!buffer.hasRemaining()) {
+            return 0;
+        }
         int n = buffer.remaining();
         if (buffer.hasArray()) {
             stream.write(buffer.array(), buffer.arrayOffset() + buffer.position(), buffer.remaining());

@@ -1,9 +1,10 @@
 package cc.whohow.vfs;
 
+import cc.whohow.vfs.io.ReadableChannel;
+import cc.whohow.vfs.io.WritableChannel;
 import cc.whohow.vfs.path.URIBuilder;
 import org.apache.commons.vfs2.FileName;
 import org.apache.commons.vfs2.FileSystemException;
-import org.apache.commons.vfs2.FileSystemManager;
 import org.apache.commons.vfs2.FileSystemOptions;
 import org.apache.commons.vfs2.provider.VfsComponentContext;
 
@@ -16,12 +17,12 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
 
-public interface VirtualFileSystem extends FileSystemManagerImpl, FileSystemProvider, FileSystem, FileObject, VfsComponentContext {
+public interface VirtualFileSystem extends CloudFileSystemProvider, CloudFileSystem, CloudFileObject, FileSystemManagerImpl, VfsComponentContext {
     @Override
-    FileOperations getFileOperations() throws FileSystemException;
+    CloudFileOperations getFileOperations() throws FileSystemException;
 
     @Override
-    default FileSystem getFileSystem() {
+    default CloudFileSystem getFileSystem() {
         return this;
     }
 
@@ -31,7 +32,7 @@ public interface VirtualFileSystem extends FileSystemManagerImpl, FileSystemProv
     }
 
     @Override
-    default FileObject getParent() throws FileSystemException {
+    default CloudFileObject getParent() throws FileSystemException {
         return null;
     }
 
@@ -56,7 +57,7 @@ public interface VirtualFileSystem extends FileSystemManagerImpl, FileSystemProv
     }
 
     @Override
-    default FileObject getRoot() throws FileSystemException {
+    default CloudFileObject getRoot() throws FileSystemException {
         return this;
     }
 
@@ -71,22 +72,32 @@ public interface VirtualFileSystem extends FileSystemManagerImpl, FileSystemProv
     }
 
     @Override
+    default ReadableChannel getReadableChannel() throws FileSystemException {
+        throw new FileSystemException("");
+    }
+
+    @Override
+    default WritableChannel getWritableChannel() throws FileSystemException {
+        throw new FileSystemException("");
+    }
+
+    @Override
     default FileName getRootName() {
         return getName();
     }
 
     @Override
-    default FileSystemManager getFileSystemManager() {
+    default VirtualFileSystem getFileSystemManager() {
         return this;
     }
 
     @Override
-    default FileObject getBaseFile() throws FileSystemException {
+    default CloudFileObject getBaseFile() throws FileSystemException {
         return this;
     }
 
     @Override
-    default FileObject resolveFile(String path) throws FileSystemException {
+    default CloudFileObject resolveFile(String path) throws FileSystemException {
         return resolve(path);
     }
 
@@ -101,7 +112,7 @@ public interface VirtualFileSystem extends FileSystemManagerImpl, FileSystemProv
     }
 
     @Override
-    default FileSystemProvider getFileSystemProvider() {
+    default CloudFileSystemProvider getFileSystemProvider() {
         return this;
     }
 
@@ -112,9 +123,9 @@ public interface VirtualFileSystem extends FileSystemManagerImpl, FileSystemProv
 
     @Override
     default Map<String, Object> getAttributes() throws FileSystemException {
-        try (FileObjectList list = getConfiguration().listRecursively()) {
+        try (CloudFileObjectList list = resolveFile("conf:/").listRecursively()) {
             Map<String, Object> attributes = new TreeMap<>();
-            for (FileObject fileObject : list) {
+            for (CloudFileObject fileObject : list) {
                 attributes.put(fileObject.getName().getPathDecoded(), FileObjects.readUtf8(fileObject));
             }
             return attributes;
@@ -124,22 +135,7 @@ public interface VirtualFileSystem extends FileSystemManagerImpl, FileSystemProv
     @Override
     default void setAttribute(String attrName, Object value) {
         try {
-            FileObjects.writeUtf8(getConfiguration().resolveFile(attrName), Objects.toString(value, null));
-        } catch (FileSystemException e) {
-            throw new UncheckedIOException(e);
-        }
-    }
-
-    @Override
-    default FileSystemOptions getFileSystemOptions() {
-        try (FileObjectList list = getConfiguration().listRecursively()) {
-            VirtualFileSystemConfigBuilder fileSystemConfigBuilder = getFileSystemConfigBuilder("conf");
-            FileSystemOptions fileSystemOptions = new FileSystemOptions();
-            for (FileObject fileObject : list) {
-                fileSystemConfigBuilder.setParam(fileSystemOptions,
-                        fileObject.getName().getPathDecoded(), FileObjects.readUtf8(fileObject));
-            }
-            return fileSystemOptions;
+            FileObjects.writeUtf8(resolveFile("conf:/").resolveFile(attrName), Objects.toString(value, null));
         } catch (FileSystemException e) {
             throw new UncheckedIOException(e);
         }
@@ -157,7 +153,7 @@ public interface VirtualFileSystem extends FileSystemManagerImpl, FileSystemProv
 
     @Override
     default String[] getSchemes() {
-        try (FileObjectList list = getConfiguration().getChild("providers").list()) {
+        try (CloudFileObjectList list = resolveFile("conf:/").getChild("providers").list()) {
             return list.stream().map(FileObjects::getBaseName).toArray(String[]::new);
         } catch (FileSystemException e) {
             return new String[0];
@@ -165,7 +161,7 @@ public interface VirtualFileSystem extends FileSystemManagerImpl, FileSystemProv
     }
 
     @Override
-    default FileSystem findFileSystem(String uri) throws FileSystemException {
+    default CloudFileSystem findFileSystem(String uri) throws FileSystemException {
         return resolve(uri).getFileSystem();
     }
 
@@ -175,17 +171,17 @@ public interface VirtualFileSystem extends FileSystemManagerImpl, FileSystemProv
     }
 
     @Override
-    default FileObject toFileObject(File file) throws FileSystemException {
+    default CloudFileObject toFileObject(File file) throws FileSystemException {
         throw new FileSystemException("");
     }
 
     @Override
-    default FileObject resolveFile(String name, FileSystemOptions fileSystemOptions) throws FileSystemException {
+    default CloudFileObject resolveFile(String name, FileSystemOptions fileSystemOptions) throws FileSystemException {
         return resolveFile(getBaseFile(), name, fileSystemOptions);
     }
 
     @Override
-    default FileObject resolveFile(org.apache.commons.vfs2.FileObject baseFile, String name, FileSystemOptions fileSystemOptions) throws FileSystemException {
+    default CloudFileObject resolveFile(org.apache.commons.vfs2.FileObject baseFile, String name, FileSystemOptions fileSystemOptions) throws FileSystemException {
         return resolveFile(URIBuilder.resolve(baseFile.getName().getURI(), name));
     }
 

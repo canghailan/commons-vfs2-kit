@@ -1,6 +1,6 @@
 package cc.whohow.vfs.watch;
 
-import cc.whohow.vfs.FileObject;
+import cc.whohow.vfs.CloudFileObject;
 import cc.whohow.vfs.version.FileLastModifiedTimeVersionProvider;
 import cc.whohow.vfs.version.FileVersionProvider;
 import org.apache.commons.vfs2.FileChangeEvent;
@@ -31,11 +31,11 @@ public class FileWatchMonitor implements FileMonitor, FileListener {
         this.delay = delay;
     }
 
-    public void addListener(FileObject file, FileListener listener) {
+    public void addListener(CloudFileObject file, FileListener listener) {
         addListener(file, listener, new FileLastModifiedTimeVersionProvider());
     }
 
-    public synchronized void addListener(FileObject file, FileListener listener, FileVersionProvider<?> fileVersionProvider) {
+    public synchronized void addListener(CloudFileObject file, FileListener listener, FileVersionProvider<?> fileVersionProvider) {
         FileName fileName = file.getName();
         ScheduledFutureTask futureTask = getTask(fileName);
         if (futureTask == null) {
@@ -78,7 +78,7 @@ public class FileWatchMonitor implements FileMonitor, FileListener {
 
     @Override
     public void addFile(org.apache.commons.vfs2.FileObject file) {
-        addListener((FileObject) file, this);
+        addListener((CloudFileObject) file, this);
     }
 
     @Override

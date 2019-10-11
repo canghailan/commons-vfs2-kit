@@ -1,12 +1,13 @@
 package cc.whohow.vfs.type;
 
 import cc.whohow.vfs.io.IO;
+import cc.whohow.vfs.io.ReadableChannel;
+import cc.whohow.vfs.io.WritableChannel;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
-import java.nio.channels.WritableByteChannel;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
@@ -40,11 +41,16 @@ public class TextType implements DataType<String> {
 
     @Override
     public void serialize(OutputStream stream, String value) throws IOException {
-        IO.write(stream, charset.encode(value));
+        IO.write(stream, serialize(value));
     }
 
     @Override
-    public void serialize(WritableByteChannel channel, String value) throws IOException {
-        channel.write(serialize(value));
+    public String deserialize(ReadableChannel channel) throws IOException {
+        return deserialize(channel.readAll());
+    }
+
+    @Override
+    public void serialize(WritableChannel channel, String value) throws IOException {
+        channel.writeAll(serialize(value));
     }
 }

@@ -1,12 +1,12 @@
 package cc.whohow.vfs.operations;
 
-import cc.whohow.vfs.FileOperation;
+import cc.whohow.vfs.CloudFileOperation;
 
-public abstract class AbstractFileOperation<T, R> implements FileOperation<T, R> {
+public abstract class AbstractFileOperation<T, R> implements CloudFileOperation<T, R> {
     protected T options;
 
     @Override
-    public FileOperation<T, R> with(T options) {
+    public CloudFileOperation<T, R> with(T options) {
         this.options = options;
         return this;
     }

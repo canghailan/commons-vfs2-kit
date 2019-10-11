@@ -1,19 +1,19 @@
 package cc.whohow.vfs.tree;
 
-import cc.whohow.vfs.FileObject;
-import cc.whohow.vfs.FileObjectList;
+import cc.whohow.vfs.CloudFileObject;
+import cc.whohow.vfs.CloudFileObjectList;
 
 import java.util.Iterator;
 
-public class FileObjectTree implements FileObjectList {
-    private FileObject fileObject;
+public class FileObjectTree implements CloudFileObjectList {
+    private CloudFileObject fileObject;
 
-    public FileObjectTree(FileObject fileObject) {
+    public FileObjectTree(CloudFileObject fileObject) {
         this.fileObject = fileObject;
     }
 
     @Override
-    public Iterator<FileObject> iterator() {
+    public Iterator<CloudFileObject> iterator() {
         return new FileObjectTreeIterator(fileObject);
     }
 

@@ -1,7 +1,6 @@
 package cc.whohow.vfs.type;
 
-import cc.whohow.vfs.io.ByteBufferReadableChannel;
-import cc.whohow.vfs.io.ByteBufferWritableChannel;
+import cc.whohow.vfs.io.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -17,20 +16,20 @@ public interface DataType<T> {
     void serialize(OutputStream stream, T value) throws IOException;
 
     default T deserialize(ByteBuffer buffer) throws IOException {
-        return deserialize((InputStream) new ByteBufferReadableChannel(buffer));
+        return deserialize(new ByteBufferReadableChannel(buffer));
     }
 
     default ByteBuffer serialize(T value) throws IOException {
         ByteBufferWritableChannel buffer = new ByteBufferWritableChannel();
-        serialize((OutputStream) buffer, value);
+        serialize(buffer, value);
         return buffer.getByteBuffer();
     }
 
-    default T deserialize(ReadableByteChannel channel) throws IOException {
-        return deserialize(Channels.newInputStream(channel));
+    default T deserialize(ReadableChannel channel) throws IOException {
+        return deserialize((InputStream) channel);
     }
 
-    default void serialize(WritableByteChannel channel, T value) throws IOException {
-        serialize(Channels.newOutputStream(channel), value);
+    default void serialize(WritableChannel channel, T value) throws IOException {
+        serialize((OutputStream) channel, value);
     }
 }

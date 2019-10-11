@@ -1,12 +1,13 @@
 package cc.whohow.vfs.type;
 
 import cc.whohow.vfs.io.IO;
+import cc.whohow.vfs.io.ReadableChannel;
+import cc.whohow.vfs.io.WritableChannel;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
-import java.nio.channels.WritableByteChannel;
 
 public class BinaryType implements DataType<ByteBuffer> {
     private static final BinaryType INSTANCE = new BinaryType();
@@ -39,7 +40,12 @@ public class BinaryType implements DataType<ByteBuffer> {
     }
 
     @Override
-    public void serialize(WritableByteChannel channel, ByteBuffer value) throws IOException {
-        channel.write(value);
+    public ByteBuffer deserialize(ReadableChannel channel) throws IOException {
+        return channel.readAll();
+    }
+
+    @Override
+    public void serialize(WritableChannel channel, ByteBuffer value) throws IOException {
+        channel.writeAll(value);
     }
 }

@@ -1,19 +1,19 @@
 package cc.whohow.configuration;
 
-import cc.whohow.vfs.FileObject;
+import cc.whohow.vfs.CloudFileObject;
 import org.apache.commons.vfs2.FileSystemException;
 
 import java.io.UncheckedIOException;
 
 public class VfsConfigurationManager implements FileBasedConfigurationManager {
-    protected final FileObject fileObject;
+    protected final CloudFileObject fileObject;
 
-    public VfsConfigurationManager(FileObject fileObject) {
+    public VfsConfigurationManager(CloudFileObject fileObject) {
         this.fileObject = fileObject;
     }
 
     @Override
-    public FileObject get(String key) {
+    public CloudFileObject get(String key) {
         if (key.startsWith("/") || key.endsWith("/")) {
             throw new IllegalArgumentException();
         }

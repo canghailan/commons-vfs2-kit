@@ -1,6 +1,6 @@
 package cc.whohow.vfs.synchronize;
 
-import cc.whohow.vfs.FileObject;
+import cc.whohow.vfs.CloudFileObject;
 import cc.whohow.vfs.version.FileVersionProvider;
 import org.apache.commons.vfs2.FileChangeEvent;
 import org.apache.commons.vfs2.FileListener;
@@ -9,18 +9,18 @@ import java.io.Closeable;
 import java.io.IOException;
 
 public class FileWatchSynchronizer extends FileSynchronizer implements FileListener, Closeable {
-    public FileWatchSynchronizer(FileObject source, FileObject target) {
+    public FileWatchSynchronizer(CloudFileObject source, CloudFileObject target) {
         super(source, target);
         initialize();
     }
 
-    public FileWatchSynchronizer(FileObject source, FileObject target, FileVersionProvider<?> fileVersionProvider) {
+    public FileWatchSynchronizer(CloudFileObject source, CloudFileObject target, FileVersionProvider<?> fileVersionProvider) {
         super(source, target, fileVersionProvider);
         initialize();
     }
 
-    public FileWatchSynchronizer(FileObject source,
-                                 FileObject target,
+    public FileWatchSynchronizer(CloudFileObject source,
+                                 CloudFileObject target,
                                  FileVersionProvider<?> sourceVersionProvider,
                                  FileVersionProvider<?> targetVersionProvider) {
         super(source, target, sourceVersionProvider, targetVersionProvider);
@@ -34,7 +34,7 @@ public class FileWatchSynchronizer extends FileSynchronizer implements FileListe
     @Override
     public void fileCreated(FileChangeEvent event) {
         String key = sourceKey(event.getFile().getName());
-        create(key, (FileObject) event.getFile());
+        create(key, (CloudFileObject) event.getFile());
     }
 
     @Override
@@ -46,7 +46,7 @@ public class FileWatchSynchronizer extends FileSynchronizer implements FileListe
     @Override
     public void fileChanged(FileChangeEvent event) {
         String key = sourceKey(event.getFile().getName());
-        change(key, (FileObject) event.getFile(), targetFile(key));
+        change(key, (CloudFileObject) event.getFile(), targetFile(key));
     }
 
     @Override

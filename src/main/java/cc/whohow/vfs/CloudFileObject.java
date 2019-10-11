@@ -1,6 +1,8 @@
 package cc.whohow.vfs;
 
-import cc.whohow.vfs.io.IO;
+import cc.whohow.vfs.io.ReadableChannel;
+import cc.whohow.vfs.io.WritableChannel;
+import cc.whohow.vfs.path.URIBuilder;
 import cc.whohow.vfs.tree.FileObjectTree;
 import cc.whohow.vfs.tree.FileObjectTreeIterator;
 import cc.whohow.vfs.util.MapIterator;
@@ -8,10 +10,8 @@ import org.apache.commons.vfs2.FileContent;
 import org.apache.commons.vfs2.FileName;
 import org.apache.commons.vfs2.FileSystemException;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -19,15 +19,21 @@ import java.util.List;
 /**
  * 轻量级文件对象
  */
-public interface FileObject extends FileObjectImpl, FileContentImpl {
-    FileSystem getFileSystem();
+public interface CloudFileObject extends FileObjectImpl, FileContentImpl {
+    CloudFileSystem getFileSystem();
 
-    FileName getName();
+    CloudFileObjectList list() throws FileSystemException;
 
-    FileObjectList list() throws FileSystemException;
+    default CloudFileObjectList listRecursively() throws FileSystemException {
+        return new FileObjectTree(this);
+    }
+
+    ReadableChannel getReadableChannel() throws FileSystemException;
+
+    WritableChannel getWritableChannel() throws FileSystemException;
 
     @Override
-    default FileObject getParent() throws FileSystemException {
+    default CloudFileObject getParent() throws FileSystemException {
         FileName parent = getName().getParent();
         if (parent == null) {
             return null;
@@ -36,55 +42,49 @@ public interface FileObject extends FileObjectImpl, FileContentImpl {
     }
 
     @Override
-    default FileObject getChild(String name) throws FileSystemException {
+    default CloudFileObject getChild(String name) throws FileSystemException {
         if (name.contains(org.apache.commons.vfs2.FileName.SEPARATOR)) {
             throw new IllegalArgumentException(name);
         }
         return resolveFile(name);
     }
 
-    default FileObjectList listRecursively() throws FileSystemException {
-        return new FileObjectTree(this);
+    @Override
+    default InputStream getInputStream() throws FileSystemException {
+        return getReadableChannel();
     }
 
-    default ByteBuffer read() throws IOException {
-        try (InputStream stream = getInputStream()) {
-            return IO.read(stream);
-        }
-    }
-
-    default void write(ByteBuffer buffer) throws IOException {
-        try (OutputStream stream = getOutputStream()) {
-            IO.write(stream, buffer);
-        }
+    @Override
+    default OutputStream getOutputStream() throws FileSystemException {
+        return getWritableChannel();
     }
 
     default List<String> getURIs() {
         return Collections.singletonList(getPublicURIString());
     }
 
-    default <R> FileOperation<FileObject, R> getOperation(Class<? extends FileOperation<FileObject, R>> fileOperation) throws FileSystemException {
+    default <R> CloudFileOperation<CloudFileObject, R> getOperation(Class<? extends CloudFileOperation<CloudFileObject, R>> fileOperation) throws FileSystemException {
         return getFileOperations().getOperation(fileOperation, this);
     }
 
     @Override
-    default FileOperations getFileOperations() throws FileSystemException {
+    default CloudFileOperations getFileOperations() throws FileSystemException {
         return getFileSystem().getFileSystemProvider().getFileOperations();
     }
 
     @Override
-    default FileObject getFile() {
+    default CloudFileObject getFile() {
         return this;
     }
 
     @Override
-    default FileObject resolveFile(String path) throws FileSystemException {
-        return getFileSystem().resolveFile(path);
+    default CloudFileObject resolveFile(String path) throws FileSystemException {
+        return getFileSystem().getFileSystemManager().resolveFile(URIBuilder.resolve(getName().getURI(), path));
     }
 
     @Override
     default org.apache.commons.vfs2.FileObject[] getChildren() throws FileSystemException {
-        try (FileObjectList list = list()) {
+        try (CloudFileObjectList list = list()) {
             return list.stream().toArray(org.apache.commons.vfs2.FileObject[]::new);
         }
     }

@@ -14,14 +14,14 @@ import java.nio.charset.StandardCharsets;
 /**
  * 文件管理器
  */
-public class FileManager {
-    private final FileSystem fileSystem;
+public class CloudFileManager {
+    private final CloudFileSystem fileSystem;
 
-    public FileManager(FileSystem fileSystem) {
+    public CloudFileManager(CloudFileSystem fileSystem) {
         this.fileSystem = fileSystem;
     }
 
-    public FileObject resolve(String path) {
+    public CloudFileObject resolve(String path) {
         try {
             return fileSystem.resolve(path);
         } catch (FileSystemException e) {

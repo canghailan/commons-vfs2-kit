@@ -38,9 +38,9 @@ public interface FileObjectImpl extends FileObject {
                             if (src.isFolder()) {
                                 dst.createFolder();
                             } else {
-                                createFile();
-                                try (FileContent content = getContent()) {
-                                    content.write(src);
+                                dst.createFile();
+                                try (FileContent content = src.getContent()) {
+                                    content.write(dst);
                                 }
                             }
                         }
@@ -61,15 +61,15 @@ public interface FileObjectImpl extends FileObject {
                         // file -> folder
                         try (FileObject dst = getChild(srcFile.getName().getBaseName())) {
                             dst.createFile();
-                            try (FileContent content = dst.getContent()) {
-                                content.write(srcFile);
+                            try (FileContent content = srcFile.getContent()) {
+                                content.write(dst);
                             }
                         }
                     } else {
                         // file -> file
                         createFile();
-                        try (FileContent dst = getContent()) {
-                            dst.write(srcFile);
+                        try (FileContent content = srcFile.getContent()) {
+                            content.write(this);
                         }
                     }
                 }
@@ -273,7 +273,7 @@ public interface FileObjectImpl extends FileObject {
 
     @Override
     default FileObject resolveFile(String path) throws FileSystemException {
-        return getFileSystem().resolveFile(new URIBuilder(getName().getURI()).resolve(path).build().toString());
+        return getFileSystem().getFileSystemManager().resolveFile(URIBuilder.resolve(getName().getURI(), path));
     }
 
     @Override

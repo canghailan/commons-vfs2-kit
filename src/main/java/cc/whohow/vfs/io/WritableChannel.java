@@ -1,15 +1,22 @@
 package cc.whohow.vfs.io;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
 import java.nio.channels.WritableByteChannel;
 
 public abstract class WritableChannel extends OutputStream implements WritableByteChannel {
-    public long transferFrom(ReadableChannel channel) throws IOException {
-        return transferFrom(channel, IO.BUFFER_SIZE);
+    @Override
+    public int write(ByteBuffer src) throws IOException {
+        return IO.write(this, src);
     }
 
-    public long transferFrom(ReadableChannel channel, int bufferSize) throws IOException {
-        return IO.transfer(channel, this, bufferSize);
+    public int writeAll(ByteBuffer buffer) throws IOException {
+        return write(buffer);
+    }
+
+    public long transferFrom(InputStream stream) throws IOException {
+        return IO.transfer(stream, this, IO.BUFFER_SIZE);
     }
 }

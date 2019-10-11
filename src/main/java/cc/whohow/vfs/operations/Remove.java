@@ -1,7 +1,7 @@
 package cc.whohow.vfs.operations;
 
-import cc.whohow.vfs.FileObject;
-import cc.whohow.vfs.FileOperation;
+import cc.whohow.vfs.CloudFileObject;
+import cc.whohow.vfs.CloudFileOperation;
 
-public interface Remove extends FileOperation<FileObject, Boolean> {
+public interface Remove extends CloudFileOperation<CloudFileObject, Boolean> {
 }

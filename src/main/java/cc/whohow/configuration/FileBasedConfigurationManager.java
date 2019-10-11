@@ -1,7 +1,7 @@
 package cc.whohow.configuration;
 
-import cc.whohow.vfs.FileObject;
+import cc.whohow.vfs.CloudFileObject;
 
 public interface FileBasedConfigurationManager {
-    FileObject get(String key);
+    CloudFileObject get(String key);
 }
