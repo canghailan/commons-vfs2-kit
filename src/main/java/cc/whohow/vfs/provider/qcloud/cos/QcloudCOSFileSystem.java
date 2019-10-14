@@ -1,6 +1,10 @@
-package cc.whohow.vfs.provider.cos;
+package cc.whohow.vfs.provider.qcloud.cos;
 
-import cc.whohow.vfs.*;
+import cc.whohow.vfs.CloudFileObject;
+import cc.whohow.vfs.CloudFileSystem;
+import cc.whohow.vfs.CloudFileSystemProvider;
+import cc.whohow.vfs.VirtualFileSystem;
+import cc.whohow.vfs.provider.s3.S3FileName;
 import com.qcloud.cos.COS;
 import org.apache.commons.vfs2.FileName;
 import org.apache.commons.vfs2.FileSystemException;
@@ -8,12 +12,12 @@ import org.apache.commons.vfs2.provider.AbstractVfsComponent;
 
 public class QcloudCOSFileSystem extends AbstractVfsComponent implements CloudFileSystem {
     protected final QcloudCOSFileSystemProvider fileSystemProvider;
-    protected final QcloudCOSFileName root;
+    protected final S3FileName root;
     protected final COS cos;
 
     public QcloudCOSFileSystem(QcloudCOSFileSystemProvider fileSystemProvider, String bucketName, COS cos) {
         this.fileSystemProvider = fileSystemProvider;
-        this.root = new QcloudCOSFileName(null, null, bucketName, null, "");
+        this.root = new S3FileName(fileSystemProvider.getScheme(), null, null, bucketName, null, "");
         this.cos = cos;
     }
 
@@ -27,8 +31,8 @@ public class QcloudCOSFileSystem extends AbstractVfsComponent implements CloudFi
     }
 
     @Override
-    public CloudFileObject resolve(CharSequence name) throws FileSystemException {
-        return new QcloudCOSFileObject(this, new QcloudCOSFileName(root.toURI().resolve(name.toString()).toString()));
+    public CloudFileObject resolveFile(String name) throws FileSystemException {
+        return new QcloudCOSFileObject(this, new S3FileName(root.toURI().resolve(name).toString()));
     }
 
     @Override
@@ -54,9 +58,5 @@ public class QcloudCOSFileSystem extends AbstractVfsComponent implements CloudFi
     @Override
     public String toString() {
         return root.toString();
-    }
-
-    public QcloudCOSFileName getFileName(String key) {
-        return new QcloudCOSFileName(root.getAccessKeyId(), root.getSecretAccessKey(), root.getBucketName(), root.getEndpoint(), key);
     }
 }

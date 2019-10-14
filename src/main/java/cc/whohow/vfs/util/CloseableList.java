@@ -17,7 +17,7 @@ public class CloseableList implements AutoCloseable, Runnable {
     }
 
     @Override
-    public void close()  {
+    public void close() {
         IO.close(closeable);
     }
 

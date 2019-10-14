@@ -3,7 +3,10 @@ package cc.whohow.vfs.diff;
 import cc.whohow.vfs.util.CloseableIterable;
 import cc.whohow.vfs.util.CloseableList;
 
-import java.util.*;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Objects;
 import java.util.function.BiPredicate;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;

@@ -1,10 +1,11 @@
-package cc.whohow.vfs.provider.cos;
+package cc.whohow.vfs.provider.qcloud.cos;
 
 import cc.whohow.vfs.CloudFileObject;
-import cc.whohow.vfs.CloudFileObjectList;
 import cc.whohow.vfs.io.ReadableChannel;
 import cc.whohow.vfs.io.ReadableChannelAdapter;
 import cc.whohow.vfs.io.WritableChannel;
+import cc.whohow.vfs.provider.s3.S3FileAttributes;
+import cc.whohow.vfs.provider.s3.S3FileName;
 import com.qcloud.cos.COS;
 import com.qcloud.cos.model.ObjectMetadata;
 import org.apache.commons.vfs2.FileContentInfo;
@@ -13,13 +14,14 @@ import org.apache.commons.vfs2.impl.DefaultFileContentInfo;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.DirectoryStream;
 import java.util.Map;
 
 public class QcloudCOSFileObject implements CloudFileObject {
     protected final QcloudCOSFileSystem fileSystem;
-    protected final QcloudCOSFileName name;
+    protected final S3FileName name;
 
-    public QcloudCOSFileObject(QcloudCOSFileSystem fileSystem, QcloudCOSFileName name) {
+    public QcloudCOSFileObject(QcloudCOSFileSystem fileSystem, S3FileName name) {
         this.fileSystem = fileSystem;
         this.name = name;
     }
@@ -71,17 +73,17 @@ public class QcloudCOSFileObject implements CloudFileObject {
     }
 
     @Override
-    public QcloudCOSFileName getName() {
+    public S3FileName getName() {
         return name;
     }
 
     @Override
-    public CloudFileObjectList list() throws FileSystemException {
+    public DirectoryStream<CloudFileObject> list() throws FileSystemException {
         return new QcloudCOSFileObjectList(this, false);
     }
 
     @Override
-    public CloudFileObjectList listRecursively() throws FileSystemException {
+    public DirectoryStream<CloudFileObject> listRecursively() throws FileSystemException {
         return new QcloudCOSFileObjectList(this, true);
     }
 
@@ -108,34 +110,35 @@ public class QcloudCOSFileObject implements CloudFileObject {
         return new QcloudCOSWritableChannel(getCOS(), getBucketName(), getKey());
     }
 
-    protected ObjectMetadata getMetadata() {
+    protected ObjectMetadata getObjectMetadata() {
         return getCOS().getObjectMetadata(getBucketName(), getKey());
     }
 
     @Override
     public Map<String, Object> getAttributes() throws FileSystemException {
-        return getMetadata().getRawMetadata();
+        ObjectMetadata objectMetadata = getObjectMetadata();
+        return new S3FileAttributes(objectMetadata.getRawMetadata(), objectMetadata.getUserMetadata());
     }
 
     @Override
     public long getSize() throws FileSystemException {
-        return getMetadata().getContentLength();
+        return getObjectMetadata().getContentLength();
     }
 
     @Override
     public long getLastModifiedTime() throws FileSystemException {
-        return getMetadata().getLastModified().getTime();
+        return getObjectMetadata().getLastModified().getTime();
     }
 
     @Override
     public FileContentInfo getContentInfo() throws FileSystemException {
-        ObjectMetadata metadata = getMetadata();
+        ObjectMetadata metadata = getObjectMetadata();
         return new DefaultFileContentInfo(metadata.getContentType(), metadata.getContentEncoding());
     }
 
     @Override
-    public CloudFileObject getParent() throws FileSystemException {
-        QcloudCOSFileName parent = getName().getParent();
+    public QcloudCOSFileObject getParent() throws FileSystemException {
+        S3FileName parent = getName().getParent();
         if (parent == null) {
             return null;
         }
@@ -143,8 +146,11 @@ public class QcloudCOSFileObject implements CloudFileObject {
     }
 
     @Override
-    public CloudFileObject getChild(String name) throws FileSystemException {
-        return new QcloudCOSFileObject(fileSystem, new QcloudCOSFileName(getName(), getKey() + name));
+    public QcloudCOSFileObject getChild(String name) throws FileSystemException {
+        if (!isFolder()) {
+            throw new FileSystemException("vfs.provider/list-children-not-folder.error", this);
+        }
+        return new QcloudCOSFileObject(fileSystem, new S3FileName(getName(), getKey() + name));
     }
 
     @Override

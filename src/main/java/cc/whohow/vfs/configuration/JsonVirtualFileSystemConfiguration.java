@@ -1,5 +1,6 @@
 package cc.whohow.vfs.configuration;
 
+import cc.whohow.vfs.CloudFileObject;
 import cc.whohow.vfs.VirtualFileSystem;
 import cc.whohow.vfs.VirtualFileSystemManager;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -38,7 +39,11 @@ public class JsonVirtualFileSystemConfiguration {
             Iterator<Map.Entry<String, JsonNode>> vfs = json.path("vfs").fields();
             while (vfs.hasNext()) {
                 Map.Entry<String, JsonNode> i = vfs.next();
-                virtualFileSystem.addJunction(i.getKey(), virtualFileSystem.resolveFile(i.getValue().textValue()));
+                CloudFileObject fileObject = virtualFileSystem.resolveFile(i.getValue().textValue());
+                virtualFileSystem.addJunction(i.getKey(), fileObject);
+                for (String uri : fileObject.getURIs()) {
+                    virtualFileSystem.addJunction(uri, fileObject);
+                }
             }
 
             return virtualFileSystem;
@@ -48,7 +53,7 @@ public class JsonVirtualFileSystemConfiguration {
     }
 
     public void visit(String key, JsonNode node) {
-        path.push(key);
+        path.addLast(key);
 
         if (node.isObject()) {
             Iterator<Map.Entry<String, JsonNode>> iterator = node.fields();
@@ -66,6 +71,6 @@ public class JsonVirtualFileSystemConfiguration {
             virtualFileSystem.setAttribute(name.toString(), node.asText(null));
         }
 
-        path.pop();
+        path.removeLast();
     }
 }

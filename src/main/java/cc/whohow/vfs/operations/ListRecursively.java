@@ -1,8 +1,9 @@
 package cc.whohow.vfs.operations;
 
 import cc.whohow.vfs.CloudFileObject;
-import cc.whohow.vfs.CloudFileObjectList;
 import cc.whohow.vfs.CloudFileOperation;
 
-public interface ListRecursively extends CloudFileOperation<CloudFileObject, CloudFileObjectList> {
+import java.nio.file.DirectoryStream;
+
+public interface ListRecursively extends CloudFileOperation<CloudFileObject, DirectoryStream<CloudFileObject>> {
 }

@@ -1,4 +1,4 @@
-package cc.whohow.vfs.provider.cos;
+package cc.whohow.vfs.provider.qcloud.cos;
 
 import cc.whohow.vfs.io.ByteBufferReadableChannel;
 import cc.whohow.vfs.io.WritableChannel;
@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -21,8 +22,9 @@ public class QcloudCOSWritableChannel extends WritableChannel {
     private final COS cos;
     private final String bucketName;
     private final String key;
+    private final int bufferSize;
     private String uploadId;
-    private List<PartETag> partETags = new ArrayList<>();
+    private List<PartETag> partETags = Collections.emptyList();
     private byte[] buffer;
     private int length;
 
@@ -37,8 +39,7 @@ public class QcloudCOSWritableChannel extends WritableChannel {
         this.cos = cos;
         this.bucketName = bucketName;
         this.key = key;
-        this.buffer = new byte[bufferSize];
-        this.length = 0;
+        this.bufferSize = bufferSize;
     }
 
     public COS getCOS() {
@@ -68,14 +69,17 @@ public class QcloudCOSWritableChannel extends WritableChannel {
         if (uploadId == null) {
             uploadId = cos.initiateMultipartUpload(new InitiateMultipartUploadRequest(bucketName, key))
                     .getUploadId();
+            partETags = new ArrayList<>();
+            buffer = new byte[bufferSize];
+            length = 0;
         }
 
         if (len < buffer.length) {
             int r = buffer.length - length;
             if (r > len) {
-                writeBuffer(b, off,  len);
+                writeBuffer(b, off, len);
             } else if (r == len) {
-                writeBuffer(b, off,  len);
+                writeBuffer(b, off, len);
                 flushBuffer(false);
             } else {
                 writeBuffer(b, off, r);
@@ -115,7 +119,7 @@ public class QcloudCOSWritableChannel extends WritableChannel {
     }
 
     private synchronized void writeBuffer(byte[] b, int off, int len) {
-        System.arraycopy(b, off,buffer, length,  len);
+        System.arraycopy(b, off, buffer, length, len);
         length += len;
     }
 
@@ -131,7 +135,7 @@ public class QcloudCOSWritableChannel extends WritableChannel {
                 .withKey(key)
                 .withUploadId(uploadId)
                 .withPartNumber(partNumber)
-                .withInputStream(new ByteArrayInputStream(buffer, 0, length))
+                .withInputStream(new ByteArrayInputStream(buffer, offset, length))
                 .withPartSize(length)
                 .withLastPart(close)
         );
@@ -140,11 +144,17 @@ public class QcloudCOSWritableChannel extends WritableChannel {
 
     @Override
     public int writeAll(ByteBuffer buffer) throws IOException {
+        if (!partETags.isEmpty()) {
+            throw new IllegalStateException("parts: " + partETags.size());
+        }
         return (int) transferFrom(new ByteBufferReadableChannel(buffer));
     }
 
     @Override
     public long transferFrom(InputStream stream) throws IOException {
+        if (!partETags.isEmpty()) {
+            throw new IllegalStateException("parts: " + partETags.size());
+        }
         return cos.putObject(bucketName, key, stream, new ObjectMetadata())
                 .getMetadata().getContentLength();
     }

@@ -1,14 +1,14 @@
 package cc.whohow.vfs.type;
 
-import cc.whohow.vfs.io.*;
+import cc.whohow.vfs.io.ByteBufferReadableChannel;
+import cc.whohow.vfs.io.ByteBufferWritableChannel;
+import cc.whohow.vfs.io.ReadableChannel;
+import cc.whohow.vfs.io.WritableChannel;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
-import java.nio.channels.Channels;
-import java.nio.channels.ReadableByteChannel;
-import java.nio.channels.WritableByteChannel;
 
 public interface DataType<T> {
     T deserialize(InputStream stream) throws IOException;

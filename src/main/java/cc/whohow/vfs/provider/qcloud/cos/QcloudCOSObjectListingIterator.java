@@ -1,4 +1,4 @@
-package cc.whohow.vfs.provider.cos;
+package cc.whohow.vfs.provider.qcloud.cos;
 
 import com.qcloud.cos.COS;
 import com.qcloud.cos.model.ListObjectsRequest;
@@ -14,6 +14,18 @@ public class QcloudCOSObjectListingIterator implements Iterator<ObjectListing> {
     public QcloudCOSObjectListingIterator(COS cos, ListObjectsRequest listObjectsRequest) {
         this.cos = cos;
         this.listObjectsRequest = listObjectsRequest;
+    }
+
+    public COS getCOS() {
+        return cos;
+    }
+
+    public String getBucketName() {
+        return listObjectsRequest.getBucketName();
+    }
+
+    public String getPrefix() {
+        return listObjectsRequest.getPrefix();
     }
 
     @Override

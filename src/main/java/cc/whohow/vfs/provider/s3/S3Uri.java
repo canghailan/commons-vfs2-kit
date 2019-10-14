@@ -1,25 +1,27 @@
-package cc.whohow.vfs.provider.cos;
+package cc.whohow.vfs.provider.s3;
 
 import java.net.URI;
 import java.util.Objects;
 
-public class QcloudCOSUri {
+public class S3Uri {
+    protected final String scheme;
     protected final String accessKeyId;
     protected final String secretAccessKey;
     protected final String bucketName;
     protected final String endpoint;
     protected final String key;
-    private volatile URI uri;
+    protected volatile URI uri;
 
-    public QcloudCOSUri(String uri) {
+    public S3Uri(String uri) {
         this(URI.create(uri));
     }
 
-    public QcloudCOSUri(URI u) {
+    public S3Uri(URI u) {
         uri = u.normalize();
-        if (!"cos".equals(uri.getScheme()) || uri.getHost() == null) {
+        if (uri.getQuery() != null || uri.getFragment() != null) {
             throw new IllegalArgumentException(uri.toString());
         }
+        scheme = uri.getScheme();
         if (uri.getUserInfo() != null) {
             String[] userInfo = uri.getUserInfo().split(":", 2);
             accessKeyId = userInfo[0];
@@ -28,23 +30,33 @@ public class QcloudCOSUri {
             accessKeyId = null;
             secretAccessKey = null;
         }
-        String[] host = uri.getHost().split("\\.", 2);
-        if (host.length == 1) {
-            bucketName = host[0];
-            endpoint = null;
+        if (uri.getHost() != null) {
+            String[] host = uri.getHost().split("\\.", 2);
+            if (host.length == 1) {
+                bucketName = host[0];
+                endpoint = null;
+            } else {
+                bucketName = host[0];
+                endpoint = host[1];
+            }
         } else {
-            bucketName = host[0];
-            endpoint = host[1];
+            bucketName = null;
+            endpoint = null;
         }
         key = uri.getPath().isEmpty() ? "" : uri.getPath().substring(1);
     }
 
-    public QcloudCOSUri(String accessKeyId, String secretAccessKey, String bucketName, String endpoint, String key) {
+    public S3Uri(String scheme, String accessKeyId, String secretAccessKey, String bucketName, String endpoint, String key) {
+        this.scheme = scheme;
         this.accessKeyId = accessKeyId;
         this.secretAccessKey = secretAccessKey;
         this.bucketName = bucketName;
         this.endpoint = endpoint;
         this.key = key;
+    }
+
+    public String getScheme() {
+        return scheme;
     }
 
     public String getAccessKeyId() {
@@ -73,7 +85,7 @@ public class QcloudCOSUri {
                 uri = URI.create(key);
             } else {
                 StringBuilder buffer = new StringBuilder();
-                buffer.append("cos://");
+                buffer.append(scheme).append("://");
                 if (accessKeyId != null && secretAccessKey != null) {
                     buffer.append(accessKeyId).append(':').append(secretAccessKey).append('@');
                 }
@@ -97,14 +109,15 @@ public class QcloudCOSUri {
 
     @Override
     public int hashCode() {
-        return Objects.hash(accessKeyId, secretAccessKey, bucketName, endpoint, key);
+        return Objects.hash(scheme, accessKeyId, secretAccessKey, bucketName, endpoint, key);
     }
 
     @Override
     public boolean equals(Object o) {
-        if (o instanceof QcloudCOSUri) {
-            QcloudCOSUri that = (QcloudCOSUri) o;
-            return Objects.equals(this.accessKeyId, that.accessKeyId) &&
+        if (o instanceof S3Uri) {
+            S3Uri that = (S3Uri) o;
+            return Objects.equals(this.scheme, that.scheme) &&
+                    Objects.equals(this.accessKeyId, that.accessKeyId) &&
                     Objects.equals(this.secretAccessKey, that.secretAccessKey) &&
                     Objects.equals(this.bucketName, that.bucketName) &&
                     Objects.equals(this.endpoint, that.endpoint) &&
@@ -116,5 +129,13 @@ public class QcloudCOSUri {
     @Override
     public String toString() {
         return toURI().toString();
+    }
+
+    public S3Uri toPublic() {
+        if (accessKeyId == null || secretAccessKey == null) {
+            return this;
+        } else {
+            return new S3Uri(scheme, null, null, bucketName, endpoint, key);
+        }
     }
 }

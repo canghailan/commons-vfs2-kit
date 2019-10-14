@@ -1,12 +1,14 @@
-package cc.whohow.vfs.provider.cos;
+package cc.whohow.vfs.provider.qcloud.cos;
 
+import cc.whohow.vfs.provider.s3.S3FileName;
+import com.qcloud.cos.Headers;
 import com.qcloud.cos.model.COSObjectSummary;
 import org.apache.commons.vfs2.FileSystemException;
 
 public class QcloudCOSListingFileObject extends QcloudCOSFileObject {
     protected final COSObjectSummary objectSummary;
 
-    public QcloudCOSListingFileObject(QcloudCOSFileSystem fileSystem, QcloudCOSFileName name, COSObjectSummary objectSummary) {
+    public QcloudCOSListingFileObject(QcloudCOSFileSystem fileSystem, S3FileName name, COSObjectSummary objectSummary) {
         super(fileSystem, name);
         this.objectSummary = objectSummary;
     }
@@ -24,10 +26,14 @@ public class QcloudCOSListingFileObject extends QcloudCOSFileObject {
     @Override
     public Object getAttribute(String attrName) throws FileSystemException {
         switch (attrName) {
-            case "size": return getSize();
-            case "lastModifiedTime": return getLastModifiedTime();
-            case "eTag": return objectSummary.getETag();
-            default: return super.getAttribute(attrName);
+            case Headers.CONTENT_LENGTH:
+                return objectSummary.getSize();
+            case Headers.LAST_MODIFIED:
+                return objectSummary.getLastModified().getTime();
+            case Headers.ETAG:
+                return objectSummary.getETag();
+            default:
+                return super.getAttribute(attrName);
         }
     }
 }

@@ -1,7 +1,5 @@
 package cc.whohow.vfs;
 
-import org.apache.commons.vfs2.FileObject;
-import org.apache.commons.vfs2.FileSystem;
 import org.apache.commons.vfs2.*;
 
 import java.io.File;

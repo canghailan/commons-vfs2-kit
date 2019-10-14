@@ -29,4 +29,9 @@ public class ConcatIterator<T> implements Iterator<T> {
     public T next() {
         return iterator.next();
     }
+
+    @Override
+    public void remove() {
+        iterator.remove();
+    }
 }

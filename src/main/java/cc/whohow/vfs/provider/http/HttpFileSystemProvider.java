@@ -1,6 +1,8 @@
 package cc.whohow.vfs.provider.http;
 
-import cc.whohow.vfs.*;
+import cc.whohow.vfs.CloudFileOperations;
+import cc.whohow.vfs.CloudFileSystem;
+import cc.whohow.vfs.CloudFileSystemProvider;
 import org.apache.commons.vfs2.Capability;
 import org.apache.commons.vfs2.FileName;
 import org.apache.commons.vfs2.FileSystemException;

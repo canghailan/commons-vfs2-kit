@@ -23,7 +23,7 @@ public class CloudFileManager {
 
     public CloudFileObject resolve(String path) {
         try {
-            return fileSystem.resolve(path);
+            return fileSystem.resolveFile(path);
         } catch (FileSystemException e) {
             throw new UncheckedIOException(e);
         }

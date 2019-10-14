@@ -1,12 +1,12 @@
 package cc.whohow.vfs.tree;
 
 import cc.whohow.vfs.CloudFileObject;
-import cc.whohow.vfs.CloudFileObjectList;
 import cc.whohow.vfs.io.IO;
 import cc.whohow.vfs.util.CloseableIterator;
 import org.apache.commons.vfs2.FileSystemException;
 
 import java.io.UncheckedIOException;
+import java.nio.file.DirectoryStream;
 import java.util.ArrayDeque;
 import java.util.Iterator;
 
@@ -15,7 +15,7 @@ public class FileObjectTreeIterator implements Iterator<CloudFileObject> {
 
     public FileObjectTreeIterator(CloudFileObject fileObject) {
         try {
-            CloudFileObjectList list = fileObject.list();
+            DirectoryStream<CloudFileObject> list = fileObject.list();
             this.stack.push(new CloseableIterator.Adapter<>(list.iterator(), list));
         } catch (FileSystemException e) {
             throw new UncheckedIOException(e);

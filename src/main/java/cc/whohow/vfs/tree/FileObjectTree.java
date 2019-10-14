@@ -1,11 +1,11 @@
 package cc.whohow.vfs.tree;
 
 import cc.whohow.vfs.CloudFileObject;
-import cc.whohow.vfs.CloudFileObjectList;
 
+import java.nio.file.DirectoryStream;
 import java.util.Iterator;
 
-public class FileObjectTree implements CloudFileObjectList {
+public class FileObjectTree implements DirectoryStream<CloudFileObject> {
     private CloudFileObject fileObject;
 
     public FileObjectTree(CloudFileObject fileObject) {

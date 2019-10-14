@@ -10,6 +10,8 @@ import org.apache.commons.vfs2.FileSystemOptions;
 import org.apache.commons.vfs2.provider.FileProvider;
 import org.apache.commons.vfs2.provider.VfsComponent;
 
+import java.net.URI;
+
 public interface CloudFileSystemProvider extends FileProvider, VfsComponent {
     String getScheme();
 
@@ -18,6 +20,10 @@ public interface CloudFileSystemProvider extends FileProvider, VfsComponent {
     CloudFileSystem findFileSystem(String uri) throws FileSystemException;
 
     FileName getFileName(String uri) throws FileSystemException;
+
+    default CloudFileObject getFileObject(URI uri) throws FileSystemException {
+        return getFileObject(uri.toString());
+    }
 
     default CloudFileObject getFileObject(String uri) throws FileSystemException {
         return findFileSystem(uri).resolveFile(uri);

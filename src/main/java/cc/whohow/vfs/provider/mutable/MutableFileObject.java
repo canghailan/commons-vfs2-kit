@@ -1,18 +1,18 @@
 package cc.whohow.vfs.provider.mutable;
 
 import cc.whohow.vfs.CloudFileObject;
-import cc.whohow.vfs.CloudFileObjectList;
 import cc.whohow.vfs.CloudFileSystem;
 import cc.whohow.vfs.io.ReadableChannel;
 import cc.whohow.vfs.io.ReadableChannelAdapter;
 import cc.whohow.vfs.io.WritableChannel;
 import cc.whohow.vfs.io.WritableChannelAdapter;
-import cc.whohow.vfs.tree.FileObjectListAdapter;
+import cc.whohow.vfs.tree.FileObjectList;
 import org.apache.commons.vfs2.FileName;
 import org.apache.commons.vfs2.FileSystemException;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.DirectoryStream;
 import java.util.Collections;
 import java.util.Map;
 
@@ -109,8 +109,8 @@ public class MutableFileObject implements CloudFileObject {
     }
 
     @Override
-    public CloudFileObjectList list() throws FileSystemException {
-        return new FileObjectListAdapter(children.values());
+    public DirectoryStream<CloudFileObject> list() throws FileSystemException {
+        return new FileObjectList(children.values());
     }
 
     @Override

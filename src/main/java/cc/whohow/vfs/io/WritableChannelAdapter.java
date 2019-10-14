@@ -37,7 +37,7 @@ public class WritableChannelAdapter extends WritableChannel {
         try {
             stream.close();
         } finally {
-            open =false;
+            open = false;
         }
     }
 

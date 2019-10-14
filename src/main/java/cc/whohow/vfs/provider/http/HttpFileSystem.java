@@ -41,7 +41,7 @@ public class HttpFileSystem extends AbstractVfsComponent implements CloudFileSys
     }
 
     @Override
-    public CloudFileObject resolve(CharSequence name) throws FileSystemException {
+    public CloudFileObject resolveFile(String name) throws FileSystemException {
         return null;
     }
 }

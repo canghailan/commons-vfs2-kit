@@ -1,9 +1,13 @@
 package cc.whohow.vfs;
 
-import org.apache.commons.vfs2.*;
+import org.apache.commons.vfs2.Capability;
+import org.apache.commons.vfs2.FileName;
+import org.apache.commons.vfs2.FileSystemException;
+import org.apache.commons.vfs2.FileSystemOptions;
 import org.apache.commons.vfs2.provider.VfsComponent;
 
 import java.io.UncheckedIOException;
+import java.net.URI;
 
 public interface CloudFileSystem extends FileSystemImpl, VfsComponent {
     CloudFileSystemProvider getFileSystemProvider();
@@ -11,21 +15,21 @@ public interface CloudFileSystem extends FileSystemImpl, VfsComponent {
     @Override
     VirtualFileSystem getFileSystemManager();
 
-    CloudFileObject resolve(CharSequence name) throws FileSystemException;
-
     @Override
-    default CloudFileObject getRoot() throws FileSystemException {
-        return resolve(getRootURI());
+    CloudFileObject resolveFile(String name) throws FileSystemException;
+
+    default CloudFileObject resolveFile(URI uri) throws FileSystemException {
+        return resolveFile(uri.toString());
     }
 
     @Override
-    default CloudFileObject resolveFile(String name) throws FileSystemException {
-        return resolve(name);
+    default CloudFileObject getRoot() throws FileSystemException {
+        return resolveFile(getRootURI());
     }
 
     @Override
     default CloudFileObject resolveFile(FileName name) throws FileSystemException {
-        return resolve(name.getURI());
+        return resolveFile(name.getURI());
     }
 
     @Override
@@ -37,7 +41,7 @@ public interface CloudFileSystem extends FileSystemImpl, VfsComponent {
     default FileSystemOptions getFileSystemOptions() {
         try {
             return new VirtualFileSystemOptions(getFileSystemManager().resolveFile(
-                    "conf:/providers/" +getFileSystemProvider().getScheme()+ "/")).get();
+                    "conf:/providers/" + getFileSystemProvider().getScheme() + "/")).get();
         } catch (FileSystemException e) {
             throw new UncheckedIOException(e);
         }

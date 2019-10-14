@@ -4,7 +4,6 @@ import cc.whohow.vfs.io.IO;
 import cc.whohow.vfs.path.URIBuilder;
 import cc.whohow.vfs.selector.FileSelectors;
 import cc.whohow.vfs.selector.ImmutableFileSelectInfo;
-import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.*;
 
 import java.io.IOException;

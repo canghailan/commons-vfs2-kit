@@ -1,11 +1,14 @@
-package cc.whohow.vfs.provider.cos;
+package cc.whohow.vfs.provider.qcloud.cos;
 
 import cc.whohow.vfs.*;
+import cc.whohow.vfs.log.LogProxy;
+import cc.whohow.vfs.provider.s3.S3FileName;
+import cc.whohow.vfs.provider.s3.S3Uri;
 import cc.whohow.vfs.type.DataType;
-import cc.whohow.vfs.FileValue;
 import cc.whohow.vfs.type.JsonType;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
+import com.qcloud.cos.COS;
 import com.qcloud.cos.COSClient;
 import com.qcloud.cos.ClientConfig;
 import com.qcloud.cos.auth.BasicCOSCredentials;
@@ -18,14 +21,28 @@ import org.apache.commons.vfs2.FileName;
 import org.apache.commons.vfs2.FileSystemException;
 import org.apache.commons.vfs2.provider.AbstractVfsComponent;
 
+import java.io.IOException;
+import java.nio.file.DirectoryStream;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 public class QcloudCOSFileSystemProvider extends AbstractVfsComponent implements CloudFileSystemProvider {
+    private static final Set<Capability> CAPABILITIES = Collections.unmodifiableSet(EnumSet.of(
+            Capability.READ_CONTENT,
+            Capability.WRITE_CONTENT,
+            Capability.ATTRIBUTES,
+            Capability.LAST_MODIFIED,
+            Capability.GET_LAST_MODIFIED,
+            Capability.CREATE,
+            Capability.DELETE,
+            Capability.RENAME,
+            Capability.GET_TYPE,
+            Capability.LIST_CHILDREN,
+            Capability.URI));
     protected Set<COSCredentials> credentials = new LinkedHashSet<>();
-    protected Map<String, QcloudCOSUri> buckets = new TreeMap<>();
-    protected Map<QcloudCOSUri, COSClient> clients = new ConcurrentHashMap<>();
+    protected Map<String, S3Uri> buckets = new TreeMap<>();
+    protected Map<S3Uri, COSClient> clients = new ConcurrentHashMap<>();
     protected Map<String, QcloudCOSFileSystem> fileSystems = new ConcurrentHashMap<>();
 
     @Override
@@ -33,25 +50,28 @@ public class QcloudCOSFileSystemProvider extends AbstractVfsComponent implements
         return "cos";
     }
 
-    protected COSClient newCOS(QcloudCOSUri uri) {
+    protected COSClient newCOS(S3Uri uri) {
         return new COSClient(new BasicCOSCredentials(uri.getAccessKeyId(), uri.getSecretAccessKey()), new ClientConfig(new Region(uri.getEndpoint())));
     }
 
-    protected COSClient getCOS(QcloudCOSUri uri) {
+    protected COS getCOS(S3Uri uri) {
         if (uri == null ||
+                !Objects.equals(uri.getScheme(), getScheme()) ||
                 StringUtils.isNullOrEmpty(uri.getAccessKeyId()) ||
                 StringUtils.isNullOrEmpty(uri.getSecretAccessKey()) ||
                 StringUtils.isNullOrEmpty(uri.getEndpoint())) {
             throw new IllegalArgumentException(Objects.toString(uri));
         }
-        return clients.computeIfAbsent(new QcloudCOSUri(uri.getAccessKeyId(), uri.getSecretAccessKey(), null, uri.getEndpoint(), null), this::newCOS);
+        COS cos = clients.computeIfAbsent(new S3Uri(uri.getScheme(), uri.getAccessKeyId(), uri.getSecretAccessKey(), null, uri.getEndpoint(), null), this::newCOS);
+        return LogProxy.newProxyInstance(getLogger(), cos, COS.class);
     }
 
-    protected QcloudCOSFileSystem newFileSystem(QcloudCOSUri uri) {
+    protected QcloudCOSFileSystem newFileSystem(S3Uri uri) {
         if (uri == null || StringUtils.isNullOrEmpty(uri.getBucketName())) {
             throw new IllegalArgumentException(Objects.toString(uri));
         }
-        if (StringUtils.isNullOrEmpty(uri.getAccessKeyId()) ||
+        if (!Objects.equals(uri.getScheme(), getScheme()) ||
+                StringUtils.isNullOrEmpty(uri.getAccessKeyId()) ||
                 StringUtils.isNullOrEmpty(uri.getSecretAccessKey()) ||
                 StringUtils.isNullOrEmpty(uri.getEndpoint())) {
             return new QcloudCOSFileSystem(this, uri.getBucketName(), getCOS(buckets.get(uri.getBucketName())));
@@ -60,13 +80,15 @@ public class QcloudCOSFileSystemProvider extends AbstractVfsComponent implements
         }
     }
 
-    protected QcloudCOSFileSystem getFileSystem(QcloudCOSUri uri) {
+    protected QcloudCOSFileSystem getFileSystem(S3Uri uri) throws FileSystemException {
         QcloudCOSFileSystem fileSystem = fileSystems.get(uri.getBucketName());
         if (fileSystem == null) {
             synchronized (this) {
                 fileSystem = fileSystems.get(uri.getBucketName());
                 if (fileSystem == null) {
                     fileSystem = newFileSystem(uri);
+                    fileSystem.setContext(getContext());
+                    fileSystem.init();
                 }
                 fileSystems.put(uri.getBucketName(), fileSystem);
             }
@@ -76,22 +98,22 @@ public class QcloudCOSFileSystemProvider extends AbstractVfsComponent implements
 
     @Override
     public CloudFileSystem getFileSystem(String uri) throws FileSystemException {
-        return getFileSystem(new QcloudCOSUri(uri));
+        return getFileSystem(new S3Uri(uri));
     }
 
     @Override
     public CloudFileSystem findFileSystem(String uri) throws FileSystemException {
-        return getFileSystem(new QcloudCOSUri(uri));
+        return getFileSystem(new S3Uri(uri));
     }
 
     @Override
     public FileName getFileName(String uri) throws FileSystemException {
-        return new QcloudCOSFileName(uri);
+        return new S3FileName(uri);
     }
 
     @Override
     public CloudFileObject getFileObject(String uri) throws FileSystemException {
-        QcloudCOSFileName fileName = new QcloudCOSFileName(uri);
+        S3FileName fileName = new S3FileName(uri);
         return new QcloudCOSFileObject(getFileSystem(fileName), fileName);
     }
 
@@ -111,11 +133,15 @@ public class QcloudCOSFileSystemProvider extends AbstractVfsComponent implements
         DataType<JsonNode> yaml = new JsonType<>(new YAMLMapper(), JsonNode.class);
 
         // credentials
-        try (CloudFileObjectList list = vfs.resolveFile("conf:/providers/cos/credentials").list()) {
+        try (DirectoryStream<CloudFileObject> list = vfs.resolveFile("conf:/providers/qcloud-cos/credentials/").list()) {
             for (CloudFileObject credential : list) {
                 JsonNode value = new FileValue<>(credential, yaml).get();
-                credentials.add(new BasicCOSCredentials(value.get("secretId").textValue(), value.get("secretKey").textValue()));
+                credentials.add(new BasicCOSCredentials(value.get("accessKeyId").textValue(), value.get("secretAccessKey").textValue()));
             }
+        } catch (FileSystemException e) {
+            throw e;
+        } catch (IOException e) {
+            throw new FileSystemException(e);
         }
 
         // buckets
@@ -125,7 +151,7 @@ public class QcloudCOSFileSystemProvider extends AbstractVfsComponent implements
                 List<Bucket> buckets = cos.listBuckets();
                 for (Bucket bucket : buckets) {
                     this.buckets.put(bucket.getName(),
-                            new QcloudCOSUri(credential.getCOSAccessKeyId(), credential.getCOSSecretKey(), bucket.getName(), bucket.getLocation(), null));
+                            new S3Uri(getScheme(), credential.getCOSAccessKeyId(), credential.getCOSSecretKey(), bucket.getName(), bucket.getLocation(), null));
                 }
             } finally {
                 cos.shutdown();
@@ -147,7 +173,8 @@ public class QcloudCOSFileSystemProvider extends AbstractVfsComponent implements
     @Override
     public String toString() {
         return buckets.values().stream()
-                .map(QcloudCOSUri::toString)
+                .map(S3Uri::toPublic)
+                .map(S3Uri::toString)
                 .collect(Collectors.joining("\n"));
     }
 }

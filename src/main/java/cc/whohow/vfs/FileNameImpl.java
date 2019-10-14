@@ -1,6 +1,5 @@
 package cc.whohow.vfs;
 
-import cc.whohow.vfs.path.PathBuilder;
 import cc.whohow.vfs.path.PathParser;
 import cc.whohow.vfs.path.URIBuilder;
 import org.apache.commons.vfs2.FileName;
@@ -43,12 +42,12 @@ public interface FileNameImpl extends FileName {
 
     @Override
     default String getRootURI() {
-        return new URIBuilder().setURI(getURI()).setPath("/").toString();
+        return new URIBuilder().setURI(getURI()).setPath(ROOT_PATH).toString();
     }
 
     @Override
     default String getRelativeName(FileName name) throws FileSystemException {
-        return PathBuilder.relativize(getURI(), name.getURI());
+        return URI.create(getURI()).relativize(URI.create(name.getURI())).toString();
     }
 
     @Override
@@ -80,7 +79,7 @@ public interface FileNameImpl extends FileName {
 
     @Override
     default FileType getType() {
-        return getURI().endsWith("/") ? FileType.FOLDER : FileType.FILE;
+        return getPathDecoded().endsWith(SEPARATOR) ? FileType.FOLDER : FileType.FILE;
     }
 
     @Override
@@ -90,6 +89,6 @@ public interface FileNameImpl extends FileName {
 
     @Override
     default int compareTo(FileName o) {
-        return getFriendlyURI().compareTo(o.getFriendlyURI());
+        return getURI().compareTo(o.getURI());
     }
 }

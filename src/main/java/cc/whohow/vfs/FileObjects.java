@@ -4,6 +4,7 @@ import cc.whohow.vfs.io.ReadableChannel;
 import cc.whohow.vfs.io.WritableChannel;
 import cc.whohow.vfs.type.DataType;
 import org.apache.commons.vfs2.FileNotFoundException;
+import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemException;
 import org.apache.commons.vfs2.operations.FileOperation;
 
@@ -14,17 +15,19 @@ import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.DirectoryStream;
+import java.util.stream.StreamSupport;
 
 public class FileObjects {
-    public static String getBaseName(org.apache.commons.vfs2.FileObject fileObject) {
+    public static String getBaseName(FileObject fileObject) {
         return fileObject.getName().getBaseName();
     }
 
-    public static String getPublicURIString(org.apache.commons.vfs2.FileObject fileObject) {
+    public static String getPublicURIString(FileObject fileObject) {
         return fileObject.getPublicURIString();
     }
 
-    public static boolean exists(org.apache.commons.vfs2.FileObject fileObject) {
+    public static boolean exists(FileObject fileObject) {
         try {
             return fileObject.exists();
         } catch (FileNotFoundException e) {
@@ -34,7 +37,7 @@ public class FileObjects {
         }
     }
 
-    public static boolean isFile(org.apache.commons.vfs2.FileObject fileObject) {
+    public static boolean isFile(FileObject fileObject) {
         try {
             return fileObject.isFile();
         } catch (FileSystemException e) {
@@ -42,7 +45,7 @@ public class FileObjects {
         }
     }
 
-    public static boolean isFolder(org.apache.commons.vfs2.FileObject fileObject) {
+    public static boolean isFolder(FileObject fileObject) {
         try {
             return fileObject.isFolder();
         } catch (FileSystemException e) {
@@ -53,8 +56,8 @@ public class FileObjects {
     public static long getSize(CloudFileObject fileObject) {
         try {
             if (fileObject.isFolder()) {
-                try (CloudFileObjectList list = fileObject.listRecursively()) {
-                    return list.stream()
+                try (DirectoryStream<CloudFileObject> list = fileObject.listRecursively()) {
+                    return StreamSupport.stream(list.spliterator(), false)
                             .filter(FileObjects::isFile)
                             .mapToLong(FileObjects::getFileSize)
                             .sum();
@@ -62,7 +65,7 @@ public class FileObjects {
             } else {
                 return fileObject.getSize();
             }
-        } catch (FileSystemException e) {
+        } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
     }
@@ -83,7 +86,7 @@ public class FileObjects {
         }
     }
 
-    public static CloudFileObjectList list(CloudFileObject fileObject) {
+    public static DirectoryStream<CloudFileObject> list(CloudFileObject fileObject) {
         try {
             return fileObject.list();
         } catch (FileSystemException e) {
@@ -91,7 +94,7 @@ public class FileObjects {
         }
     }
 
-    public static CloudFileObjectList listRecursively(CloudFileObject fileObject) {
+    public static DirectoryStream<CloudFileObject> listRecursively(CloudFileObject fileObject) {
         try {
             return fileObject.listRecursively();
         } catch (FileSystemException e) {
@@ -164,7 +167,7 @@ public class FileObjects {
     }
 
     @SuppressWarnings("unchecked")
-    public static  <T extends FileOperation> T getOperation(org.apache.commons.vfs2.FileObject fileObject, Class<T> fileOperation) {
+    public static <T extends FileOperation> T getOperation(FileObject fileObject, Class<T> fileOperation) {
         try {
             return (T) fileObject.getFileOperations().getOperation(fileOperation);
         } catch (FileSystemException e) {

@@ -10,11 +10,14 @@ import org.apache.commons.vfs2.FileContent;
 import org.apache.commons.vfs2.FileName;
 import org.apache.commons.vfs2.FileSystemException;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.DirectoryStream;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.stream.StreamSupport;
 
 /**
  * 轻量级文件对象
@@ -22,9 +25,12 @@ import java.util.List;
 public interface CloudFileObject extends FileObjectImpl, FileContentImpl {
     CloudFileSystem getFileSystem();
 
-    CloudFileObjectList list() throws FileSystemException;
+    DirectoryStream<CloudFileObject> list() throws FileSystemException;
 
-    default CloudFileObjectList listRecursively() throws FileSystemException {
+    default DirectoryStream<CloudFileObject> listRecursively() throws FileSystemException {
+        if (!isFolder()) {
+            throw new FileSystemException("vfs.provider/list-children-not-folder.error", this);
+        }
         return new FileObjectTree(this);
     }
 
@@ -79,13 +85,17 @@ public interface CloudFileObject extends FileObjectImpl, FileContentImpl {
 
     @Override
     default CloudFileObject resolveFile(String path) throws FileSystemException {
-        return getFileSystem().getFileSystemManager().resolveFile(URIBuilder.resolve(getName().getURI(), path));
+        return getFileSystem().resolveFile(URIBuilder.resolve(getName().getURI(), path));
     }
 
     @Override
     default org.apache.commons.vfs2.FileObject[] getChildren() throws FileSystemException {
-        try (CloudFileObjectList list = list()) {
-            return list.stream().toArray(org.apache.commons.vfs2.FileObject[]::new);
+        try (DirectoryStream<CloudFileObject> list = list()) {
+            return StreamSupport.stream(list.spliterator(), false).toArray(org.apache.commons.vfs2.FileObject[]::new);
+        } catch (FileSystemException e) {
+            throw e;
+        } catch (IOException e) {
+            throw new FileSystemException(e);
         }
     }
 

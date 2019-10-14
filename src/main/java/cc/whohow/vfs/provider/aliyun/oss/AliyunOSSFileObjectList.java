@@ -1,15 +1,15 @@
-package cc.whohow.vfs.provider.cos;
+package cc.whohow.vfs.provider.aliyun.oss;
 
 import cc.whohow.vfs.CloudFileObject;
-import cc.whohow.vfs.CloudFileObjectList;
 
+import java.nio.file.DirectoryStream;
 import java.util.Iterator;
 
-public class QcloudCOSFileObjectList implements CloudFileObjectList {
-    protected final QcloudCOSFileObject base;
+public class AliyunOSSFileObjectList implements DirectoryStream<CloudFileObject> {
+    protected final AliyunOSSFileObject base;
     protected final boolean recursively;
 
-    public QcloudCOSFileObjectList(QcloudCOSFileObject base,
+    public AliyunOSSFileObjectList(AliyunOSSFileObject base,
                                    boolean recursively) {
         this.base = base;
         this.recursively = recursively;
@@ -17,7 +17,7 @@ public class QcloudCOSFileObjectList implements CloudFileObjectList {
 
     @Override
     public Iterator<CloudFileObject> iterator() {
-        return new QcloudCOSFileObjectIterator(base, recursively);
+        return new AliyunOSSFileObjectIterator(base, recursively);
     }
 
     @Override

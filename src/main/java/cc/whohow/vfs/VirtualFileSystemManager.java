@@ -1,22 +1,28 @@
 package cc.whohow.vfs;
 
 import cc.whohow.vfs.provider.kv.KeyValueFileObject;
-import cc.whohow.vfs.tree.FileObjectListAdapter;
+import cc.whohow.vfs.provider.uri.UriFileName;
+import cc.whohow.vfs.tree.FileObjectList;
 import cc.whohow.vfs.type.TextType;
 import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.commons.vfs2.Capability;
 import org.apache.commons.vfs2.FileName;
+import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemException;
 import org.apache.commons.vfs2.operations.FileOperationProvider;
 import org.apache.commons.vfs2.provider.FileReplicator;
 import org.apache.commons.vfs2.provider.TemporaryFileStore;
 import org.apache.commons.vfs2.provider.VfsComponentContext;
 
+import java.net.URI;
 import java.net.URLStreamHandlerFactory;
+import java.nio.file.DirectoryStream;
 import java.util.*;
 import java.util.concurrent.ConcurrentSkipListMap;
 
 public class VirtualFileSystemManager implements VirtualFileSystem {
+    private Log logger = LogFactory.getLog(VirtualFileSystemManager.class);
     private NavigableMap<String, String> conf = new ConcurrentSkipListMap<>();
     private NavigableMap<String, String> data = new ConcurrentSkipListMap<>();
     private NavigableMap<String, CloudFileObject> vfs = new ConcurrentSkipListMap<>(Comparator.reverseOrder());
@@ -25,8 +31,8 @@ public class VirtualFileSystemManager implements VirtualFileSystem {
     public VirtualFileSystemManager() {
         vfs.put("/", this);
         vfs.put("vfs:/", this);
-        vfs.put("vfm:/", new KeyValueFileObject<>(this, TextType.utf8(), data, "/"));
-        vfs.put("conf:/", new KeyValueFileObject<>(this, TextType.utf8(), conf, "/"));
+        vfs.put("vfm:/", new KeyValueFileObject<>(this, TextType.utf8(), data, new UriFileName("vfm:/")));
+        vfs.put("conf:/", new KeyValueFileObject<>(this, TextType.utf8(), conf, new UriFileName("conf:/")));
         providers.put("vfs", this);
         providers.put("vfm", this);
         providers.put("conf", this);
@@ -52,13 +58,29 @@ public class VirtualFileSystemManager implements VirtualFileSystem {
     }
 
     @Override
-    public CloudFileObjectList list() throws FileSystemException {
-        return new FileObjectListAdapter(vfs.values());
+    public DirectoryStream<CloudFileObject> list() throws FileSystemException {
+        return new FileObjectList(vfs.values());
     }
 
     @Override
-    public CloudFileObject resolve(CharSequence name) throws FileSystemException {
-        return null;
+    public CloudFileObject resolveFile(String name) throws FileSystemException {
+        return resolveFile(URI.create(name));
+    }
+
+    @Override
+    public CloudFileObject resolveFile(URI u) throws FileSystemException {
+        URI uri = u.normalize();
+        String s = uri.toString();
+        for (Map.Entry<String, CloudFileObject> e : vfs.entrySet()) {
+            if (s.startsWith(e.getKey())) {
+                return e.getValue().resolveFile(s.substring(e.getKey().length()));
+            }
+        }
+        CloudFileSystemProvider fileSystemProvider = providers.get(uri.getScheme());
+        if (fileSystemProvider == null) {
+            return null;
+        }
+        return fileSystemProvider.getFileObject(uri);
     }
 
     @Override
@@ -93,7 +115,29 @@ public class VirtualFileSystemManager implements VirtualFileSystem {
 
     @Override
     public void init() throws FileSystemException {
+        try (DirectoryStream<CloudFileObject> list = resolveFile("conf:/providers/").list()) {
+            for (CloudFileObject provider : list) {
+                String className = new FileValue<>(provider.resolveFile("className"), TextType.utf8()).get();
+                CloudFileSystemProvider fileSystemProvider = (CloudFileSystemProvider) Class.forName(className).newInstance();
+                CloudFileObject scheme = provider.resolveFile("scheme");
+                if (scheme.exists()) {
+                    System.out.println("scheme");
+                }
+                providers.putIfAbsent(fileSystemProvider.getScheme(), fileSystemProvider);
+                fileSystemProvider.setContext(this);
+                fileSystemProvider.setLogger(logger);
+                fileSystemProvider.init();
+            }
+        } catch (FileSystemException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new FileSystemException(e);
+        }
+    }
 
+    @Override
+    public void addJunction(String junction, FileObject file) throws FileSystemException {
+        vfs.put(junction, (CloudFileObject) file);
     }
 
     @Override

@@ -2,7 +2,6 @@ package cc.whohow.vfs;
 
 import cc.whohow.vfs.io.IO;
 import cc.whohow.vfs.time.FileTimes;
-import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.*;
 import org.apache.commons.vfs2.impl.DefaultFileContentInfo;
 import org.apache.commons.vfs2.util.RandomAccessMode;
