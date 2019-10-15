@@ -1,13 +1,13 @@
 package cc.whohow.vfs.diff;
 
 public class Diff<K> {
-    public static final char NO = '=';
+    public static final char EQ = '=';
     public static final char ADD = '+';
     public static final char DELETE = '-';
     public static final char UPDATE = '*';
 
-    public static <K> Diff<K> no(K key) {
-        return new Diff<>(NO, key);
+    public static <K> Diff<K> eq(K key) {
+        return new Diff<>(EQ, key);
     }
 
     public static <K> Diff<K> add(K key) {
@@ -36,6 +36,14 @@ public class Diff<K> {
 
     public K getKey() {
         return key;
+    }
+
+    public boolean isEq() {
+        return type == EQ;
+    }
+
+    public boolean isNotEq() {
+        return type != EQ;
     }
 
     @Override

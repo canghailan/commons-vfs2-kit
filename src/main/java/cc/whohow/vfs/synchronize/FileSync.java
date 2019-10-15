@@ -55,7 +55,7 @@ public class FileSync implements Supplier<Stream<Diff<String>>>, Function<Diff<S
     @Override
     public CloudFileOperation<?, ?> apply(Diff<String> diff) {
         switch (diff.getType()) {
-            case Diff.NO: {
+            case Diff.EQ: {
                 return null;
             }
             case Diff.ADD:
@@ -147,8 +147,8 @@ public class FileSync implements Supplier<Stream<Diff<String>>>, Function<Diff<S
             log.write("\n\n\n");
 
             try (Stream<Diff<String>> diff = get()) {
-
-                diff.peek(this)
+                diff.filter(Diff::isNotEq)
+                        .peek(this)
                         .map(Diff::toString)
                         .forEach(new AppendableConsumer(log, "", "\n"));
 

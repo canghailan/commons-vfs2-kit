@@ -61,7 +61,7 @@ public class MapDiffs<T, K, V> implements Iterator<Diff<K>> {
             return Diff.add(newKey);
         }
         if (equals.test(oldValue, newValue)) {
-            return Diff.no(newKey);
+            return Diff.eq(newKey);
         } else {
             return Diff.update(newKey);
         }
