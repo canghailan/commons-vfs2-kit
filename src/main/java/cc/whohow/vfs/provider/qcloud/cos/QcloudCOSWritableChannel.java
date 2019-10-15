@@ -115,7 +115,9 @@ public class QcloudCOSWritableChannel extends WritableChannel {
         if (length > 0) {
             flushBuffer(true);
         }
-        cos.completeMultipartUpload(new CompleteMultipartUploadRequest(bucketName, key, uploadId, partETags));
+        if (uploadId != null) {
+            cos.completeMultipartUpload(new CompleteMultipartUploadRequest(bucketName, key, uploadId, partETags));
+        }
     }
 
     private synchronized void writeBuffer(byte[] b, int off, int len) {

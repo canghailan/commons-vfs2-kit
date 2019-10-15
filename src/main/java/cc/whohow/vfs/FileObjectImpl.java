@@ -96,19 +96,23 @@ public interface FileObjectImpl extends FileObject {
 
     @Override
     default int deleteAll() throws FileSystemException {
-        FileObject[] list = getChildren();
-        try {
-            int n = 0;
-            for (FileObject fileObject : list) {
-                if (fileObject.isFolder()) {
-                    n += fileObject.deleteAll();
-                } else {
-                    n += fileObject.delete() ? 1 : 0;
+        if (isFolder()) {
+            FileObject[] list = getChildren();
+            try {
+                int n = 0;
+                for (FileObject fileObject : list) {
+                    if (fileObject.isFolder()) {
+                        n += fileObject.deleteAll();
+                    } else {
+                        n += fileObject.delete() ? 1 : 0;
+                    }
                 }
+                return n;
+            } finally {
+                IO.close(list);
             }
-            return n;
-        } finally {
-            IO.close(list);
+        } else {
+            return delete() ? 1 : 0;
         }
     }
 

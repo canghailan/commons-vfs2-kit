@@ -2,6 +2,7 @@ package cc.whohow.vfs;
 
 import cc.whohow.vfs.operations.Copy;
 import cc.whohow.vfs.operations.Move;
+import cc.whohow.vfs.operations.Remove;
 import cc.whohow.vfs.path.URIBuilder;
 import org.apache.commons.vfs2.FileName;
 import org.apache.commons.vfs2.FileSystemConfigBuilder;
@@ -31,12 +32,24 @@ public interface CloudFileSystemProvider extends FileProvider, VfsComponent {
 
     CloudFileOperations getFileOperations() throws FileSystemException;
 
+    default Remove getRemoveOperation(CloudFileObject fileObject) throws FileSystemException {
+        return getFileOperations().getOperation(Remove.class, fileObject);
+    }
+
+    default Copy getCopyOperation(Copy.Options options) throws FileSystemException {
+        return getFileOperations().getOperation(Copy.class, options);
+    }
+
+    default Move getMoveOperation(Move.Options options) throws FileSystemException {
+        return getFileOperations().getOperation(Move.class, options);
+    }
+
     default void copy(Copy.Options options) throws FileSystemException {
-        getFileOperations().getOperation(Copy.class, options).call();
+        getCopyOperation(options).call();
     }
 
     default void move(Move.Options options) throws FileSystemException {
-        getFileOperations().getOperation(Move.class, options).call();
+        getMoveOperation(options).call();
     }
 
     @Override

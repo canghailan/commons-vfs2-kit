@@ -1,5 +1,6 @@
 package cc.whohow.vfs;
 
+import cc.whohow.vfs.operations.provider.DefaultCloudFileOperations;
 import cc.whohow.vfs.provider.kv.KeyValueFileObject;
 import cc.whohow.vfs.provider.uri.UriFileName;
 import cc.whohow.vfs.tree.FileObjectList;
@@ -27,6 +28,7 @@ public class VirtualFileSystemManager implements VirtualFileSystem {
     private NavigableMap<String, String> data = new ConcurrentSkipListMap<>();
     private NavigableMap<String, CloudFileObject> vfs = new ConcurrentSkipListMap<>(Comparator.reverseOrder());
     private NavigableMap<String, CloudFileSystemProvider> providers = new ConcurrentSkipListMap<>();
+    private DefaultCloudFileOperations operations = new DefaultCloudFileOperations();
 
     public VirtualFileSystemManager() {
         vfs.put("/", this);
@@ -90,7 +92,7 @@ public class VirtualFileSystemManager implements VirtualFileSystem {
 
     @Override
     public CloudFileOperations getFileOperations() throws FileSystemException {
-        return null;
+        return operations;
     }
 
     @Override

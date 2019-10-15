@@ -8,18 +8,18 @@ import org.apache.commons.vfs2.FileSystemException;
 
 import java.io.UncheckedIOException;
 
-public class S3FileVersionProvider extends FileAttributeVersionProvider {
+public class S3FileVersionProvider extends FileAttributeVersionProvider<String> {
     public S3FileVersionProvider() {
         super(OSSHeaders.ETAG);
     }
 
     @Override
-    public FileVersion<Object> getVersion(CloudFileObject fileObject) {
+    public FileVersion<String> getVersion(CloudFileObject fileObject) {
         try {
             if (fileObject.isFile()) {
                 return super.getVersion(fileObject);
             } else {
-                return new FileVersion<>(fileObject, null);
+                return null;
             }
         } catch (FileSystemException e) {
             throw new UncheckedIOException(e);

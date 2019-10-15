@@ -113,4 +113,27 @@ public interface CloudFileObject extends FileObjectImpl, FileContentImpl {
     default Iterator<org.apache.commons.vfs2.FileObject> iterator() {
         return new MapIterator<>(new FileObjectTreeIterator(this), fileObject -> fileObject);
     }
+
+    @Override
+    default int deleteAll() throws FileSystemException {
+        if (isFolder()) {
+            try (DirectoryStream<CloudFileObject> list = list()) {
+                int n = 0;
+                for (CloudFileObject fileObject : list) {
+                    if (fileObject.isFolder()) {
+                        n += fileObject.deleteAll();
+                    } else {
+                        n += fileObject.delete() ? 1 : 0;
+                    }
+                }
+                return n;
+            } catch (FileSystemException e) {
+                throw e;
+            } catch (IOException e) {
+                throw new FileSystemException(e);
+            }
+        } else {
+            return delete() ? 1 : 0;
+        }
+    }
 }

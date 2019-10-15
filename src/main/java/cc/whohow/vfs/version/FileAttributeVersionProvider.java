@@ -5,17 +5,18 @@ import org.apache.commons.vfs2.FileSystemException;
 
 import java.io.UncheckedIOException;
 
-public class FileAttributeVersionProvider implements FileVersionProvider<Object> {
-    private final String attribute;
+public class FileAttributeVersionProvider<T> implements FileVersionProvider<T> {
+    protected final String attribute;
 
     public FileAttributeVersionProvider(String attribute) {
         this.attribute = attribute;
     }
 
     @Override
-    public FileVersion<Object> getVersion(CloudFileObject fileObject) {
+    @SuppressWarnings("unchecked")
+    public FileVersion<T> getVersion(CloudFileObject fileObject) {
         try {
-            return new FileVersion<>(fileObject, fileObject.getAttribute(attribute));
+            return new FileVersion<>(fileObject, (T) fileObject.getAttribute(attribute));
         } catch (FileSystemException e) {
             throw new UncheckedIOException(e);
         }

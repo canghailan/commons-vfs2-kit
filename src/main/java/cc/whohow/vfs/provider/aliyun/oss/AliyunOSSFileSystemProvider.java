@@ -41,10 +41,10 @@ public class AliyunOSSFileSystemProvider extends AbstractVfsComponent implements
             Capability.LIST_CHILDREN,
             Capability.URI));
     protected Set<DefaultCredentials> credentials = new LinkedHashSet<>();
+    protected ClientConfiguration clientConfiguration;
     protected Map<String, S3Uri> buckets = new TreeMap<>();
     protected Map<S3Uri, OSSClient> clients = new ConcurrentHashMap<>();
     protected Map<String, AliyunOSSFileSystem> fileSystems = new ConcurrentHashMap<>();
-    protected ClientConfiguration clientConfiguration;
 
     @Override
     public String getScheme() {
@@ -147,6 +147,9 @@ public class AliyunOSSFileSystemProvider extends AbstractVfsComponent implements
         } catch (IOException e) {
             throw new FileSystemException(e);
         }
+
+        // clientConfiguration
+        clientConfiguration = new ClientConfiguration();
 
         // buckets
         for (DefaultCredentials credential : credentials) {
