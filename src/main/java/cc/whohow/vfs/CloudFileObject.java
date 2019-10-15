@@ -8,6 +8,7 @@ import cc.whohow.vfs.tree.FileObjectTreeIterator;
 import cc.whohow.vfs.util.MapIterator;
 import org.apache.commons.vfs2.FileContent;
 import org.apache.commons.vfs2.FileName;
+import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemException;
 
 import java.io.IOException;
@@ -110,7 +111,7 @@ public interface CloudFileObject extends FileObjectImpl, FileContentImpl {
     }
 
     @Override
-    default Iterator<org.apache.commons.vfs2.FileObject> iterator() {
+    default Iterator<FileObject> iterator() {
         return new MapIterator<>(new FileObjectTreeIterator(this), fileObject -> fileObject);
     }
 

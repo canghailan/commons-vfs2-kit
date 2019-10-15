@@ -11,6 +11,14 @@ public class QcloudCOSObjectListingIterator implements Iterator<ObjectListing> {
     private final ListObjectsRequest listObjectsRequest;
     private ObjectListing objectListing;
 
+    public QcloudCOSObjectListingIterator(COS cos, String bucketName, String prefix) {
+        this(cos, new ListObjectsRequest(bucketName, prefix, null, null, 1000));
+    }
+
+    public QcloudCOSObjectListingIterator(COS cos, String bucketName, String prefix, String delimiter) {
+        this(cos, new ListObjectsRequest(bucketName, prefix, null, delimiter, 1000));
+    }
+
     public QcloudCOSObjectListingIterator(COS cos, ListObjectsRequest listObjectsRequest) {
         this.cos = cos;
         this.listObjectsRequest = listObjectsRequest;

@@ -31,7 +31,7 @@ public class TextType implements DataType<String> {
 
     @Override
     public ByteBuffer serialize(String value) {
-        return charset.encode(value);
+        return (value == null || value.isEmpty()) ? ByteBuffer.allocate(0) : charset.encode(value);
     }
 
     @Override

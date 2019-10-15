@@ -1,4 +1,4 @@
-package cc.whohow.vfs.operations.provider;
+package cc.whohow.vfs.operations;
 
 import cc.whohow.vfs.CloudFileOperation;
 

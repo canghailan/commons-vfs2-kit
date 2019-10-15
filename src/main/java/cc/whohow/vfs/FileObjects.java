@@ -158,9 +158,9 @@ public class FileObjects {
         new FileValue<>(fileObject, type).accept(value);
     }
 
-    public static void delete(CloudFileObject fileObject) {
+    public static void deleteAll(FileObject fileObject) {
         try {
-            fileObject.delete();
+            fileObject.deleteAll();
         } catch (FileSystemException e) {
             throw new UncheckedIOException(e);
         }

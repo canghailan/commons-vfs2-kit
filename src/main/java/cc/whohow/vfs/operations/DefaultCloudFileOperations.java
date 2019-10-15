@@ -1,10 +1,7 @@
-package cc.whohow.vfs.operations.provider;
+package cc.whohow.vfs.operations;
 
 import cc.whohow.vfs.CloudFileOperation;
 import cc.whohow.vfs.CloudFileOperations;
-import cc.whohow.vfs.operations.Copy;
-import cc.whohow.vfs.operations.Move;
-import cc.whohow.vfs.operations.Remove;
 import org.apache.commons.vfs2.FileSystemException;
 import org.apache.commons.vfs2.operations.FileOperation;
 

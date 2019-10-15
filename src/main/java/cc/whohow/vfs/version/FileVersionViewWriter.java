@@ -11,7 +11,7 @@ import java.util.function.Consumer;
 public class FileVersionViewWriter implements Consumer<FileVersionView>, Closeable {
     private final ZoneId zoneId = ZoneId.systemDefault();
     private final Writer writer;
-    private String prefix;
+    private final String prefix;
 
     public FileVersionViewWriter(OutputStream stream) {
         this(new OutputStreamWriter(stream, StandardCharsets.UTF_8));

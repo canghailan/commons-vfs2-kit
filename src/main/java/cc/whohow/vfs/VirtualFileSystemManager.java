@@ -1,6 +1,6 @@
 package cc.whohow.vfs;
 
-import cc.whohow.vfs.operations.provider.DefaultCloudFileOperations;
+import cc.whohow.vfs.operations.DefaultCloudFileOperations;
 import cc.whohow.vfs.provider.kv.KeyValueFileObject;
 import cc.whohow.vfs.provider.uri.UriFileName;
 import cc.whohow.vfs.tree.FileObjectList;
@@ -98,6 +98,11 @@ public class VirtualFileSystemManager implements VirtualFileSystem {
     @Override
     public URLStreamHandlerFactory getURLStreamHandlerFactory() {
         return null;
+    }
+
+    @Override
+    public String[] getSchemes() {
+        return providers.keySet().toArray(new String[0]);
     }
 
     @Override

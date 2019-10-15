@@ -106,7 +106,7 @@ public interface FileContentImpl extends FileContent {
 
     @Override
     default long write(OutputStream output) throws IOException {
-        return write(output, 8 * 1024);
+        return write(output, IO.BUFFER_SIZE);
     }
 
     @Override

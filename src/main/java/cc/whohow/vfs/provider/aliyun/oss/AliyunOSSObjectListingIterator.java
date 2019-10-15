@@ -14,6 +14,14 @@ public class AliyunOSSObjectListingIterator implements Iterator<ObjectListing> {
     private final ListObjectsRequest listObjectsRequest;
     private ObjectListing objectListing;
 
+    public AliyunOSSObjectListingIterator(OSS oss, String bucketName, String prefix) {
+        this(oss, new ListObjectsRequest(bucketName, prefix, null, null, 1000));
+    }
+
+    public AliyunOSSObjectListingIterator(OSS oss, String bucketName, String prefix, String delimiter) {
+        this(oss, new ListObjectsRequest(bucketName, prefix, null, delimiter, 1000));
+    }
+
     public AliyunOSSObjectListingIterator(OSS oss, ListObjectsRequest listObjectsRequest) {
         this.oss = oss;
         this.listObjectsRequest = listObjectsRequest;

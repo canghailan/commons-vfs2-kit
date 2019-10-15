@@ -3,6 +3,7 @@ package cc.whohow.vfs;
 import cc.whohow.vfs.io.ReadableChannel;
 import cc.whohow.vfs.io.WritableChannel;
 import cc.whohow.vfs.path.URIBuilder;
+import cc.whohow.vfs.type.TextType;
 import org.apache.commons.vfs2.FileName;
 import org.apache.commons.vfs2.FileSystemException;
 import org.apache.commons.vfs2.FileSystemOptions;
@@ -15,7 +16,6 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
-import java.util.stream.StreamSupport;
 
 public interface VirtualFileSystem extends CloudFileSystemProvider, CloudFileSystem, CloudFileObject, FileSystemManagerImpl, VfsComponentContext {
     @Override
@@ -120,10 +120,11 @@ public interface VirtualFileSystem extends CloudFileSystemProvider, CloudFileSys
 
     @Override
     default Map<String, Object> getAttributes() throws FileSystemException {
+        TextType utf8 = TextType.utf8();
         try (DirectoryStream<CloudFileObject> list = resolveFile("conf:/").listRecursively()) {
             Map<String, Object> attributes = new TreeMap<>();
             for (CloudFileObject fileObject : list) {
-                attributes.put(fileObject.getName().getPathDecoded(), FileObjects.readUtf8(fileObject));
+                attributes.put(fileObject.getName().getPathDecoded(), new FileValue<>(fileObject, utf8).get());
             }
             return attributes;
         } catch (FileSystemException e) {
@@ -135,8 +136,9 @@ public interface VirtualFileSystem extends CloudFileSystemProvider, CloudFileSys
 
     @Override
     default void setAttribute(String attrName, Object value) {
+        TextType utf8 = TextType.utf8();
         try {
-            FileObjects.writeUtf8(resolveFile("conf:/").resolveFile(attrName), Objects.toString(value, null));
+            new FileValue<>(resolveFile("conf:/").resolveFile(attrName), utf8).accept(Objects.toString(value, null));
         } catch (FileSystemException e) {
             throw new UncheckedIOException(e);
         }
@@ -150,16 +152,6 @@ public interface VirtualFileSystem extends CloudFileSystemProvider, CloudFileSys
     @Override
     default boolean hasProvider(String scheme) {
         return getScheme().equals(scheme) || Arrays.asList(getSchemes()).contains(scheme);
-    }
-
-    @Override
-    default String[] getSchemes() {
-        try (DirectoryStream<CloudFileObject> list = resolveFile("conf:/").getChild("providers").list()) {
-            return StreamSupport.stream(list.spliterator(), false)
-                    .map(FileObjects::getBaseName).toArray(String[]::new);
-        } catch (IOException e) {
-            return new String[0];
-        }
     }
 
     @Override

@@ -7,6 +7,9 @@ import cc.whohow.vfs.io.WritableChannel;
 import cc.whohow.vfs.provider.s3.S3FileAttributes;
 import cc.whohow.vfs.provider.s3.S3FileName;
 import com.qcloud.cos.COS;
+import com.qcloud.cos.model.COSObjectSummary;
+import com.qcloud.cos.model.DeleteObjectsRequest;
+import com.qcloud.cos.model.ObjectListing;
 import com.qcloud.cos.model.ObjectMetadata;
 import org.apache.commons.vfs2.FileContentInfo;
 import org.apache.commons.vfs2.FileSystemException;
@@ -15,7 +18,9 @@ import org.apache.commons.vfs2.impl.DefaultFileContentInfo;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.DirectoryStream;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class QcloudCOSFileObject implements CloudFileObject {
     protected final QcloudCOSFileSystem fileSystem;
@@ -156,5 +161,29 @@ public class QcloudCOSFileObject implements CloudFileObject {
     @Override
     public String toString() {
         return name.toString();
+    }
+
+    @Override
+    public int deleteAll() throws FileSystemException {
+        if (isFile()) {
+            getCOS().deleteObject(getBucketName(), getKey());
+            return 1;
+        } else {
+            int n = 0;
+            QcloudCOSObjectListingIterator iterator = new QcloudCOSObjectListingIterator(getCOS(), getBucketName(), getKey());
+            while (iterator.hasNext()) {
+                ObjectListing objectListing = iterator.next();
+                if (!objectListing.getObjectSummaries().isEmpty()) {
+                    List<DeleteObjectsRequest.KeyVersion> keys = objectListing.getObjectSummaries().stream()
+                            .map(COSObjectSummary::getKey)
+                            .map(DeleteObjectsRequest.KeyVersion::new)
+                            .collect(Collectors.toList());
+                    getCOS().deleteObjects(new DeleteObjectsRequest(getBucketName()).withKeys(keys));
+                }
+                n += objectListing.getCommonPrefixes().size();
+                n += objectListing.getObjectSummaries().size();
+            }
+            return n;
+        }
     }
 }

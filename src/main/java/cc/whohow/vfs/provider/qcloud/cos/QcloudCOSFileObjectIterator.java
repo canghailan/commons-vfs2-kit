@@ -4,7 +4,6 @@ import cc.whohow.vfs.CloudFileObject;
 import cc.whohow.vfs.provider.s3.S3FileName;
 import cc.whohow.vfs.util.MapIterator;
 import com.qcloud.cos.model.COSObjectSummary;
-import com.qcloud.cos.model.ListObjectsRequest;
 import com.qcloud.cos.model.ObjectListing;
 import org.apache.commons.vfs2.FileSystemException;
 
@@ -21,12 +20,9 @@ public class QcloudCOSFileObjectIterator implements Iterator<CloudFileObject> {
 
     public QcloudCOSFileObjectIterator(QcloudCOSFileObject base, boolean recursively) {
         this.base = base;
-        this.objectListingIterator = new QcloudCOSObjectListingIterator(base.getCOS(), new ListObjectsRequest(
-                base.getBucketName(),
-                base.getKey(),
-                null,
-                recursively ? null : "/",
-                1000));
+        this.objectListingIterator = recursively ?
+                new QcloudCOSObjectListingIterator(base.getCOS(), base.getBucketName(), base.getKey()) :
+                new QcloudCOSObjectListingIterator(base.getCOS(), base.getBucketName(), base.getKey(), "/");
         this.files = Collections.emptyIterator();
     }
 

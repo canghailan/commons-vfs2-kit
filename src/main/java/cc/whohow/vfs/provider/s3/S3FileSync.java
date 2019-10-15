@@ -1,4 +1,4 @@
-package cc.whohow.vfs.synchronize;
+package cc.whohow.vfs.provider.s3;
 
 import cc.whohow.vfs.CloudFileObject;
 import cc.whohow.vfs.CloudFileOperation;
@@ -7,7 +7,6 @@ import cc.whohow.vfs.diff.Diff;
 import cc.whohow.vfs.diff.MapDiffs;
 import cc.whohow.vfs.io.AppendableConsumer;
 import cc.whohow.vfs.operations.Copy;
-import cc.whohow.vfs.provider.s3.S3FileVersionProvider;
 import cc.whohow.vfs.version.FileVersion;
 import cc.whohow.vfs.version.FileVersionView;
 import cc.whohow.vfs.version.FileVersionViewWriter;
@@ -23,13 +22,16 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-public class FileSync implements Supplier<Stream<Diff<String>>>, Function<Diff<String>, CloudFileOperation<?, ?>>, Consumer<Diff<String>>, BiConsumer<Diff<String>, Executor>, Runnable {
+public class S3FileSync implements
+        Supplier<Stream<Diff<String>>>,
+        Function<Diff<String>, CloudFileOperation<?, ?>>, Consumer<Diff<String>>, BiConsumer<Diff<String>, Executor>,
+        Runnable {
     private VirtualFileSystem vfs;
     private CloudFileObject context;
     private CloudFileObject source;
     private CloudFileObject target;
 
-    public FileSync(VirtualFileSystem vfs, String context, String source, String target) throws FileSystemException {
+    public S3FileSync(VirtualFileSystem vfs, String context, String source, String target) throws FileSystemException {
         this.vfs = vfs;
         this.context = vfs.resolveFile(context);
         this.source = vfs.resolveFile(source);
@@ -44,7 +46,7 @@ public class FileSync implements Supplier<Stream<Diff<String>>>, Function<Diff<S
         }
     }
 
-    public CloudFileOperation<?, ?> delete(String path) {
+    public CloudFileOperation<?, ?> remove(String path) {
         try {
             return vfs.getRemoveOperation(target.resolveFile(path));
         } catch (FileSystemException e) {
@@ -63,7 +65,7 @@ public class FileSync implements Supplier<Stream<Diff<String>>>, Function<Diff<S
                 return copy(diff.getKey());
             }
             case Diff.DELETE: {
-                return delete(diff.getKey());
+                return remove(diff.getKey());
             }
             default: {
                 throw new IllegalArgumentException(diff.toString());
@@ -91,44 +93,35 @@ public class FileSync implements Supplier<Stream<Diff<String>>>, Function<Diff<S
     public Stream<Diff<String>> get() {
         try {
             context.deleteAll();
-        } catch (FileSystemException e) {
-            throw new UncheckedIOException(e);
-        }
-        try (Stream<FileVersion<String>> versions = new S3FileVersionProvider().getVersions(source)) {
             try (FileVersionViewWriter writer = new FileVersionViewWriter(context.resolveFile("new.txt").getOutputStream(), source.getName().getURI())) {
-                versions.map(FileVersionView::of)
-                        .forEach(writer);
+                try (Stream<FileVersion<String>> versions = new S3FileVersionProvider().getVersions(source)) {
+                    versions.map(FileVersionView::of)
+                            .forEach(writer);
+                    writer.flush();
+                }
             }
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
-        try (Stream<FileVersion<String>> versions = new S3FileVersionProvider().getVersions(target)) {
             try (FileVersionViewWriter writer = new FileVersionViewWriter(context.resolveFile("old.txt").getOutputStream(), target.getName().getURI())) {
-                versions.map(FileVersionView::of)
-                        .forEach(writer);
+                try (Stream<FileVersion<String>> versions = new S3FileVersionProvider().getVersions(target)) {
+                    versions.map(FileVersionView::of)
+                            .forEach(writer);
+                    writer.flush();
+                }
             }
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
-        try (Stream<FileVersionView> newList = new BufferedReader(new InputStreamReader(context.resolveFile("new.txt").getInputStream())).lines().map(FileVersionView::parse);
-             Stream<FileVersionView> oldList = new BufferedReader(new InputStreamReader(context.resolveFile("old.txt").getInputStream())).lines().map(FileVersionView::parse)) {
-            try (Stream<Diff<String>> diff = new MapDiffs<>(
-                    FileVersionView::getName,
-                    FileVersionView::getVersion,
-                    String::equalsIgnoreCase,
-                    new LinkedHashMap<>(),
-                    newList.iterator(),
-                    oldList.iterator()).stream()) {
-                try (Writer writer = new OutputStreamWriter(new BufferedOutputStream(context.resolveFile("diff.txt").getOutputStream(), 2 * 1024 * 1024), StandardCharsets.UTF_8)) {
-                    diff.map(Diff::toString)
+            try (Writer writer = new OutputStreamWriter(new BufferedOutputStream(context.resolveFile("diff.txt").getOutputStream(), 2 * 1024 * 1024), StandardCharsets.UTF_8)) {
+                try (Stream<FileVersionView> newList = new BufferedReader(new InputStreamReader(context.resolveFile("new.txt").getInputStream())).lines().map(FileVersionView::parse);
+                     Stream<FileVersionView> oldList = new BufferedReader(new InputStreamReader(context.resolveFile("old.txt").getInputStream())).lines().map(FileVersionView::parse)) {
+                    new MapDiffs<>(
+                            FileVersionView::getName,
+                            FileVersionView::getVersion,
+                            String::equalsIgnoreCase,
+                            new LinkedHashMap<>(),
+                            newList.iterator(),
+                            oldList.iterator()).stream()
+                            .map(Diff::toString)
                             .forEach(new AppendableConsumer(writer, "", "\n"));
                     writer.flush();
                 }
             }
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
-        try {
             return new BufferedReader(new InputStreamReader(context.resolveFile("diff.txt").getInputStream())).lines()
                     .map(Diff::parse);
         } catch (IOException e) {
@@ -151,9 +144,9 @@ public class FileSync implements Supplier<Stream<Diff<String>>>, Function<Diff<S
                         .peek(this)
                         .map(Diff::toString)
                         .forEach(new AppendableConsumer(log, "", "\n"));
-
-                log.flush();
             }
+
+            log.flush();
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }

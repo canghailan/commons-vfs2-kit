@@ -7,6 +7,9 @@ import cc.whohow.vfs.io.WritableChannel;
 import cc.whohow.vfs.provider.s3.S3FileAttributes;
 import cc.whohow.vfs.provider.s3.S3FileName;
 import com.aliyun.oss.OSS;
+import com.aliyun.oss.model.DeleteObjectsRequest;
+import com.aliyun.oss.model.OSSObjectSummary;
+import com.aliyun.oss.model.ObjectListing;
 import com.aliyun.oss.model.ObjectMetadata;
 import org.apache.commons.vfs2.FileSystemException;
 
@@ -18,7 +21,9 @@ import java.net.URL;
 import java.nio.file.DirectoryStream;
 import java.time.Duration;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 阿里云文件对象
@@ -168,5 +173,28 @@ public class AliyunOSSFileObject implements CloudFileObject {
     @Override
     public String toString() {
         return name.toString();
+    }
+
+    @Override
+    public int deleteAll() throws FileSystemException {
+        if (isFile()) {
+            getOSS().deleteObject(getBucketName(), getKey());
+            return 1;
+        } else {
+            int n = 0;
+            AliyunOSSObjectListingIterator iterator = new AliyunOSSObjectListingIterator(getOSS(), getBucketName(), getKey());
+            while (iterator.hasNext()) {
+                ObjectListing objectListing = iterator.next();
+                if (!objectListing.getObjectSummaries().isEmpty()) {
+                    List<String> keys = objectListing.getObjectSummaries().stream()
+                            .map(OSSObjectSummary::getKey)
+                            .collect(Collectors.toList());
+                    getOSS().deleteObjects(new DeleteObjectsRequest(getBucketName()).withKeys(keys));
+                }
+                n += objectListing.getCommonPrefixes().size();
+                n += objectListing.getObjectSummaries().size();
+            }
+            return n;
+        }
     }
 }

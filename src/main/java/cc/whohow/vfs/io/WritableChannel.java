@@ -17,6 +17,6 @@ public abstract class WritableChannel extends OutputStream implements WritableBy
     }
 
     public long transferFrom(InputStream stream) throws IOException {
-        return IO.transfer(stream, this, IO.BUFFER_SIZE);
+        return IO.transfer(stream, this);
     }
 }

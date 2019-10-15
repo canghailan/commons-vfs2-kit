@@ -1,8 +1,6 @@
-package cc.whohow.vfs.operations.provider;
+package cc.whohow.vfs.operations;
 
 import cc.whohow.vfs.CloudFileObject;
-import cc.whohow.vfs.operations.AbstractFileOperation;
-import cc.whohow.vfs.operations.Remove;
 import org.apache.commons.vfs2.FileSystemException;
 
 import java.io.UncheckedIOException;

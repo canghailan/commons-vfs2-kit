@@ -82,6 +82,12 @@ public interface FileObjectImpl extends FileObject {
 
     @Override
     default int delete(FileSelector selector) throws FileSystemException {
+        if (selector == Selectors.SELECT_ALL) {
+            return deleteAll();
+        }
+        if (selector == Selectors.SELECT_SELF) {
+            return delete() ? 1 : 0;
+        }
         List<org.apache.commons.vfs2.FileObject> list = new ArrayList<>();
         findFiles(selector, true, list);
         try {
@@ -196,19 +202,16 @@ public interface FileObjectImpl extends FileObject {
 
     @Override
     default String getPublicURIString() {
-        // default public
         return getName().getFriendlyURI();
     }
 
     @Override
     default FileType getType() throws FileSystemException {
-        // default by name
         return getName().getType();
     }
 
     @Override
     default URL getURL() throws FileSystemException {
-        // default public
         try {
             return new URL(getPublicURIString());
         } catch (MalformedURLException e) {
@@ -281,7 +284,6 @@ public interface FileObjectImpl extends FileObject {
 
     @Override
     default FileObject resolveFile(String name, NameScope scope) throws FileSystemException {
-        // default resolve and check
         FileObject fileObject = resolveFile(name);
         switch (scope) {
             case FILE_SYSTEM: {
@@ -328,13 +330,11 @@ public interface FileObjectImpl extends FileObject {
 
     @Override
     default int compareTo(FileObject o) {
-        // default compare by name
         return getName().compareTo(o.getName());
     }
 
     @Override
     default Iterator<FileObject> iterator() {
-        // default by find
         try {
             ArrayList<FileObject> list = new ArrayList<>();
             findFiles(Selectors.EXCLUDE_SELF, true, list);

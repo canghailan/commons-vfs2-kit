@@ -1,8 +1,4 @@
-package cc.whohow.vfs.operations.provider;
-
-import cc.whohow.vfs.operations.AbstractFileOperation;
-import cc.whohow.vfs.operations.Copy;
-import cc.whohow.vfs.operations.Move;
+package cc.whohow.vfs.operations;
 
 public class DefaultMoveOperation extends AbstractFileOperation<Move.Options, Object> implements Move {
     private final DefaultCopyOperation copy = new DefaultCopyOperation();

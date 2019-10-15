@@ -4,10 +4,7 @@ import cc.whohow.vfs.operations.Copy;
 import cc.whohow.vfs.operations.Move;
 import cc.whohow.vfs.operations.Remove;
 import cc.whohow.vfs.path.URIBuilder;
-import org.apache.commons.vfs2.FileName;
-import org.apache.commons.vfs2.FileSystemConfigBuilder;
-import org.apache.commons.vfs2.FileSystemException;
-import org.apache.commons.vfs2.FileSystemOptions;
+import org.apache.commons.vfs2.*;
 import org.apache.commons.vfs2.provider.FileProvider;
 import org.apache.commons.vfs2.provider.VfsComponent;
 
@@ -53,12 +50,12 @@ public interface CloudFileSystemProvider extends FileProvider, VfsComponent {
     }
 
     @Override
-    default CloudFileObject findFile(org.apache.commons.vfs2.FileObject baseFile, String uri, FileSystemOptions fileSystemOptions) throws FileSystemException {
+    default CloudFileObject findFile(FileObject baseFile, String uri, FileSystemOptions fileSystemOptions) throws FileSystemException {
         return getFileObject(URIBuilder.resolve(baseFile.getName().getURI(), uri));
     }
 
     @Override
-    default CloudFileObject createFileSystem(String scheme, org.apache.commons.vfs2.FileObject file, FileSystemOptions fileSystemOptions) throws FileSystemException {
+    default CloudFileObject createFileSystem(String scheme, FileObject file, FileSystemOptions fileSystemOptions) throws FileSystemException {
         throw new FileSystemException("");
     }
 

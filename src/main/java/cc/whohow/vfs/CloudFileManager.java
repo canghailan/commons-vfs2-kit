@@ -15,9 +15,9 @@ import java.nio.charset.StandardCharsets;
  * 文件管理器
  */
 public class CloudFileManager {
-    private final CloudFileSystem fileSystem;
+    private final VirtualFileSystem fileSystem;
 
-    public CloudFileManager(CloudFileSystem fileSystem) {
+    public CloudFileManager(VirtualFileSystem fileSystem) {
         this.fileSystem = fileSystem;
     }
 
@@ -73,13 +73,13 @@ public class CloudFileManager {
         FileObjects.write(resolve(path), type, value);
     }
 
-    public void delete(String path) {
-        FileObjects.delete(resolve(path));
+    public void deleteAll(String path) {
+        FileObjects.deleteAll(resolve(path));
     }
 
     public void copy(String src, String dst) {
         try {
-            fileSystem.getFileSystemProvider().copy(new Copy.Options(resolve(src), resolve(dst)));
+            fileSystem.copy(new Copy.Options(resolve(src), resolve(dst)));
         } catch (FileSystemException e) {
             throw new UncheckedIOException(e);
         }
@@ -87,7 +87,7 @@ public class CloudFileManager {
 
     public void move(String src, String dst) {
         try {
-            fileSystem.getFileSystemProvider().move(new Move.Options(resolve(src), resolve(dst)));
+            fileSystem.move(new Move.Options(resolve(src), resolve(dst)));
         } catch (FileSystemException e) {
             throw new UncheckedIOException(e);
         }

@@ -3,7 +3,6 @@ package cc.whohow.vfs.provider.aliyun.oss;
 import cc.whohow.vfs.CloudFileObject;
 import cc.whohow.vfs.provider.s3.S3FileName;
 import cc.whohow.vfs.util.MapIterator;
-import com.aliyun.oss.model.ListObjectsRequest;
 import com.aliyun.oss.model.OSSObjectSummary;
 import com.aliyun.oss.model.ObjectListing;
 import org.apache.commons.vfs2.FileSystemException;
@@ -25,12 +24,9 @@ public class AliyunOSSFileObjectIterator implements Iterator<CloudFileObject> {
 
     public AliyunOSSFileObjectIterator(AliyunOSSFileObject base, boolean recursively) {
         this.base = base;
-        this.objectListingIterator = new AliyunOSSObjectListingIterator(base.getOSS(), new ListObjectsRequest(
-                base.getBucketName(),
-                base.getKey(),
-                null,
-                recursively ? null : "/",
-                1000));
+        this.objectListingIterator = recursively ?
+                new AliyunOSSObjectListingIterator(base.getOSS(), base.getBucketName(), base.getKey()) :
+                new AliyunOSSObjectListingIterator(base.getOSS(), base.getBucketName(), base.getKey(), "/");
         this.files = Collections.emptyIterator();
     }
 

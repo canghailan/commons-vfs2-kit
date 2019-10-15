@@ -1,5 +1,6 @@
 package cc.whohow.vfs.type;
 
+import cc.whohow.vfs.CloudFileObject;
 import cc.whohow.vfs.io.ByteBufferReadableChannel;
 import cc.whohow.vfs.io.ByteBufferWritableChannel;
 import cc.whohow.vfs.io.ReadableChannel;
@@ -31,5 +32,17 @@ public interface DataType<T> {
 
     default void serialize(WritableChannel channel, T value) throws IOException {
         serialize((OutputStream) channel, value);
+    }
+
+    default T deserialize(CloudFileObject fileObject) throws IOException {
+        try (ReadableChannel channel = fileObject.getReadableChannel()) {
+            return deserialize(channel);
+        }
+    }
+
+    default void serialize(CloudFileObject fileObject, T value) throws IOException {
+        try (WritableChannel channel = fileObject.getWritableChannel()) {
+            serialize(channel, value);
+        }
     }
 }

@@ -1,5 +1,6 @@
 package cc.whohow.vfs;
 
+import cc.whohow.vfs.type.TextType;
 import org.apache.commons.vfs2.FileSystemOptions;
 
 import java.io.IOException;
@@ -17,11 +18,12 @@ public class VirtualFileSystemOptions implements Supplier<FileSystemOptions> {
 
     @Override
     public FileSystemOptions get() {
+        TextType utf8 = TextType.utf8();
         try (DirectoryStream<CloudFileObject> list = configuration.listRecursively()) {
             FileSystemOptions fileSystemOptions = new FileSystemOptions();
             for (CloudFileObject fileObject : list) {
                 BUILDER.setParam(fileSystemOptions,
-                        fileObject.getName().getPathDecoded(), FileObjects.readUtf8(fileObject));
+                        fileObject.getName().getPathDecoded(), new FileValue<>(fileObject, utf8).get());
             }
             return fileSystemOptions;
         } catch (IOException e) {

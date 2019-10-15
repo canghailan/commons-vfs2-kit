@@ -1,9 +1,7 @@
-package cc.whohow.vfs.operations.provider;
+package cc.whohow.vfs.operations;
 
 import cc.whohow.vfs.io.ReadableChannel;
 import cc.whohow.vfs.io.WritableChannel;
-import cc.whohow.vfs.operations.AbstractFileOperation;
-import cc.whohow.vfs.operations.Copy;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;

@@ -1,11 +1,13 @@
 package cc.whohow.vfs;
 
+import org.apache.commons.vfs2.operations.FileOperation;
+
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.function.Function;
 
-public interface CloudFileOperation<T, R> extends org.apache.commons.vfs2.operations.FileOperation, Function<T, R>, Runnable, Callable<R> {
+public interface CloudFileOperation<T, R> extends FileOperation, Function<T, R>, Runnable, Callable<R> {
     CloudFileOperation<T, R> with(T options);
 
     T getOptions();
