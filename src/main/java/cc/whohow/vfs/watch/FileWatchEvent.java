@@ -1,13 +1,13 @@
 package cc.whohow.vfs.watch;
 
-import cc.whohow.vfs.CloudFileObject;
 import org.apache.commons.vfs2.FileListener;
+import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.events.AbstractFileChangeEvent;
 
 import java.nio.file.WatchEvent;
 
-public abstract class FileWatchEvent extends AbstractFileChangeEvent implements WatchEvent<CloudFileObject> {
-    public FileWatchEvent(CloudFileObject file) {
+public abstract class FileWatchEvent extends AbstractFileChangeEvent implements WatchEvent<FileObject> {
+    public FileWatchEvent(FileObject file) {
         super(file);
     }
 
@@ -17,17 +17,17 @@ public abstract class FileWatchEvent extends AbstractFileChangeEvent implements 
     }
 
     @Override
-    public CloudFileObject context() {
-        return (CloudFileObject) getFile();
+    public FileObject context() {
+        return getFile();
     }
 
     public static class Create extends FileWatchEvent {
-        public Create(CloudFileObject context) {
+        public Create(FileObject context) {
             super(context);
         }
 
         @Override
-        public Kind<CloudFileObject> kind() {
+        public Kind<FileObject> kind() {
             return FileEventKind.CREATE;
         }
 
@@ -38,12 +38,12 @@ public abstract class FileWatchEvent extends AbstractFileChangeEvent implements 
     }
 
     public static class Delete extends FileWatchEvent {
-        public Delete(CloudFileObject context) {
+        public Delete(FileObject context) {
             super(context);
         }
 
         @Override
-        public Kind<CloudFileObject> kind() {
+        public Kind<FileObject> kind() {
             return FileEventKind.DELETE;
         }
 
@@ -54,12 +54,12 @@ public abstract class FileWatchEvent extends AbstractFileChangeEvent implements 
     }
 
     public static class Modify extends FileWatchEvent {
-        public Modify(CloudFileObject context) {
+        public Modify(FileObject context) {
             super(context);
         }
 
         @Override
-        public Kind<CloudFileObject> kind() {
+        public Kind<FileObject> kind() {
             return FileEventKind.MODIFY;
         }
 

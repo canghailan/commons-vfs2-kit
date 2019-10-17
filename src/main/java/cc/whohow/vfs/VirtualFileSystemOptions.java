@@ -18,12 +18,11 @@ public class VirtualFileSystemOptions implements Supplier<FileSystemOptions> {
 
     @Override
     public FileSystemOptions get() {
-        TextSerializer utf8 = TextSerializer.utf8();
         try (DirectoryStream<CloudFileObject> list = configuration.listRecursively()) {
             FileSystemOptions fileSystemOptions = new FileSystemOptions();
             for (CloudFileObject fileObject : list) {
                 BUILDER.setParam(fileSystemOptions,
-                        fileObject.getName().getPathDecoded(), new FileValue<>(fileObject, utf8).get());
+                        fileObject.getName().getPathDecoded(), TextSerializer.utf8().deserialize(fileObject));
             }
             return fileSystemOptions;
         } catch (IOException e) {

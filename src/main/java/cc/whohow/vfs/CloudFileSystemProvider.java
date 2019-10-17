@@ -4,6 +4,8 @@ import cc.whohow.vfs.operations.Copy;
 import cc.whohow.vfs.operations.Move;
 import cc.whohow.vfs.operations.Remove;
 import cc.whohow.vfs.path.URIBuilder;
+import cc.whohow.vfs.version.FileLastModifiedTimeVersionProvider;
+import cc.whohow.vfs.version.FileVersionProvider;
 import org.apache.commons.vfs2.*;
 import org.apache.commons.vfs2.provider.FileProvider;
 import org.apache.commons.vfs2.provider.VfsComponent;
@@ -67,5 +69,9 @@ public interface CloudFileSystemProvider extends FileProvider, VfsComponent {
     @Override
     default FileName parseUri(org.apache.commons.vfs2.FileName root, String uri) throws FileSystemException {
         return getFileName(URIBuilder.resolve(root.getURI(), uri));
+    }
+
+    default FileVersionProvider<?> getFileVersionProvider() {
+        return FileLastModifiedTimeVersionProvider.get();
     }
 }

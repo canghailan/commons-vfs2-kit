@@ -6,7 +6,7 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-public class MapFileDiffIterator<T, K, V> implements Iterator<FileDiffEntry<K>> {
+public class FileDiffIterator<T, K, V> implements Iterator<FileDiffEntry<K>> {
     private Function<T, K> key;
     private Function<T, V> value;
     private BiPredicate<V, V> equals;
@@ -14,15 +14,15 @@ public class MapFileDiffIterator<T, K, V> implements Iterator<FileDiffEntry<K>> 
     private Iterator<T> newList;
     private Iterator<K> delete;
 
-    public MapFileDiffIterator(Function<T, K> key, Function<T, V> value, Iterator<T> newList, Iterator<T> oldList) {
+    public FileDiffIterator(Function<T, K> key, Function<T, V> value, Iterator<T> newList, Iterator<T> oldList) {
         this(key, value, new LinkedHashMap<>(), newList, oldList);
     }
 
-    public MapFileDiffIterator(Function<T, K> key, Function<T, V> value, Map<K, V> map, Iterator<T> newList, Iterator<T> oldList) {
+    public FileDiffIterator(Function<T, K> key, Function<T, V> value, Map<K, V> map, Iterator<T> newList, Iterator<T> oldList) {
         this(key, value, Objects::equals, map, newList, oldList);
     }
 
-    public MapFileDiffIterator(Function<T, K> key, Function<T, V> value, BiPredicate<V, V> equals, Map<K, V> map, Iterator<T> newList, Iterator<T> oldList) {
+    public FileDiffIterator(Function<T, K> key, Function<T, V> value, BiPredicate<V, V> equals, Map<K, V> map, Iterator<T> newList, Iterator<T> oldList) {
         this.key = key;
         this.value = value;
         this.equals = equals;

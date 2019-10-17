@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
-import java.nio.file.Watchable;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Function;
@@ -17,7 +16,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class PollingFileWatchable<T> implements Watchable, Supplier<Map<FileName, FileVersion<T>>> {
+public class PollingFileWatchable<T> implements FileWatchable, Supplier<Map<FileName, FileVersion<T>>> {
     private final CloudFileObject fileObject;
     private final FileVersionProvider<T> fileVersionProvider;
 

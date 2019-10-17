@@ -12,11 +12,6 @@ import java.io.OutputStream;
 public class JsonSerializer<T> implements Serializer<T> {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final JsonSerializer<JsonNode> INSTANCE = new JsonSerializer<>(JsonNode.class);
-
-    public static JsonSerializer<JsonNode> get() {
-        return INSTANCE;
-    }
-
     protected ObjectMapper objectMapper;
     protected JavaType type;
 
@@ -51,6 +46,10 @@ public class JsonSerializer<T> implements Serializer<T> {
     public JsonSerializer(ObjectMapper objectMapper, JavaType type) {
         this.objectMapper = objectMapper;
         this.type = type;
+    }
+
+    public static JsonSerializer<JsonNode> get() {
+        return INSTANCE;
     }
 
     @Override

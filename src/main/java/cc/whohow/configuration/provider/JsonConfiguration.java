@@ -4,7 +4,6 @@ import cc.whohow.configuration.Configuration;
 import cc.whohow.vfs.CloudFileObject;
 import cc.whohow.vfs.FileValue;
 import cc.whohow.vfs.serialize.JsonSerializer;
-import cc.whohow.vfs.serialize.Serializer;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -40,9 +39,5 @@ public class JsonConfiguration<T> extends FileValue.Cache<T> implements Configur
 
     public JsonConfiguration(CloudFileObject fileObject, JavaType type, ObjectMapper objectMapper) {
         super(fileObject, new JsonSerializer<>(objectMapper, type));
-    }
-
-    protected JsonConfiguration(CloudFileObject fileObject, Serializer<T> serializer) {
-        super(fileObject, serializer);
     }
 }

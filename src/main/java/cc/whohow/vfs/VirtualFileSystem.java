@@ -4,12 +4,17 @@ import cc.whohow.vfs.io.ReadableChannel;
 import cc.whohow.vfs.io.WritableChannel;
 import cc.whohow.vfs.path.URIBuilder;
 import cc.whohow.vfs.serialize.TextSerializer;
+import cc.whohow.vfs.watch.PollingFileWatchService;
+import org.apache.commons.logging.Log;
 import org.apache.commons.vfs2.FileName;
 import org.apache.commons.vfs2.FileSystemException;
 import org.apache.commons.vfs2.FileSystemOptions;
 import org.apache.commons.vfs2.provider.VfsComponentContext;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URI;
 import java.nio.file.DirectoryStream;
 import java.util.Arrays;
@@ -120,11 +125,10 @@ public interface VirtualFileSystem extends CloudFileSystemProvider, CloudFileSys
 
     @Override
     default Map<String, Object> getAttributes() throws FileSystemException {
-        TextSerializer utf8 = TextSerializer.utf8();
         try (DirectoryStream<CloudFileObject> list = resolveFile("conf:/").listRecursively()) {
             Map<String, Object> attributes = new TreeMap<>();
             for (CloudFileObject fileObject : list) {
-                attributes.put(fileObject.getName().getPathDecoded(), new FileValue<>(fileObject, utf8).get());
+                attributes.put(fileObject.getName().getPathDecoded(), TextSerializer.utf8().deserialize(fileObject));
             }
             return attributes;
         } catch (FileSystemException e) {
@@ -135,12 +139,13 @@ public interface VirtualFileSystem extends CloudFileSystemProvider, CloudFileSys
     }
 
     @Override
-    default void setAttribute(String attrName, Object value) {
-        TextSerializer utf8 = TextSerializer.utf8();
+    default void setAttribute(String attrName, Object value) throws FileSystemException {
         try {
-            new FileValue<>(resolveFile("conf:/").resolveFile(attrName), utf8).accept(Objects.toString(value, null));
+            TextSerializer.utf8().serialize(resolveFile("conf:/").resolveFile(attrName), Objects.toString(value, null));
         } catch (FileSystemException e) {
-            throw new UncheckedIOException(e);
+            throw e;
+        } catch (IOException e) {
+            throw new FileSystemException(e);
         }
     }
 
@@ -192,5 +197,17 @@ public interface VirtualFileSystem extends CloudFileSystemProvider, CloudFileSys
     }
 
     @Override
+    default void setLogger(Log log) {
+
+    }
+
+    @Override
+    default void setContext(VfsComponentContext context) {
+
+    }
+
+    @Override
     void close();
+
+    PollingFileWatchService getWatchService();
 }

@@ -5,6 +5,7 @@ import cc.whohow.vfs.provider.kv.KeyValueFileObject;
 import cc.whohow.vfs.provider.uri.UriFileName;
 import cc.whohow.vfs.serialize.TextSerializer;
 import cc.whohow.vfs.tree.FileObjectList;
+import cc.whohow.vfs.watch.PollingFileWatchService;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.vfs2.Capability;
@@ -14,13 +15,14 @@ import org.apache.commons.vfs2.FileSystemException;
 import org.apache.commons.vfs2.operations.FileOperationProvider;
 import org.apache.commons.vfs2.provider.FileReplicator;
 import org.apache.commons.vfs2.provider.TemporaryFileStore;
-import org.apache.commons.vfs2.provider.VfsComponentContext;
 
 import java.net.URI;
 import java.net.URLStreamHandlerFactory;
 import java.nio.file.DirectoryStream;
 import java.util.*;
 import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
 public class VirtualFileSystemManager implements VirtualFileSystem {
     private Log logger = LogFactory.getLog(VirtualFileSystemManager.class);
@@ -29,6 +31,8 @@ public class VirtualFileSystemManager implements VirtualFileSystem {
     private NavigableMap<String, CloudFileObject> vfs = new ConcurrentSkipListMap<>(Comparator.reverseOrder());
     private NavigableMap<String, CloudFileSystemProvider> providers = new ConcurrentSkipListMap<>();
     private DefaultCloudFileOperations operations = new DefaultCloudFileOperations();
+    private ScheduledExecutorService executor;
+    private PollingFileWatchService watchService;
 
     public VirtualFileSystemManager() {
         vfs.put("/", this);
@@ -38,6 +42,12 @@ public class VirtualFileSystemManager implements VirtualFileSystem {
         providers.put("vfs", this);
         providers.put("vfm", this);
         providers.put("conf", this);
+        executor = Executors.newScheduledThreadPool(2);
+        watchService = new PollingFileWatchService(executor);
+    }
+
+    public ScheduledExecutorService getExecutor() {
+        return executor;
     }
 
     @Override
@@ -111,21 +121,12 @@ public class VirtualFileSystemManager implements VirtualFileSystem {
     }
 
     @Override
-    public void setLogger(Log log) {
-
-    }
-
-    @Override
-    public void setContext(VfsComponentContext context) {
-
-    }
-
-    @Override
     public void init() throws FileSystemException {
         try (DirectoryStream<CloudFileObject> list = resolveFile("conf:/providers/").list()) {
             for (CloudFileObject provider : list) {
-                String className = new FileValue<>(provider.resolveFile("className"), TextSerializer.utf8()).get();
-                CloudFileSystemProvider fileSystemProvider = (CloudFileSystemProvider) Class.forName(className).newInstance();
+                String className = TextSerializer.utf8().deserialize(provider.resolveFile("className"));
+                CloudFileSystemProvider fileSystemProvider = (CloudFileSystemProvider) Class.forName(className)
+                        .getDeclaredConstructor().newInstance();
                 CloudFileObject scheme = provider.resolveFile("scheme");
                 if (scheme.exists()) {
                     System.out.println("scheme");
@@ -194,6 +195,10 @@ public class VirtualFileSystemManager implements VirtualFileSystem {
             buffer.append(e.getKey()).append(": ").append(e.getValue()).append("\n");
         }
         return buffer.toString();
+    }
+
+    public PollingFileWatchService getWatchService() {
+        return watchService;
     }
 
     //    protected static final Pattern RESERVED = Pattern.compile("[@#&*?]");

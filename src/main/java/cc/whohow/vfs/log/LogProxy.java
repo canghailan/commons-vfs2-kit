@@ -15,6 +15,11 @@ public class LogProxy implements InvocationHandler {
         this.target = target;
     }
 
+    @SuppressWarnings("unchecked")
+    public static <T> T newProxyInstance(Log log, T target, Class<?>... interfaces) {
+        return (T) Proxy.newProxyInstance(target.getClass().getClassLoader(), interfaces, new LogProxy(log, target));
+    }
+
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
         Object r = method.invoke(target, args);
@@ -33,10 +38,5 @@ public class LogProxy implements InvocationHandler {
 //            log.debug(buffer);
 //        }
         return r;
-    }
-
-    @SuppressWarnings("unchecked")
-    public static <T> T newProxyInstance(Log log, T target, Class<?>... interfaces) {
-        return (T) Proxy.newProxyInstance(target.getClass().getClassLoader(), interfaces, new LogProxy(log, target));
     }
 }

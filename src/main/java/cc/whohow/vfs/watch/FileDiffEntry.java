@@ -9,6 +9,25 @@ public abstract class FileDiffEntry<K> implements Map.Entry<K, FileEventKind> {
         this.key = key;
     }
 
+    public static <K> FileDiffEntry<K> create(FileEventKind kind, K key) {
+        switch (kind) {
+            case CREATE:
+                return new Create<>(key);
+            case DELETE:
+                return new Delete<>(key);
+            case MODIFY:
+                return new Modify<>(key);
+            case NOT_MODIFIED:
+                return new NotModified<>(key);
+            default:
+                throw new IllegalArgumentException(kind.toString());
+        }
+    }
+
+    public static FileDiffEntry<String> parse(String text) {
+        return create(FileEventKind.of(text.charAt(0)), text.substring(2));
+    }
+
     @Override
     public FileEventKind setValue(FileEventKind value) {
         throw new UnsupportedOperationException();
@@ -73,19 +92,5 @@ public abstract class FileDiffEntry<K> implements Map.Entry<K, FileEventKind> {
         public FileEventKind getValue() {
             return FileEventKind.NOT_MODIFIED;
         }
-    }
-
-    public static <K> FileDiffEntry<K> create(FileEventKind kind, K key) {
-        switch (kind) {
-            case CREATE: return new Create<>(key);
-            case DELETE: return new Delete<>(key);
-            case MODIFY: return new Modify<>(key);
-            case NOT_MODIFIED: return new NotModified<>(key);
-            default: throw new IllegalArgumentException(kind.toString());
-        }
-    }
-
-    public static FileDiffEntry<String> parse(String text) {
-        return create(FileEventKind.of(text.charAt(0)), text.substring(2));
     }
 }

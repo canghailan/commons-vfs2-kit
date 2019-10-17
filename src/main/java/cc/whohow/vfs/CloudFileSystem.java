@@ -1,9 +1,7 @@
 package cc.whohow.vfs;
 
-import org.apache.commons.vfs2.Capability;
-import org.apache.commons.vfs2.FileName;
-import org.apache.commons.vfs2.FileSystemException;
-import org.apache.commons.vfs2.FileSystemOptions;
+import cc.whohow.vfs.watch.PollingFileWatchable;
+import org.apache.commons.vfs2.*;
 import org.apache.commons.vfs2.provider.VfsComponent;
 
 import java.io.UncheckedIOException;
@@ -45,5 +43,19 @@ public interface CloudFileSystem extends FileSystemImpl, VfsComponent {
         } catch (FileSystemException e) {
             throw new UncheckedIOException(e);
         }
+    }
+
+    @Override
+    default void addListener(FileObject file, FileListener listener) {
+        getFileSystemManager().getWatchService().addListener(
+                new PollingFileWatchable<>((CloudFileObject) file, getFileSystemProvider().getFileVersionProvider()),
+                listener);
+    }
+
+    @Override
+    default void removeListener(FileObject file, FileListener listener) {
+        getFileSystemManager().getWatchService().removeListener(
+                new PollingFileWatchable<>((CloudFileObject) file, getFileSystemProvider().getFileVersionProvider()),
+                listener);
     }
 }

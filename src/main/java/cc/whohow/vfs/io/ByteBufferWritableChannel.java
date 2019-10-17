@@ -1,7 +1,5 @@
 package cc.whohow.vfs.io;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.nio.ByteBuffer;
 
 public class ByteBufferWritableChannel extends WritableChannel {

@@ -12,11 +12,11 @@ import java.nio.ByteBuffer;
 public class BinarySerializer implements Serializer<ByteBuffer> {
     private static final BinarySerializer INSTANCE = new BinarySerializer();
 
-    public static BinarySerializer get() {
-        return INSTANCE;
+    private BinarySerializer() {
     }
 
-    private BinarySerializer() {
+    public static BinarySerializer get() {
+        return INSTANCE;
     }
 
     @Override

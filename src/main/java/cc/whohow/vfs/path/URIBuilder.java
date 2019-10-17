@@ -30,6 +30,27 @@ public class URIBuilder {
         setURI(uri);
     }
 
+    public static String resolve(String baseUri, String uri) {
+        return isRelative(uri) ? new URIBuilder(baseUri).resolve(uri).toString() : uri;
+    }
+
+    /**
+     * 是否是相对路径
+     */
+    public static boolean isRelative(String uri) {
+        return isRelative(URI.create(uri));
+    }
+
+    /**
+     * 是否是相对路径
+     */
+    public static boolean isRelative(URI uri) {
+        return uri.getScheme() == null &&
+                uri.getHost() == null &&
+                uri.getPath() != null &&
+                !uri.getPath().startsWith(FileName.SEPARATOR);
+    }
+
     public URIBuilder setURI(String uri) {
         return setURI(URI.create(uri));
     }
@@ -124,26 +145,5 @@ public class URIBuilder {
     @Override
     public String toString() {
         return build().toString();
-    }
-
-    public static String resolve(String baseUri, String uri) {
-        return isRelative(uri) ? new URIBuilder(baseUri).resolve(uri).toString() : uri;
-    }
-
-    /**
-     * 是否是相对路径
-     */
-    public static boolean isRelative(String uri) {
-        return isRelative(URI.create(uri));
-    }
-
-    /**
-     * 是否是相对路径
-     */
-    public static boolean isRelative(URI uri) {
-        return uri.getScheme() == null &&
-                uri.getHost() == null &&
-                uri.getPath() != null &&
-                !uri.getPath().startsWith(FileName.SEPARATOR);
     }
 }

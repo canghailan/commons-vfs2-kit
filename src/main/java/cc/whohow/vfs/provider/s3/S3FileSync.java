@@ -3,13 +3,13 @@ package cc.whohow.vfs.provider.s3;
 import cc.whohow.vfs.CloudFileObject;
 import cc.whohow.vfs.CloudFileOperation;
 import cc.whohow.vfs.VirtualFileSystem;
-import cc.whohow.vfs.watch.FileDiffEntry;
-import cc.whohow.vfs.watch.MapFileDiffIterator;
 import cc.whohow.vfs.io.AppendableConsumer;
 import cc.whohow.vfs.operations.Copy;
 import cc.whohow.vfs.version.FileVersion;
 import cc.whohow.vfs.version.FileVersionView;
 import cc.whohow.vfs.version.FileVersionViewWriter;
+import cc.whohow.vfs.watch.FileDiffEntry;
+import cc.whohow.vfs.watch.FileDiffIterator;
 import org.apache.commons.vfs2.FileSystemException;
 
 import java.io.*;
@@ -112,7 +112,7 @@ public class S3FileSync implements
             try (Writer writer = new OutputStreamWriter(new BufferedOutputStream(context.resolveFile("diff.txt").getOutputStream(), 2 * 1024 * 1024), StandardCharsets.UTF_8)) {
                 try (Stream<FileVersionView> newList = new BufferedReader(new InputStreamReader(context.resolveFile("new.txt").getInputStream())).lines().map(FileVersionView::parse);
                      Stream<FileVersionView> oldList = new BufferedReader(new InputStreamReader(context.resolveFile("old.txt").getInputStream())).lines().map(FileVersionView::parse)) {
-                    new MapFileDiffIterator<>(
+                    new FileDiffIterator<>(
                             FileVersionView::getName,
                             FileVersionView::getVersion,
                             String::equalsIgnoreCase,

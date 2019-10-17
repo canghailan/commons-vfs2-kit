@@ -1,10 +1,10 @@
 package cc.whohow.vfs.watch;
 
-import cc.whohow.vfs.CloudFileObject;
+import org.apache.commons.vfs2.FileObject;
 
 import java.nio.file.WatchEvent;
 
-public enum FileEventKind implements WatchEvent.Kind<CloudFileObject> {
+public enum FileEventKind implements WatchEvent.Kind<FileObject> {
     CREATE('+'),
     DELETE('-'),
     MODIFY('*'),
@@ -16,6 +16,21 @@ public enum FileEventKind implements WatchEvent.Kind<CloudFileObject> {
         this.symbol = symbol;
     }
 
+    public static FileEventKind of(char symbol) {
+        switch (symbol) {
+            case '+':
+                return CREATE;
+            case '-':
+                return DELETE;
+            case '*':
+                return MODIFY;
+            case '=':
+                return NOT_MODIFIED;
+            default:
+                throw new IllegalArgumentException(String.valueOf(symbol));
+        }
+    }
+
     public char getSymbol() {
         return symbol;
     }
@@ -25,17 +40,7 @@ public enum FileEventKind implements WatchEvent.Kind<CloudFileObject> {
     }
 
     @Override
-    public Class<CloudFileObject> type() {
-        return CloudFileObject.class;
-    }
-
-    public static FileEventKind of(char symbol) {
-        switch (symbol) {
-            case '+': return CREATE;
-            case '-': return DELETE;
-            case '*': return MODIFY;
-            case '=': return NOT_MODIFIED;
-            default: throw new IllegalArgumentException(String.valueOf(symbol));
-        }
+    public Class<FileObject> type() {
+        return FileObject.class;
     }
 }

@@ -27,41 +27,6 @@ public class FileVersionView {
         this.name = name;
     }
 
-    public String getVersion() {
-        return version;
-    }
-
-    public long getSize() {
-        return size;
-    }
-
-    public long getLastModifiedTime() {
-        return lastModifiedTime;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    @Override
-    public String toString() {
-        StringBuilder buffer = new StringBuilder(256);
-        if (getVersion() != null) {
-            buffer.append(getVersion());
-        }
-        buffer.append('\t');
-        if (getSize() > 0) {
-            buffer.append(getSize());
-        }
-        buffer.append('\t');
-        if (getLastModifiedTime() > 0) {
-            buffer.append(DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(ZonedDateTime.ofInstant(Instant.ofEpochMilli(getLastModifiedTime()), ZoneId.systemDefault())));
-        }
-        buffer.append('\t');
-        buffer.append(getName());
-        return buffer.toString();
-    }
-
     public static String stringify(Object value) {
         return value == null ? null : value.toString();
     }
@@ -106,5 +71,40 @@ public class FileVersionView {
                 lastModifiedTime.isEmpty() ? -1 : ZonedDateTime.parse(lastModifiedTime, DateTimeFormatter.ISO_OFFSET_DATE_TIME).toInstant().toEpochMilli(),
                 name
         );
+    }
+
+    public String getVersion() {
+        return version;
+    }
+
+    public long getSize() {
+        return size;
+    }
+
+    public long getLastModifiedTime() {
+        return lastModifiedTime;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder buffer = new StringBuilder(256);
+        if (getVersion() != null) {
+            buffer.append(getVersion());
+        }
+        buffer.append('\t');
+        if (getSize() > 0) {
+            buffer.append(getSize());
+        }
+        buffer.append('\t');
+        if (getLastModifiedTime() > 0) {
+            buffer.append(DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(ZonedDateTime.ofInstant(Instant.ofEpochMilli(getLastModifiedTime()), ZoneId.systemDefault())));
+        }
+        buffer.append('\t');
+        buffer.append(getName());
+        return buffer.toString();
     }
 }

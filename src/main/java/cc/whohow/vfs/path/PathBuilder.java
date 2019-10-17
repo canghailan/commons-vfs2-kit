@@ -53,6 +53,20 @@ public class PathBuilder implements Iterable<CharSequence> {
         return true;
     }
 
+    /**
+     * 计算两个URI的相对路径
+     */
+    public static String relativize(URI ancestor, URI descendant) {
+        return ancestor.relativize(descendant).normalize().getPath();
+    }
+
+    /**
+     * 计算两个URI的相对路径
+     */
+    public static String relativize(String ancestor, String descendant) {
+        return relativize(URI.create(ancestor), URI.create(descendant));
+    }
+
     public char separatorChar() {
         return separatorChar;
     }
@@ -349,19 +363,5 @@ public class PathBuilder implements Iterable<CharSequence> {
         pathBuilder.endsWithSeparator = endsWithSeparator;
         pathBuilder.names = new LinkedList<>(names);
         return pathBuilder;
-    }
-
-    /**
-     * 计算两个URI的相对路径
-     */
-    public static String relativize(URI ancestor, URI descendant) {
-        return ancestor.relativize(descendant).normalize().getPath();
-    }
-
-    /**
-     * 计算两个URI的相对路径
-     */
-    public static String relativize(String ancestor, String descendant) {
-        return relativize(URI.create(ancestor), URI.create(descendant));
     }
 }

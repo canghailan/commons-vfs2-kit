@@ -13,15 +13,14 @@ import java.nio.charset.StandardCharsets;
 
 public class TextSerializer implements Serializer<String> {
     private static final TextSerializer UTF_8 = new TextSerializer(StandardCharsets.UTF_8);
-
-    public static final TextSerializer utf8() {
-        return UTF_8;
-    }
-
     protected final Charset charset;
 
     public TextSerializer(Charset charset) {
         this.charset = charset;
+    }
+
+    public static final TextSerializer utf8() {
+        return UTF_8;
     }
 
     @Override

@@ -4,9 +4,7 @@ import cc.whohow.vfs.CloudFileSystem;
 import cc.whohow.vfs.VirtualFileSystem;
 import cc.whohow.vfs.provider.s3.S3FileName;
 import com.aliyun.oss.OSS;
-import org.apache.commons.vfs2.FileListener;
 import org.apache.commons.vfs2.FileName;
-import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemException;
 import org.apache.commons.vfs2.provider.AbstractVfsComponent;
 
@@ -60,17 +58,5 @@ public class AliyunOSSFileSystem extends AbstractVfsComponent implements CloudFi
     @Override
     public String toString() {
         return root.toString();
-    }
-
-    @Override
-    public synchronized void addListener(FileObject file, FileListener listener) {
-//        fileProvider.getFileWatchMonitor()
-//                .addListener(file, listener, new AliyunOSSFileVersionProvider());
-    }
-
-    @Override
-    public synchronized void removeListener(FileObject file, FileListener listener) {
-//        fileProvider.getFileWatchMonitor()
-//                .removeListener(file, listener);
     }
 }

@@ -7,11 +7,12 @@ import cc.whohow.vfs.version.FileVersionProvider;
 import org.apache.commons.vfs2.FileName;
 
 import java.nio.file.WatchEvent;
-import java.nio.file.WatchKey;
-import java.util.*;
-import java.util.concurrent.Callable;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
-public class PollingFileWatchKey<T> implements WatchKey, Callable<Iterable<FileWatchEvent>> {
+public class PollingFileWatchKey<T> implements FileWatchKey {
     private final PollingFileWatchable<T> watchable;
     private volatile Map<FileName, FileVersion<T>> versions;
 
@@ -28,7 +29,7 @@ public class PollingFileWatchKey<T> implements WatchKey, Callable<Iterable<FileW
     }
 
     @Override
-    public Iterable<FileWatchEvent> call() {
+    public Iterable<FileWatchEvent> get() {
         List<FileWatchEvent> list = new ArrayList<>();
         pollEvents(list);
         return list;
@@ -75,13 +76,12 @@ public class PollingFileWatchKey<T> implements WatchKey, Callable<Iterable<FileW
 
     @Override
     public boolean reset() {
-        versions = null;
         return true;
     }
 
     @Override
-    public void cancel() {
-
+    public synchronized void cancel() {
+        versions = null;
     }
 
     @Override

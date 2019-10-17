@@ -6,6 +6,12 @@ import org.apache.commons.vfs2.FileSystemException;
 import java.io.UncheckedIOException;
 
 public class FileLastModifiedTimeVersionProvider implements FileVersionProvider<Long> {
+    private static final FileLastModifiedTimeVersionProvider INSTANCE = new FileLastModifiedTimeVersionProvider();
+
+    public static FileLastModifiedTimeVersionProvider get() {
+        return INSTANCE;
+    }
+
     @Override
     public FileVersion<Long> getVersion(CloudFileObject fileObject) {
         try {
