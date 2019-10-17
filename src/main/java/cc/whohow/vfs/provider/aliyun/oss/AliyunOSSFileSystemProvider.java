@@ -4,8 +4,7 @@ import cc.whohow.vfs.*;
 import cc.whohow.vfs.log.LogProxy;
 import cc.whohow.vfs.provider.s3.S3FileName;
 import cc.whohow.vfs.provider.s3.S3Uri;
-import cc.whohow.vfs.type.DataType;
-import cc.whohow.vfs.type.JsonType;
+import cc.whohow.vfs.serialize.YamlSerializer;
 import com.aliyun.oss.ClientConfiguration;
 import com.aliyun.oss.OSS;
 import com.aliyun.oss.OSSClient;
@@ -13,7 +12,6 @@ import com.aliyun.oss.common.auth.DefaultCredentialProvider;
 import com.aliyun.oss.common.auth.DefaultCredentials;
 import com.aliyun.oss.model.Bucket;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import com.qcloud.cos.utils.StringUtils;
 import org.apache.commons.vfs2.Capability;
 import org.apache.commons.vfs2.FileName;
@@ -134,12 +132,11 @@ public class AliyunOSSFileSystemProvider extends AbstractVfsComponent implements
     @Override
     public void init() throws FileSystemException {
         VirtualFileSystem vfs = (VirtualFileSystem) getContext().getFileSystemManager();
-        DataType<JsonNode> yaml = new JsonType<>(new YAMLMapper(), JsonNode.class);
 
         // credentials
         try (DirectoryStream<CloudFileObject> list = vfs.resolveFile("conf:/providers/aliyun-oss/credentials/").list()) {
             for (CloudFileObject credential : list) {
-                JsonNode value = new FileValue<>(credential, yaml).get();
+                JsonNode value = YamlSerializer.get().deserialize(credential);
                 credentials.add(new DefaultCredentials(value.get("accessKeyId").textValue(), value.get("secretAccessKey").textValue()));
             }
         } catch (FileSystemException e) {

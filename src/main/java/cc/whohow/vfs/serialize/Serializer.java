@@ -1,4 +1,4 @@
-package cc.whohow.vfs.type;
+package cc.whohow.vfs.serialize;
 
 import cc.whohow.vfs.CloudFileObject;
 import cc.whohow.vfs.io.ByteBufferReadableChannel;
@@ -11,7 +11,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 
-public interface DataType<T> {
+public interface Serializer<T> {
     T deserialize(InputStream stream) throws IOException;
 
     void serialize(OutputStream stream, T value) throws IOException;

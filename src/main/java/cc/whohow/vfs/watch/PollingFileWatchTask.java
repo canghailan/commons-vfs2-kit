@@ -1,22 +1,21 @@
 package cc.whohow.vfs.watch;
 
 import org.apache.commons.vfs2.FileListener;
-import org.apache.commons.vfs2.events.AbstractFileChangeEvent;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-public class FileWatchTask implements Runnable {
-    private final FileWatcher watcher;
+public class PollingFileWatchTask implements Runnable {
+    private final PollingFileWatchKey<?> watchKey;
     private final List<FileWatchListener> listeners = new CopyOnWriteArrayList<>();
 
-    public FileWatchTask(FileWatcher watcher) {
-        this.watcher = watcher;
+    public PollingFileWatchTask(PollingFileWatchKey<?> watchKey) {
+        this.watchKey = watchKey;
     }
 
-    public FileWatcher getWatcher() {
-        return watcher;
+    public PollingFileWatchKey getWatchKey() {
+        return watchKey;
     }
 
     public List<FileWatchListener> getListeners() {
@@ -33,7 +32,7 @@ public class FileWatchTask implements Runnable {
 
     @Override
     public void run() {
-        for (AbstractFileChangeEvent e : watcher.call()) {
+        for (FileWatchEvent e : watchKey.call()) {
             for (FileListener listener : listeners) {
                 try {
                     e.notify(listener);
@@ -45,6 +44,6 @@ public class FileWatchTask implements Runnable {
 
     @Override
     public String toString() {
-        return watcher.toString();
+        return watchKey.toString();
     }
 }

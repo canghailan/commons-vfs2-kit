@@ -1,8 +1,6 @@
 package cc.whohow.vfs;
 
-import cc.whohow.vfs.io.ReadableChannel;
-import cc.whohow.vfs.io.WritableChannel;
-import cc.whohow.vfs.type.DataType;
+import cc.whohow.vfs.serialize.Serializer;
 import cc.whohow.vfs.util.Value;
 import org.apache.commons.vfs2.FileChangeEvent;
 import org.apache.commons.vfs2.FileListener;
@@ -13,19 +11,19 @@ import java.util.function.Consumer;
 
 public class FileValue<T> implements Value<T> {
     protected final CloudFileObject fileObject;
-    protected final DataType<T> type;
+    protected final Serializer<T> serializer;
 
-    public FileValue(CloudFileObject fileObject, DataType<T> type) {
+    public FileValue(CloudFileObject fileObject, Serializer<T> serializer) {
         this.fileObject = fileObject;
-        this.type = type;
+        this.serializer = serializer;
     }
 
     public CloudFileObject getFileObject() {
         return fileObject;
     }
 
-    public DataType<T> getType() {
-        return type;
+    public Serializer<T> getSerializer() {
+        return serializer;
     }
 
     @Override
@@ -39,9 +37,15 @@ public class FileValue<T> implements Value<T> {
     }
 
     @Override
+    public void getAndWatch(Consumer<T> callback) {
+        watch(callback);
+        callback.accept(get());
+    }
+
+    @Override
     public void accept(T value) {
-        try (WritableChannel channel = fileObject.getWritableChannel()) {
-            type.serialize(channel, value);
+        try {
+            serializer.serialize(fileObject, value);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -49,8 +53,8 @@ public class FileValue<T> implements Value<T> {
 
     @Override
     public T get() {
-        try (ReadableChannel channel = fileObject.getReadableChannel()) {
-            return type.deserialize(channel);
+        try {
+            return serializer.deserialize(fileObject);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -59,7 +63,7 @@ public class FileValue<T> implements Value<T> {
     public static class Cache<T> extends FileValue<T> implements FileListener, AutoCloseable {
         protected volatile T value;
 
-        public Cache(CloudFileObject fileObject, DataType<T> type) {
+        public Cache(CloudFileObject fileObject, Serializer<T> type) {
             super(fileObject, type);
             fileObject.getFileSystem().addListener(fileObject, this);
         }
@@ -87,7 +91,7 @@ public class FileValue<T> implements Value<T> {
         }
 
         @Override
-        public void close() throws Exception {
+        public void close() {
             fileObject.getFileSystem().removeListener(fileObject, this);
         }
 

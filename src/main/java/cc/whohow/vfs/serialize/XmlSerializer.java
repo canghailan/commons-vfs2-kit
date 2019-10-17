@@ -1,4 +1,4 @@
-package cc.whohow.vfs.type;
+package cc.whohow.vfs.serialize;
 
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
@@ -13,12 +13,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-public class XmlType implements DataType<Document> {
+public class XmlSerializer implements Serializer<Document> {
     private static final DocumentBuilderFactory BUILDER_FACTORY = DocumentBuilderFactory.newInstance();
     private static final TransformerFactory TRANSFORMER_FACTORY = TransformerFactory.newInstance();
-    private static final XmlType INSTANCE = new XmlType();
+    private static final XmlSerializer INSTANCE = new XmlSerializer();
 
-    public static DataType<Document> get() {
+    public static Serializer<Document> get() {
         return INSTANCE;
     }
 

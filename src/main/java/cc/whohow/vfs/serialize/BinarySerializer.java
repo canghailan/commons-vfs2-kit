@@ -1,4 +1,4 @@
-package cc.whohow.vfs.type;
+package cc.whohow.vfs.serialize;
 
 import cc.whohow.vfs.io.IO;
 import cc.whohow.vfs.io.ReadableChannel;
@@ -9,14 +9,14 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 
-public class BinaryType implements DataType<ByteBuffer> {
-    private static final BinaryType INSTANCE = new BinaryType();
+public class BinarySerializer implements Serializer<ByteBuffer> {
+    private static final BinarySerializer INSTANCE = new BinarySerializer();
 
-    public static BinaryType get() {
+    public static BinarySerializer get() {
         return INSTANCE;
     }
 
-    private BinaryType() {
+    private BinarySerializer() {
     }
 
     @Override

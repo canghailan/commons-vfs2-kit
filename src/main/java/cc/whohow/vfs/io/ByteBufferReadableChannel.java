@@ -1,6 +1,7 @@
 package cc.whohow.vfs.io;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 
 public class ByteBufferReadableChannel extends ReadableChannel {
@@ -81,16 +82,11 @@ public class ByteBufferReadableChannel extends ReadableChannel {
     public ByteBuffer readAll() throws IOException {
         return byteBuffer;
     }
-//
-//    @Override
-//    public long transferTo(WritableChannel channel) throws IOException {
-//        return channel.write(byteBuffer);
-//    }
-//
-//    @Override
-//    public long transferTo(WritableChannel channel, int bufferSize) throws IOException {
-//        return channel.write(byteBuffer);
-//    }
+
+    @Override
+    public long transferTo(OutputStream channel) throws IOException {
+        return IO.write(channel, byteBuffer);
+    }
 
     @Override
     public boolean isOpen() {

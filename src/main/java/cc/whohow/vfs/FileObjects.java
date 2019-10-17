@@ -2,7 +2,7 @@ package cc.whohow.vfs;
 
 import cc.whohow.vfs.io.ReadableChannel;
 import cc.whohow.vfs.io.WritableChannel;
-import cc.whohow.vfs.type.DataType;
+import cc.whohow.vfs.serialize.Serializer;
 import org.apache.commons.vfs2.FileNotFoundException;
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemException;
@@ -150,12 +150,20 @@ public class FileObjects {
         write(fileObject, StandardCharsets.UTF_8, text);
     }
 
-    public static <T> T read(CloudFileObject fileObject, DataType<T> type) {
-        return new FileValue<>(fileObject, type).get();
+    public static <T> T read(CloudFileObject fileObject, Serializer<T> serializer) {
+        try {
+            return serializer.deserialize(fileObject);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
-    public static <T> void write(CloudFileObject fileObject, DataType<T> type, T value) {
-        new FileValue<>(fileObject, type).accept(value);
+    public static <T> void write(CloudFileObject fileObject, Serializer<T> serializer, T value) {
+        try {
+            serializer.serialize(fileObject, value);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     public static void deleteAll(FileObject fileObject) {

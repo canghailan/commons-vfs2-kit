@@ -1,14 +1,14 @@
-package cc.whohow.vfs.type;
+package cc.whohow.vfs.serialize;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Properties;
 
-public class PropertiesType implements DataType<Properties> {
-    private static final PropertiesType INSTANCE = new PropertiesType();
+public class PropertiesSerializer implements Serializer<Properties> {
+    private static final PropertiesSerializer INSTANCE = new PropertiesSerializer();
 
-    public static DataType<Properties> get() {
+    public static Serializer<Properties> get() {
         return INSTANCE;
     }
 

@@ -1,6 +1,6 @@
 package cc.whohow.vfs;
 
-import cc.whohow.vfs.type.TextType;
+import cc.whohow.vfs.serialize.TextSerializer;
 import org.apache.commons.vfs2.FileSystemOptions;
 
 import java.io.IOException;
@@ -18,7 +18,7 @@ public class VirtualFileSystemOptions implements Supplier<FileSystemOptions> {
 
     @Override
     public FileSystemOptions get() {
-        TextType utf8 = TextType.utf8();
+        TextSerializer utf8 = TextSerializer.utf8();
         try (DirectoryStream<CloudFileObject> list = configuration.listRecursively()) {
             FileSystemOptions fileSystemOptions = new FileSystemOptions();
             for (CloudFileObject fileObject : list) {

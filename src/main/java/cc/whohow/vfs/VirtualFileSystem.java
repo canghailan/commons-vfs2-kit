@@ -3,7 +3,7 @@ package cc.whohow.vfs;
 import cc.whohow.vfs.io.ReadableChannel;
 import cc.whohow.vfs.io.WritableChannel;
 import cc.whohow.vfs.path.URIBuilder;
-import cc.whohow.vfs.type.TextType;
+import cc.whohow.vfs.serialize.TextSerializer;
 import org.apache.commons.vfs2.FileName;
 import org.apache.commons.vfs2.FileSystemException;
 import org.apache.commons.vfs2.FileSystemOptions;
@@ -120,7 +120,7 @@ public interface VirtualFileSystem extends CloudFileSystemProvider, CloudFileSys
 
     @Override
     default Map<String, Object> getAttributes() throws FileSystemException {
-        TextType utf8 = TextType.utf8();
+        TextSerializer utf8 = TextSerializer.utf8();
         try (DirectoryStream<CloudFileObject> list = resolveFile("conf:/").listRecursively()) {
             Map<String, Object> attributes = new TreeMap<>();
             for (CloudFileObject fileObject : list) {
@@ -136,7 +136,7 @@ public interface VirtualFileSystem extends CloudFileSystemProvider, CloudFileSys
 
     @Override
     default void setAttribute(String attrName, Object value) {
-        TextType utf8 = TextType.utf8();
+        TextSerializer utf8 = TextSerializer.utf8();
         try {
             new FileValue<>(resolveFile("conf:/").resolveFile(attrName), utf8).accept(Objects.toString(value, null));
         } catch (FileSystemException e) {

@@ -1,13 +1,13 @@
-package cc.whohow.vfs.type;
+package cc.whohow.vfs.serialize;
 
 import java.io.InputStream;
 import java.io.OutputStream;
 
-public class UnsupportedType<T> implements DataType<T> {
-    private static final UnsupportedType INSTANCE = new UnsupportedType();
+public class UnsupportedSerializer<T> implements Serializer<T> {
+    private static final UnsupportedSerializer INSTANCE = new UnsupportedSerializer();
 
     @SuppressWarnings("unchecked")
-    public <TT> UnsupportedType<TT> get() {
+    public <TT> UnsupportedSerializer<TT> get() {
         return INSTANCE;
     }
 

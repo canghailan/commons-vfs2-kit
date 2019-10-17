@@ -4,10 +4,8 @@ import cc.whohow.vfs.*;
 import cc.whohow.vfs.log.LogProxy;
 import cc.whohow.vfs.provider.s3.S3FileName;
 import cc.whohow.vfs.provider.s3.S3Uri;
-import cc.whohow.vfs.type.DataType;
-import cc.whohow.vfs.type.JsonType;
+import cc.whohow.vfs.serialize.YamlSerializer;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import com.qcloud.cos.COS;
 import com.qcloud.cos.COSClient;
 import com.qcloud.cos.ClientConfig;
@@ -130,12 +128,11 @@ public class QcloudCOSFileSystemProvider extends AbstractVfsComponent implements
     @Override
     public void init() throws FileSystemException {
         VirtualFileSystem vfs = (VirtualFileSystem) getContext().getFileSystemManager();
-        DataType<JsonNode> yaml = new JsonType<>(new YAMLMapper(), JsonNode.class);
 
         // credentials
         try (DirectoryStream<CloudFileObject> list = vfs.resolveFile("conf:/providers/qcloud-cos/credentials/").list()) {
             for (CloudFileObject credential : list) {
-                JsonNode value = new FileValue<>(credential, yaml).get();
+                JsonNode value = YamlSerializer.get().deserialize(credential);
                 credentials.add(new BasicCOSCredentials(value.get("accessKeyId").textValue(), value.get("secretAccessKey").textValue()));
             }
         } catch (FileSystemException e) {

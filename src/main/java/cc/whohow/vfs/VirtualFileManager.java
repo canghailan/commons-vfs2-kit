@@ -2,7 +2,7 @@ package cc.whohow.vfs;
 
 import cc.whohow.vfs.operations.Copy;
 import cc.whohow.vfs.operations.Move;
-import cc.whohow.vfs.type.DataType;
+import cc.whohow.vfs.serialize.Serializer;
 import org.apache.commons.vfs2.FileSystemException;
 
 import java.io.InputStream;
@@ -14,10 +14,10 @@ import java.nio.charset.StandardCharsets;
 /**
  * 文件管理器
  */
-public class CloudFileManager {
+public class VirtualFileManager {
     private final VirtualFileSystem fileSystem;
 
-    public CloudFileManager(VirtualFileSystem fileSystem) {
+    public VirtualFileManager(VirtualFileSystem fileSystem) {
         this.fileSystem = fileSystem;
     }
 
@@ -65,11 +65,11 @@ public class CloudFileManager {
         write(path, StandardCharsets.UTF_8.encode(text));
     }
 
-    public <T> T read(String path, DataType<T> type) {
+    public <T> T read(String path, Serializer<T> type) {
         return FileObjects.read(resolve(path), type);
     }
 
-    public <T> void write(String path, DataType<T> type, T value) {
+    public <T> void write(String path, Serializer<T> type, T value) {
         FileObjects.write(resolve(path), type, value);
     }
 

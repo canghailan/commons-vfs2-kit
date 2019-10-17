@@ -1,5 +1,7 @@
 package cc.whohow.vfs.io;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 
 public class ByteBufferWritableChannel extends WritableChannel {
@@ -55,4 +57,11 @@ public class ByteBufferWritableChannel extends WritableChannel {
     public boolean isOpen() {
         return true;
     }
+
+    // TODO
+//    @Override
+//    public long transferFrom(InputStream stream) throws IOException {
+//        assert byteBuffer.hasArray();
+//        return -1;
+//    }
 }

@@ -3,8 +3,8 @@ package cc.whohow.vfs.provider.s3;
 import cc.whohow.vfs.CloudFileObject;
 import cc.whohow.vfs.CloudFileOperation;
 import cc.whohow.vfs.VirtualFileSystem;
-import cc.whohow.vfs.diff.Diff;
-import cc.whohow.vfs.diff.MapDiffs;
+import cc.whohow.vfs.watch.FileDiffEntry;
+import cc.whohow.vfs.watch.MapFileDiffIterator;
 import cc.whohow.vfs.io.AppendableConsumer;
 import cc.whohow.vfs.operations.Copy;
 import cc.whohow.vfs.version.FileVersion;
@@ -14,6 +14,8 @@ import org.apache.commons.vfs2.FileSystemException;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
 import java.util.concurrent.Executor;
 import java.util.function.BiConsumer;
@@ -23,8 +25,8 @@ import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 public class S3FileSync implements
-        Supplier<Stream<Diff<String>>>,
-        Function<Diff<String>, CloudFileOperation<?, ?>>, Consumer<Diff<String>>, BiConsumer<Diff<String>, Executor>,
+        Supplier<Stream<FileDiffEntry<String>>>,
+        Function<FileDiffEntry<String>, CloudFileOperation<?, ?>>, Consumer<FileDiffEntry<String>>, BiConsumer<FileDiffEntry<String>, Executor>,
         Runnable {
     private VirtualFileSystem vfs;
     private CloudFileObject context;
@@ -55,16 +57,16 @@ public class S3FileSync implements
     }
 
     @Override
-    public CloudFileOperation<?, ?> apply(Diff<String> diff) {
-        switch (diff.getType()) {
-            case Diff.EQ: {
+    public CloudFileOperation<?, ?> apply(FileDiffEntry<String> diff) {
+        switch (diff.getValue()) {
+            case NOT_MODIFIED: {
                 return null;
             }
-            case Diff.ADD:
-            case Diff.UPDATE: {
+            case CREATE:
+            case MODIFY: {
                 return copy(diff.getKey());
             }
-            case Diff.DELETE: {
+            case DELETE: {
                 return remove(diff.getKey());
             }
             default: {
@@ -74,7 +76,7 @@ public class S3FileSync implements
     }
 
     @Override
-    public void accept(Diff<String> diff) {
+    public void accept(FileDiffEntry<String> diff) {
         CloudFileOperation<?, ?> o = apply(diff);
         if (o != null) {
             o.call();
@@ -82,7 +84,7 @@ public class S3FileSync implements
     }
 
     @Override
-    public void accept(Diff<String> diff, Executor executor) {
+    public void accept(FileDiffEntry<String> diff, Executor executor) {
         CloudFileOperation<?, ?> o = apply(diff);
         if (o != null) {
             o.call(executor).join();
@@ -90,7 +92,7 @@ public class S3FileSync implements
     }
 
     @Override
-    public Stream<Diff<String>> get() {
+    public Stream<FileDiffEntry<String>> get() {
         try {
             context.deleteAll();
             try (FileVersionViewWriter writer = new FileVersionViewWriter(context.resolveFile("new.txt").getOutputStream(), source.getName().getURI())) {
@@ -110,20 +112,20 @@ public class S3FileSync implements
             try (Writer writer = new OutputStreamWriter(new BufferedOutputStream(context.resolveFile("diff.txt").getOutputStream(), 2 * 1024 * 1024), StandardCharsets.UTF_8)) {
                 try (Stream<FileVersionView> newList = new BufferedReader(new InputStreamReader(context.resolveFile("new.txt").getInputStream())).lines().map(FileVersionView::parse);
                      Stream<FileVersionView> oldList = new BufferedReader(new InputStreamReader(context.resolveFile("old.txt").getInputStream())).lines().map(FileVersionView::parse)) {
-                    new MapDiffs<>(
+                    new MapFileDiffIterator<>(
                             FileVersionView::getName,
                             FileVersionView::getVersion,
                             String::equalsIgnoreCase,
                             new LinkedHashMap<>(),
                             newList.iterator(),
                             oldList.iterator()).stream()
-                            .map(Diff::toString)
+                            .map(FileDiffEntry::toString)
                             .forEach(new AppendableConsumer(writer, "", "\n"));
                     writer.flush();
                 }
             }
             return new BufferedReader(new InputStreamReader(context.resolveFile("diff.txt").getInputStream())).lines()
-                    .map(Diff::parse);
+                    .map(FileDiffEntry::parse);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -132,6 +134,9 @@ public class S3FileSync implements
     @Override
     public void run() {
         try (Writer log = new OutputStreamWriter(new BufferedOutputStream(context.resolveFile("log.txt").getOutputStream(), 2 * 1024 * 1024), StandardCharsets.UTF_8)) {
+            log.write("time: ");
+            log.write(DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(ZonedDateTime.now()));
+            log.write("\n");
             log.write("source: ");
             log.write(source.getName().getURI());
             log.write("\n");
@@ -139,10 +144,10 @@ public class S3FileSync implements
             log.write(target.getName().getURI());
             log.write("\n\n\n");
 
-            try (Stream<Diff<String>> diff = get()) {
-                diff.filter(Diff::isNotEq)
+            try (Stream<FileDiffEntry<String>> diff = get()) {
+                diff.filter(FileDiffEntry::isModified)
                         .peek(this)
-                        .map(Diff::toString)
+                        .map(FileDiffEntry::toString)
                         .forEach(new AppendableConsumer(log, "", "\n"));
             }
 

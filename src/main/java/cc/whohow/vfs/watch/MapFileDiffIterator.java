@@ -1,4 +1,4 @@
-package cc.whohow.vfs.diff;
+package cc.whohow.vfs.watch;
 
 import java.util.*;
 import java.util.function.BiPredicate;
@@ -6,7 +6,7 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-public class MapDiffs<T, K, V> implements Iterator<Diff<K>> {
+public class MapFileDiffIterator<T, K, V> implements Iterator<FileDiffEntry<K>> {
     private Function<T, K> key;
     private Function<T, V> value;
     private BiPredicate<V, V> equals;
@@ -14,15 +14,15 @@ public class MapDiffs<T, K, V> implements Iterator<Diff<K>> {
     private Iterator<T> newList;
     private Iterator<K> delete;
 
-    public MapDiffs(Function<T, K> key, Function<T, V> value, Iterator<T> newList, Iterator<T> oldList) {
+    public MapFileDiffIterator(Function<T, K> key, Function<T, V> value, Iterator<T> newList, Iterator<T> oldList) {
         this(key, value, new LinkedHashMap<>(), newList, oldList);
     }
 
-    public MapDiffs(Function<T, K> key, Function<T, V> value, Map<K, V> map, Iterator<T> newList, Iterator<T> oldList) {
+    public MapFileDiffIterator(Function<T, K> key, Function<T, V> value, Map<K, V> map, Iterator<T> newList, Iterator<T> oldList) {
         this(key, value, Objects::equals, map, newList, oldList);
     }
 
-    public MapDiffs(Function<T, K> key, Function<T, V> value, BiPredicate<V, V> equals, Map<K, V> map, Iterator<T> newList, Iterator<T> oldList) {
+    public MapFileDiffIterator(Function<T, K> key, Function<T, V> value, BiPredicate<V, V> equals, Map<K, V> map, Iterator<T> newList, Iterator<T> oldList) {
         this.key = key;
         this.value = value;
         this.equals = equals;
@@ -48,9 +48,9 @@ public class MapDiffs<T, K, V> implements Iterator<Diff<K>> {
     }
 
     @Override
-    public Diff<K> next() {
+    public FileDiffEntry<K> next() {
         if (delete != null) {
-            return Diff.delete(delete.next());
+            return new FileDiffEntry.Delete<>(delete.next());
         }
 
         T next = newList.next();
@@ -58,16 +58,16 @@ public class MapDiffs<T, K, V> implements Iterator<Diff<K>> {
         V newValue = value.apply(next);
         V oldValue = oldIndex.remove(newKey);
         if (oldValue == null) {
-            return Diff.add(newKey);
+            return new FileDiffEntry.Create<>(newKey);
         }
         if (equals.test(oldValue, newValue)) {
-            return Diff.eq(newKey);
+            return new FileDiffEntry.NotModified<>(newKey);
         } else {
-            return Diff.update(newKey);
+            return new FileDiffEntry.Modify<>(newKey);
         }
     }
 
-    public Stream<Diff<K>> stream() {
+    public Stream<FileDiffEntry<K>> stream() {
         return StreamSupport.stream(Spliterators.spliteratorUnknownSize(this, 0), false);
     }
 }

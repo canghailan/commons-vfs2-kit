@@ -1,4 +1,4 @@
-package cc.whohow.vfs.type;
+package cc.whohow.vfs.serialize;
 
 import cc.whohow.vfs.io.IO;
 import cc.whohow.vfs.io.ReadableChannel;
@@ -11,16 +11,16 @@ import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
-public class TextType implements DataType<String> {
-    private static final TextType UTF_8 = new TextType(StandardCharsets.UTF_8);
+public class TextSerializer implements Serializer<String> {
+    private static final TextSerializer UTF_8 = new TextSerializer(StandardCharsets.UTF_8);
 
-    public static final TextType utf8() {
+    public static final TextSerializer utf8() {
         return UTF_8;
     }
 
     protected final Charset charset;
 
-    public TextType(Charset charset) {
+    public TextSerializer(Charset charset) {
         this.charset = charset;
     }
 

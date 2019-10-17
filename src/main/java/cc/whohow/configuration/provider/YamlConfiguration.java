@@ -1,28 +1,27 @@
 package cc.whohow.configuration.provider;
 
+import cc.whohow.configuration.Configuration;
 import cc.whohow.vfs.CloudFileObject;
+import cc.whohow.vfs.serialize.YamlSerializer;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
-public class YamlConfiguration<T> extends JsonConfiguration<T> {
-    private static final ObjectMapper DEFAULT_YAML_OBJECT_MAPPER = new ObjectMapper(new YAMLFactory());
-
+public class YamlConfiguration<T> extends JsonConfiguration<T> implements Configuration<T> {
     public YamlConfiguration(CloudFileObject fileObject, Class<T> type) {
-        this(fileObject, type, DEFAULT_YAML_OBJECT_MAPPER);
+        super(fileObject, new YamlSerializer<T>(type));
     }
 
     public YamlConfiguration(CloudFileObject fileObject, TypeReference<T> type) {
-        this(fileObject, type, DEFAULT_YAML_OBJECT_MAPPER);
+        super(fileObject, new YamlSerializer<T>(type));
     }
 
-    public YamlConfiguration(CloudFileObject fileObject, String typeCanonicalName) {
-        this(fileObject, typeCanonicalName, DEFAULT_YAML_OBJECT_MAPPER);
+    public YamlConfiguration(CloudFileObject fileObject, String type) {
+        super(fileObject, new YamlSerializer<T>(type));
     }
 
     public YamlConfiguration(CloudFileObject fileObject, JavaType type) {
-        this(fileObject, type, DEFAULT_YAML_OBJECT_MAPPER);
+        super(fileObject, new YamlSerializer<T>(type));
     }
 
     public YamlConfiguration(CloudFileObject fileObject, Class<T> type, ObjectMapper objectMapper) {

@@ -3,8 +3,8 @@ package cc.whohow.vfs;
 import cc.whohow.vfs.operations.DefaultCloudFileOperations;
 import cc.whohow.vfs.provider.kv.KeyValueFileObject;
 import cc.whohow.vfs.provider.uri.UriFileName;
+import cc.whohow.vfs.serialize.TextSerializer;
 import cc.whohow.vfs.tree.FileObjectList;
-import cc.whohow.vfs.type.TextType;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.vfs2.Capability;
@@ -33,8 +33,8 @@ public class VirtualFileSystemManager implements VirtualFileSystem {
     public VirtualFileSystemManager() {
         vfs.put("/", this);
         vfs.put("vfs:/", this);
-        vfs.put("vfm:/", new KeyValueFileObject<>(this, TextType.utf8(), data, new UriFileName("vfm:/")));
-        vfs.put("conf:/", new KeyValueFileObject<>(this, TextType.utf8(), conf, new UriFileName("conf:/")));
+        vfs.put("vfm:/", new KeyValueFileObject<>(this, TextSerializer.utf8(), data, new UriFileName("vfm:/")));
+        vfs.put("conf:/", new KeyValueFileObject<>(this, TextSerializer.utf8(), conf, new UriFileName("conf:/")));
         providers.put("vfs", this);
         providers.put("vfm", this);
         providers.put("conf", this);
@@ -124,7 +124,7 @@ public class VirtualFileSystemManager implements VirtualFileSystem {
     public void init() throws FileSystemException {
         try (DirectoryStream<CloudFileObject> list = resolveFile("conf:/providers/").list()) {
             for (CloudFileObject provider : list) {
-                String className = new FileValue<>(provider.resolveFile("className"), TextType.utf8()).get();
+                String className = new FileValue<>(provider.resolveFile("className"), TextSerializer.utf8()).get();
                 CloudFileSystemProvider fileSystemProvider = (CloudFileSystemProvider) Class.forName(className).newInstance();
                 CloudFileObject scheme = provider.resolveFile("scheme");
                 if (scheme.exists()) {

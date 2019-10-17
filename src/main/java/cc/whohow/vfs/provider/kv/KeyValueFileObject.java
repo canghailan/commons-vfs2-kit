@@ -11,8 +11,8 @@ import cc.whohow.vfs.io.WritableChannel;
 import cc.whohow.vfs.path.PathBuilder;
 import cc.whohow.vfs.path.URIBuilder;
 import cc.whohow.vfs.provider.uri.UriFileName;
+import cc.whohow.vfs.serialize.Serializer;
 import cc.whohow.vfs.tree.FileObjectList;
-import cc.whohow.vfs.type.DataType;
 import org.apache.commons.vfs2.FileName;
 import org.apache.commons.vfs2.FileSystemException;
 import org.apache.commons.vfs2.provider.AbstractVfsComponent;
@@ -25,12 +25,12 @@ import java.util.*;
 public class KeyValueFileObject<T> extends AbstractVfsComponent implements CloudFileObject, CloudFileSystem {
     protected final CloudFileSystemProvider fileSystemProvider;
     protected final UriFileName name;
-    protected final DataType<T> type;
+    protected final Serializer<T> type;
     protected final NavigableMap<String, T> data;
 
     public KeyValueFileObject(
             CloudFileSystemProvider fileSystemProvider,
-            DataType<T> type,
+            Serializer<T> type,
             NavigableMap<String, T> data,
             UriFileName name) {
         this.fileSystemProvider = fileSystemProvider;

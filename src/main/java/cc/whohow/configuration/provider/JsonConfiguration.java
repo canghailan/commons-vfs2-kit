@@ -1,44 +1,48 @@
 package cc.whohow.configuration.provider;
 
+import cc.whohow.configuration.Configuration;
 import cc.whohow.vfs.CloudFileObject;
 import cc.whohow.vfs.FileValue;
-import cc.whohow.vfs.type.JsonType;
+import cc.whohow.vfs.serialize.JsonSerializer;
+import cc.whohow.vfs.serialize.Serializer;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-public class JsonConfiguration<T> extends FileValue.Cache<T> {
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-
+public class JsonConfiguration<T> extends FileValue.Cache<T> implements Configuration<T> {
     public JsonConfiguration(CloudFileObject fileObject, Class<T> type) {
-        this(fileObject, type, OBJECT_MAPPER);
+        super(fileObject, new JsonSerializer<>(type));
     }
 
     public JsonConfiguration(CloudFileObject fileObject, TypeReference<T> type) {
-        this(fileObject, type, OBJECT_MAPPER);
+        super(fileObject, new JsonSerializer<>(type));
     }
 
     public JsonConfiguration(CloudFileObject fileObject, String type) {
-        this(fileObject, type, OBJECT_MAPPER);
+        super(fileObject, new JsonSerializer<>(type));
     }
 
     public JsonConfiguration(CloudFileObject fileObject, JavaType type) {
-        this(fileObject, type, OBJECT_MAPPER);
+        super(fileObject, new JsonSerializer<>(type));
     }
 
     public JsonConfiguration(CloudFileObject fileObject, Class<T> type, ObjectMapper objectMapper) {
-        super(fileObject, new JsonType<>(objectMapper, type));
+        super(fileObject, new JsonSerializer<>(objectMapper, type));
     }
 
     public JsonConfiguration(CloudFileObject fileObject, TypeReference<T> type, ObjectMapper objectMapper) {
-        super(fileObject, new JsonType<>(objectMapper, type));
+        super(fileObject, new JsonSerializer<>(objectMapper, type));
     }
 
     public JsonConfiguration(CloudFileObject fileObject, String type, ObjectMapper objectMapper) {
-        super(fileObject, new JsonType<>(objectMapper, type));
+        super(fileObject, new JsonSerializer<>(objectMapper, type));
     }
 
     public JsonConfiguration(CloudFileObject fileObject, JavaType type, ObjectMapper objectMapper) {
-        super(fileObject, new JsonType<>(objectMapper, type));
+        super(fileObject, new JsonSerializer<>(objectMapper, type));
+    }
+
+    protected JsonConfiguration(CloudFileObject fileObject, Serializer<T> serializer) {
+        super(fileObject, serializer);
     }
 }
