@@ -10,6 +10,7 @@ import cc.whohow.vfs.version.FileVersionView;
 import cc.whohow.vfs.version.FileVersionViewWriter;
 import cc.whohow.vfs.watch.FileDiffEntry;
 import cc.whohow.vfs.watch.FileDiffIterator;
+import cc.whohow.vfs.watch.FileDiffStatistics;
 import org.apache.commons.vfs2.FileSystemException;
 
 import java.io.*;
@@ -17,6 +18,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
+import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -27,17 +29,26 @@ import java.util.stream.Stream;
 public class S3FileSync implements
         Supplier<Stream<FileDiffEntry<String>>>,
         Function<FileDiffEntry<String>, CloudFileOperation<?, ?>>, Consumer<FileDiffEntry<String>>, BiConsumer<FileDiffEntry<String>, Executor>,
-        Runnable {
+        Callable<FileDiffStatistics> {
     private VirtualFileSystem vfs;
     private CloudFileObject context;
     private CloudFileObject source;
     private CloudFileObject target;
+    private boolean skipDelete = false;
 
     public S3FileSync(VirtualFileSystem vfs, String context, String source, String target) throws FileSystemException {
         this.vfs = vfs;
         this.context = vfs.resolveFile(context);
         this.source = vfs.resolveFile(source);
         this.target = vfs.resolveFile(target);
+    }
+
+    public boolean isSkipDelete() {
+        return skipDelete;
+    }
+
+    public void setSkipDelete(boolean skipDelete) {
+        this.skipDelete = skipDelete;
     }
 
     public CloudFileOperation<?, ?> copy(String path) {
@@ -48,7 +59,10 @@ public class S3FileSync implements
         }
     }
 
-    public CloudFileOperation<?, ?> remove(String path) {
+    public CloudFileOperation<?, ?> delete(String path) {
+        if (skipDelete) {
+            return null;
+        }
         try {
             return vfs.getRemoveOperation(target.resolveFile(path));
         } catch (FileSystemException e) {
@@ -67,7 +81,7 @@ public class S3FileSync implements
                 return copy(diff.getKey());
             }
             case DELETE: {
-                return remove(diff.getKey());
+                return delete(diff.getKey());
             }
             default: {
                 throw new IllegalArgumentException(diff.toString());
@@ -132,7 +146,7 @@ public class S3FileSync implements
     }
 
     @Override
-    public void run() {
+    public FileDiffStatistics call() {
         try (Writer log = new OutputStreamWriter(new BufferedOutputStream(context.resolveFile("log.txt").getOutputStream(), 2 * 1024 * 1024), StandardCharsets.UTF_8)) {
             log.write("time: ");
             log.write(DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(ZonedDateTime.now()));
@@ -144,14 +158,18 @@ public class S3FileSync implements
             log.write(target.getName().getURI());
             log.write("\n\n\n");
 
+            FileDiffStatistics statistics = new FileDiffStatistics();
             try (Stream<FileDiffEntry<String>> diff = get()) {
-                diff.filter(FileDiffEntry::isModified)
+                diff.peek(statistics)
+                        .filter(FileDiffEntry::isModified)
                         .peek(this)
                         .map(FileDiffEntry::toString)
                         .forEach(new AppendableConsumer(log, "", "\n"));
             }
 
             log.flush();
+
+            return statistics;
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
