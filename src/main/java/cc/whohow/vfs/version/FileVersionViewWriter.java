@@ -35,7 +35,7 @@ public class FileVersionViewWriter implements Consumer<FileVersionView>, Closeab
             writer.append(fileVersionView.getVersion());
         }
         writer.append('\t');
-        if (fileVersionView.getSize() > 0) {
+        if (fileVersionView.getSize() >= 0) {
             writer.append(Long.toString(fileVersionView.getSize()));
         }
         writer.append('\t');

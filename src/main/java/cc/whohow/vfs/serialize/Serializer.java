@@ -5,6 +5,8 @@ import cc.whohow.vfs.io.ByteBufferReadableChannel;
 import cc.whohow.vfs.io.ByteBufferWritableChannel;
 import cc.whohow.vfs.io.ReadableChannel;
 import cc.whohow.vfs.io.WritableChannel;
+import org.apache.commons.vfs2.FileContent;
+import org.apache.commons.vfs2.FileObject;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -32,6 +34,22 @@ public interface Serializer<T> {
 
     default void serialize(WritableChannel channel, T value) throws IOException {
         serialize((OutputStream) channel, value);
+    }
+
+    default T deserialize(FileObject fileObject) throws IOException {
+        try (FileContent content = fileObject.getContent()) {
+            try (InputStream stream = content.getInputStream()) {
+                return deserialize(stream);
+            }
+        }
+    }
+
+    default void serialize(FileObject fileObject, T value) throws IOException {
+        try (FileContent content = fileObject.getContent()) {
+            try (OutputStream stream = content.getOutputStream()) {
+                serialize(stream, value);
+            }
+        }
     }
 
     default T deserialize(CloudFileObject fileObject) throws IOException {

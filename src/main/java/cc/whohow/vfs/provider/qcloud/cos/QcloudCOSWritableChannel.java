@@ -1,6 +1,7 @@
 package cc.whohow.vfs.provider.qcloud.cos;
 
 import cc.whohow.vfs.io.ByteBufferReadableChannel;
+import cc.whohow.vfs.io.ProgressMonitorInputStream;
 import cc.whohow.vfs.io.WritableChannel;
 import com.qcloud.cos.COS;
 import com.qcloud.cos.model.*;
@@ -27,6 +28,7 @@ public class QcloudCOSWritableChannel extends WritableChannel {
     private List<PartETag> partETags = Collections.emptyList();
     private byte[] buffer;
     private int length;
+    private long position;
 
     public QcloudCOSWritableChannel(COS cos, String bucketName, String key) {
         this(cos, bucketName, key, 2 * MIN_PART_SIZE);
@@ -40,6 +42,7 @@ public class QcloudCOSWritableChannel extends WritableChannel {
         this.bucketName = bucketName;
         this.key = key;
         this.bufferSize = bufferSize;
+        this.position = 0;
     }
 
     public COS getCOS() {
@@ -103,6 +106,8 @@ public class QcloudCOSWritableChannel extends WritableChannel {
                 }
             }
         }
+
+        position += len;
     }
 
     @Override
@@ -117,6 +122,9 @@ public class QcloudCOSWritableChannel extends WritableChannel {
         }
         if (uploadId != null) {
             cos.completeMultipartUpload(new CompleteMultipartUploadRequest(bucketName, key, uploadId, partETags));
+        }
+        if (position == 0) {
+            writeAll(ByteBuffer.allocate(0));
         }
     }
 
@@ -146,18 +154,16 @@ public class QcloudCOSWritableChannel extends WritableChannel {
 
     @Override
     public int writeAll(ByteBuffer buffer) throws IOException {
-        if (!partETags.isEmpty()) {
-            throw new IllegalStateException("parts: " + partETags.size());
-        }
         return (int) transferFrom(new ByteBufferReadableChannel(buffer));
     }
 
     @Override
-    public long transferFrom(InputStream stream) throws IOException {
-        if (!partETags.isEmpty()) {
-            throw new IllegalStateException("parts: " + partETags.size());
+    public synchronized long transferFrom(InputStream stream) throws IOException {
+        if (position > 0) {
+            throw new IllegalStateException("position: " + position);
         }
-        return cos.putObject(bucketName, key, stream, new ObjectMetadata())
-                .getMetadata().getContentLength();
+        ProgressMonitorInputStream monitor = new ProgressMonitorInputStream(stream);
+        cos.putObject(bucketName, key, monitor, new ObjectMetadata());
+        return position = monitor.getPosition();
     }
 }

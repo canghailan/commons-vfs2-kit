@@ -96,7 +96,7 @@ public class FileVersionView {
             buffer.append(getVersion());
         }
         buffer.append('\t');
-        if (getSize() > 0) {
+        if (getSize() >= 0) {
             buffer.append(getSize());
         }
         buffer.append('\t');

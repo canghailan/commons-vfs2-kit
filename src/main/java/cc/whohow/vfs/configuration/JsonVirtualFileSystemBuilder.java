@@ -11,13 +11,13 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.StringJoiner;
 
-public class JsonVirtualFileSystemConfiguration {
-    protected JsonNode json;
+public class JsonVirtualFileSystemBuilder {
+    protected JsonNode configuration;
     protected ArrayDeque<String> path;
     protected VirtualFileSystem virtualFileSystem;
 
-    public JsonVirtualFileSystemConfiguration(JsonNode json) {
-        this.json = json;
+    public JsonVirtualFileSystemBuilder(JsonNode configuration) {
+        this.configuration = configuration;
     }
 
     public VirtualFileSystem build() {
@@ -25,7 +25,7 @@ public class JsonVirtualFileSystemConfiguration {
             path = new ArrayDeque<>();
             virtualFileSystem = new VirtualFileSystemManager();
 
-            Iterator<Map.Entry<String, JsonNode>> iterator = json.fields();
+            Iterator<Map.Entry<String, JsonNode>> iterator = configuration.fields();
             while (iterator.hasNext()) {
                 Map.Entry<String, JsonNode> i = iterator.next();
                 if ("vfs".equals(i.getKey())) {
@@ -36,7 +36,7 @@ public class JsonVirtualFileSystemConfiguration {
 
             virtualFileSystem.init();
 
-            Iterator<Map.Entry<String, JsonNode>> vfs = json.path("vfs").fields();
+            Iterator<Map.Entry<String, JsonNode>> vfs = configuration.path("vfs").fields();
             while (vfs.hasNext()) {
                 Map.Entry<String, JsonNode> i = vfs.next();
                 CloudFileObject fileObject = virtualFileSystem.resolveFile(i.getValue().textValue());

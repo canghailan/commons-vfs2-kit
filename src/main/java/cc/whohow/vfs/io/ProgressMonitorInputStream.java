@@ -30,14 +30,18 @@ public class ProgressMonitorInputStream extends FilterInputStream {
     @Override
     public int read(byte[] b) throws IOException {
         int bytes = in.read(b);
-        position.getAndAdd(bytes);
+        if (bytes > 0) {
+            position.getAndAdd(bytes);
+        }
         return bytes;
     }
 
     @Override
     public int read(byte[] b, int off, int len) throws IOException {
         int bytes = in.read(b, off, len);
-        position.getAndAdd(bytes);
+        if (bytes > 0) {
+            position.getAndAdd(bytes);
+        }
         return bytes;
     }
 

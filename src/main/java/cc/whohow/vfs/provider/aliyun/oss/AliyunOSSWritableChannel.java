@@ -65,23 +65,30 @@ public class AliyunOSSWritableChannel extends WritableChannel {
     }
 
     @Override
-    public int writeAll(ByteBuffer buffer) throws IOException {
-        if (position != 0) {
-            throw new IllegalStateException("position: " + position);
+    public void close() throws IOException {
+        if (position == 0) {
+            writeAll(ByteBuffer.allocate(0));
         }
-        int n = buffer.remaining();
-        oss.putObject(getBucketName(), getKey(), new ByteBufferReadableChannel(buffer));
-        return n;
     }
 
     @Override
-    public long transferFrom(InputStream stream) throws IOException {
-        if (position != 0) {
+    public synchronized int writeAll(ByteBuffer buffer) throws IOException {
+        if (position > 0) {
+            throw new IllegalStateException("position: " + position);
+        }
+        position = buffer.remaining();
+        oss.putObject(getBucketName(), getKey(), new ByteBufferReadableChannel(buffer));
+        return (int) position;
+    }
+
+    @Override
+    public synchronized long transferFrom(InputStream stream) throws IOException {
+        if (position > 0) {
             throw new IllegalStateException("position: " + position);
         }
         ProgressMonitorInputStream monitor = new ProgressMonitorInputStream(stream);
         oss.putObject(getBucketName(), getKey(), monitor);
-        return monitor.getPosition();
+        return position = monitor.getPosition();
     }
 
     @Override
