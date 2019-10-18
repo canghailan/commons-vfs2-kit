@@ -15,7 +15,7 @@ public class TestFileSystem {
         VirtualFileSystem vfs = conf.build();
 
         S3FileSync s3FileSync = new S3FileSync(vfs, "oss://yt-temp/log/", "oss://yt-temp/test/", "cos://yt-backup-1256265957/");
-        s3FileSync.run();
+        System.out.println(s3FileSync.call());
 
         vfs.close();
     }

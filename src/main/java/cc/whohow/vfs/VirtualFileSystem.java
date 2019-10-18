@@ -141,7 +141,9 @@ public interface VirtualFileSystem extends CloudFileSystemProvider, CloudFileSys
     @Override
     default void setAttribute(String attrName, Object value) throws FileSystemException {
         try {
-            TextSerializer.utf8().serialize(resolveFile("conf:/").resolveFile(attrName), Objects.toString(value, null));
+            TextSerializer.utf8().serialize(
+                    resolveFile("conf:/").resolveFile(attrName),
+                    Objects.toString(value, null));
         } catch (FileSystemException e) {
             throw e;
         } catch (IOException e) {

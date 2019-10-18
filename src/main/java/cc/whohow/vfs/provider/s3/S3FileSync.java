@@ -166,6 +166,9 @@ public class S3FileSync implements
                         .map(FileDiffEntry::toString)
                         .forEach(new AppendableConsumer(log, "", "\n"));
             }
+            log.write("\n\n\n");
+
+            log.write(statistics.toString());
 
             log.flush();
 

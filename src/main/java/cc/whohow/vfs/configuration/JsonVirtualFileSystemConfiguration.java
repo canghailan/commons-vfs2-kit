@@ -52,7 +52,7 @@ public class JsonVirtualFileSystemConfiguration {
         }
     }
 
-    public void visit(String key, JsonNode node) {
+    public void visit(String key, JsonNode node) throws FileSystemException {
         path.addLast(key);
 
         if (node.isObject()) {

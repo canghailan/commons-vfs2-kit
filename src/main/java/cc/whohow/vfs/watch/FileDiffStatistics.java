@@ -1,30 +1,31 @@
 package cc.whohow.vfs.watch;
 
+import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Consumer;
 
 public class FileDiffStatistics implements Consumer<FileDiffEntry<?>> {
-    private long create = 0;
-    private long delete = 0;
-    private long modify = 0;
-    private long notModified = 0;
+    private LongAdder create = new LongAdder();
+    private LongAdder delete = new LongAdder();
+    private LongAdder modify = new LongAdder();
+    private LongAdder notModified = new LongAdder();
 
     @Override
     public void accept(FileDiffEntry<?> fileDiffEntry) {
         switch (fileDiffEntry.getValue()) {
             case CREATE: {
-                create++;
+                create.increment();
                 break;
             }
             case DELETE: {
-                delete++;
+                delete.increment();
                 break;
             }
             case MODIFY: {
-                modify++;
+                modify.increment();
                 break;
             }
             case NOT_MODIFIED: {
-                notModified++;
+                notModified.increment();
                 break;
             }
             default: {
@@ -34,19 +35,19 @@ public class FileDiffStatistics implements Consumer<FileDiffEntry<?>> {
     }
 
     public long getCreate() {
-        return create;
+        return create.longValue();
     }
 
     public long getDelete() {
-        return delete;
+        return delete.longValue();
     }
 
     public long getModify() {
-        return modify;
+        return modify.longValue();
     }
 
     public long getNotModified() {
-        return notModified;
+        return notModified.longValue();
     }
 
     public long getCount() {
