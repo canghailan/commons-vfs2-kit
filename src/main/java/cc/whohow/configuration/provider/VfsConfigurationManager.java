@@ -48,7 +48,7 @@ public class VfsConfigurationManager implements FileBasedConfigurationManager, F
 
     @Override
     public List<String> list(String key) {
-        try (DirectoryStream<CloudFileObject> list = root.resolveFile(key).listRecursively()) {
+        try (DirectoryStream<CloudFileObject> list = root.resolveFile(key).list()) {
             return StreamSupport.stream(list.spliterator(), false)
                     .map(this::getKey)
                     .collect(Collectors.toList());

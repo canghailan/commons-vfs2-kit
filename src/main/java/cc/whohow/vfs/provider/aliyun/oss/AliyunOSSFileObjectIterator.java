@@ -18,9 +18,10 @@ import java.util.Iterator;
 public class AliyunOSSFileObjectIterator implements Iterator<CloudFileObject> {
     private final AliyunOSSFileObject base;
     private final AliyunOSSObjectListingIterator objectListingIterator;
-    private Iterator<CloudFileObject> folders;
-    private Iterator<CloudFileObject> files;
-    private CloudFileObject file;
+    private Iterator<AliyunOSSFileObject> folders;
+    private Iterator<AliyunOSSFileObject> files;
+    private AliyunOSSFileObject file;
+    private boolean skip = false;
 
     public AliyunOSSFileObjectIterator(AliyunOSSFileObject base, boolean recursively) {
         this.base = base;
@@ -37,14 +38,15 @@ public class AliyunOSSFileObjectIterator implements Iterator<CloudFileObject> {
     @Override
     public boolean hasNext() {
         if (folders != null) {
-            if (folders.hasNext()) {
+            file = next(folders);
+            if (file != null) {
                 return true;
-            } else {
-                folders = null;
             }
+            folders = null;
         }
 
-        if (files.hasNext()) {
+        file = next(files);
+        if (file != null) {
             return true;
         }
 
@@ -58,13 +60,33 @@ public class AliyunOSSFileObjectIterator implements Iterator<CloudFileObject> {
         return false;
     }
 
+    private AliyunOSSFileObject next(Iterator<AliyunOSSFileObject> iterator) {
+        if (skip) {
+            if (iterator.hasNext()) {
+                return iterator.next();
+            } else {
+                return null;
+            }
+        }
+        if (iterator.hasNext()) {
+            AliyunOSSFileObject next = iterator.next();
+            if (next.getKey().equals(base.getKey())) {
+                skip = true;
+                if (iterator.hasNext()) {
+                    return iterator.next();
+                } else {
+                    return null;
+                }
+            } else {
+                return next;
+            }
+        }
+        return null;
+    }
+
     @Override
     public CloudFileObject next() {
-        if (folders != null) {
-            return file = folders.next();
-        } else {
-            return file = files.next();
-        }
+        return file;
     }
 
     @Override
@@ -76,11 +98,11 @@ public class AliyunOSSFileObjectIterator implements Iterator<CloudFileObject> {
         }
     }
 
-    private CloudFileObject newFolder(String key) {
+    private AliyunOSSFileObject newFolder(String key) {
         return new AliyunOSSFileObject(base.getFileSystem(), new S3FileName(base.getName(), key));
     }
 
-    private CloudFileObject newFile(OSSObjectSummary object) {
+    private AliyunOSSFileObject newFile(OSSObjectSummary object) {
         return new AliyunOSSListingFileObject(base.getFileSystem(), new S3FileName(base.getName(), object.getKey()), object);
     }
 }

@@ -14,9 +14,10 @@ import java.util.Iterator;
 public class QcloudCOSFileObjectIterator implements Iterator<CloudFileObject> {
     private final QcloudCOSFileObject base;
     private final QcloudCOSObjectListingIterator objectListingIterator;
-    private Iterator<CloudFileObject> folders;
-    private Iterator<CloudFileObject> files;
-    private CloudFileObject file;
+    private Iterator<QcloudCOSFileObject> folders;
+    private Iterator<QcloudCOSFileObject> files;
+    private QcloudCOSFileObject file;
+    private boolean skip = false;
 
     public QcloudCOSFileObjectIterator(QcloudCOSFileObject base, boolean recursively) {
         this.base = base;
@@ -33,14 +34,15 @@ public class QcloudCOSFileObjectIterator implements Iterator<CloudFileObject> {
     @Override
     public boolean hasNext() {
         if (folders != null) {
-            if (folders.hasNext()) {
+            file = next(folders);
+            if (file != null) {
                 return true;
-            } else {
-                folders = null;
             }
+            folders = null;
         }
 
-        if (files.hasNext()) {
+        file = next(files);
+        if (file != null) {
             return true;
         }
 
@@ -54,13 +56,33 @@ public class QcloudCOSFileObjectIterator implements Iterator<CloudFileObject> {
         return false;
     }
 
+    private QcloudCOSFileObject next(Iterator<QcloudCOSFileObject> iterator) {
+        if (skip) {
+            if (iterator.hasNext()) {
+                return iterator.next();
+            } else {
+                return null;
+            }
+        }
+        if (iterator.hasNext()) {
+            QcloudCOSFileObject next = iterator.next();
+            if (next.getKey().equals(base.getKey())) {
+                skip = true;
+                if (iterator.hasNext()) {
+                    return iterator.next();
+                } else {
+                    return null;
+                }
+            } else {
+                return next;
+            }
+        }
+        return null;
+    }
+
     @Override
     public CloudFileObject next() {
-        if (folders != null) {
-            return file = folders.next();
-        } else {
-            return file = files.next();
-        }
+        return file;
     }
 
     @Override
@@ -72,11 +94,11 @@ public class QcloudCOSFileObjectIterator implements Iterator<CloudFileObject> {
         }
     }
 
-    private CloudFileObject newFolder(String key) {
+    private QcloudCOSFileObject newFolder(String key) {
         return new QcloudCOSFileObject(base.getFileSystem(), new S3FileName(base.getName(), key));
     }
 
-    private CloudFileObject newFile(COSObjectSummary object) {
+    private QcloudCOSFileObject newFile(COSObjectSummary object) {
         return new QcloudCOSListingFileObject(base.getFileSystem(), new S3FileName(base.getName(), object.getKey()), object);
     }
 }
