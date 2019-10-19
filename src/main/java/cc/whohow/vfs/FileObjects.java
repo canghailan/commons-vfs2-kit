@@ -53,10 +53,10 @@ public class FileObjects {
         }
     }
 
-    public static long getSize(CloudFileObject fileObject) {
+    public static long getSize(FileObjectX fileObject) {
         try {
             if (fileObject.isFolder()) {
-                try (DirectoryStream<CloudFileObject> list = fileObject.listRecursively()) {
+                try (DirectoryStream<FileObjectX> list = fileObject.listRecursively()) {
                     return StreamSupport.stream(list.spliterator(), false)
                             .filter(FileObjects::isFile)
                             .mapToLong(FileObjects::getFileSize)
@@ -70,7 +70,7 @@ public class FileObjects {
         }
     }
 
-    private static long getFileSize(CloudFileObject fileObject) {
+    private static long getFileSize(FileObjectX fileObject) {
         try {
             return fileObject.getSize();
         } catch (FileSystemException e) {
@@ -78,7 +78,7 @@ public class FileObjects {
         }
     }
 
-    public static long getLastModifiedTime(CloudFileObject fileObject) {
+    public static long getLastModifiedTime(FileObjectX fileObject) {
         try {
             return fileObject.getLastModifiedTime();
         } catch (FileSystemException e) {
@@ -86,7 +86,7 @@ public class FileObjects {
         }
     }
 
-    public static DirectoryStream<CloudFileObject> list(CloudFileObject fileObject) {
+    public static DirectoryStream<FileObjectX> list(FileObjectX fileObject) {
         try {
             return fileObject.list();
         } catch (FileSystemException e) {
@@ -94,7 +94,7 @@ public class FileObjects {
         }
     }
 
-    public static DirectoryStream<CloudFileObject> listRecursively(CloudFileObject fileObject) {
+    public static DirectoryStream<FileObjectX> listRecursively(FileObjectX fileObject) {
         try {
             return fileObject.listRecursively();
         } catch (FileSystemException e) {
@@ -102,7 +102,7 @@ public class FileObjects {
         }
     }
 
-    public static InputStream getInputStream(CloudFileObject fileObject) {
+    public static InputStream getInputStream(FileObjectX fileObject) {
         try {
             return fileObject.getInputStream();
         } catch (FileSystemException e) {
@@ -110,7 +110,7 @@ public class FileObjects {
         }
     }
 
-    public static OutputStream getOutputStream(CloudFileObject fileObject) {
+    public static OutputStream getOutputStream(FileObjectX fileObject) {
         try {
             return fileObject.getOutputStream();
         } catch (FileSystemException e) {
@@ -118,7 +118,7 @@ public class FileObjects {
         }
     }
 
-    public static ByteBuffer read(CloudFileObject fileObject) {
+    public static ByteBuffer read(FileObjectX fileObject) {
         try (ReadableChannel channel = fileObject.getReadableChannel()) {
             return channel.readAll();
         } catch (IOException e) {
@@ -126,7 +126,7 @@ public class FileObjects {
         }
     }
 
-    public static void write(CloudFileObject fileObject, ByteBuffer buffer) {
+    public static void write(FileObjectX fileObject, ByteBuffer buffer) {
         try (WritableChannel channel = fileObject.getWritableChannel()) {
             channel.writeAll(buffer);
         } catch (IOException e) {
@@ -134,23 +134,23 @@ public class FileObjects {
         }
     }
 
-    public static String read(CloudFileObject fileObject, Charset charset) {
+    public static String read(FileObjectX fileObject, Charset charset) {
         return charset.decode(read(fileObject)).toString();
     }
 
-    public static void write(CloudFileObject fileObject, Charset charset, String text) {
+    public static void write(FileObjectX fileObject, Charset charset, String text) {
         write(fileObject, charset.encode(text));
     }
 
-    public static String readUtf8(CloudFileObject fileObject) {
+    public static String readUtf8(FileObjectX fileObject) {
         return read(fileObject, StandardCharsets.UTF_8);
     }
 
-    public static void writeUtf8(CloudFileObject fileObject, String text) {
+    public static void writeUtf8(FileObjectX fileObject, String text) {
         write(fileObject, StandardCharsets.UTF_8, text);
     }
 
-    public static <T> T read(CloudFileObject fileObject, Serializer<T> serializer) {
+    public static <T> T read(FileObjectX fileObject, Serializer<T> serializer) {
         try {
             return serializer.deserialize(fileObject);
         } catch (IOException e) {
@@ -158,7 +158,7 @@ public class FileObjects {
         }
     }
 
-    public static <T> void write(CloudFileObject fileObject, Serializer<T> serializer, T value) {
+    public static <T> void write(FileObjectX fileObject, Serializer<T> serializer, T value) {
         try {
             serializer.serialize(fileObject, value);
         } catch (IOException e) {

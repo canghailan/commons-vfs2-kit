@@ -1,6 +1,6 @@
 package cc.whohow.vfs.provider.qcloud.cos;
 
-import cc.whohow.vfs.CloudFileObject;
+import cc.whohow.vfs.FileObjectX;
 import cc.whohow.vfs.provider.s3.S3FileName;
 import cc.whohow.vfs.util.MapIterator;
 import com.qcloud.cos.model.COSObjectSummary;
@@ -11,7 +11,7 @@ import java.io.UncheckedIOException;
 import java.util.Collections;
 import java.util.Iterator;
 
-public class QcloudCOSFileObjectIterator implements Iterator<CloudFileObject> {
+public class QcloudCOSFileObjectIterator implements Iterator<FileObjectX> {
     private final QcloudCOSFileObject base;
     private final QcloudCOSObjectListingIterator objectListingIterator;
     private Iterator<QcloudCOSFileObject> folders;
@@ -81,7 +81,7 @@ public class QcloudCOSFileObjectIterator implements Iterator<CloudFileObject> {
     }
 
     @Override
-    public CloudFileObject next() {
+    public FileObjectX next() {
         return file;
     }
 

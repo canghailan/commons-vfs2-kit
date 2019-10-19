@@ -23,12 +23,12 @@ import java.util.stream.StreamSupport;
 /**
  * 轻量级文件对象
  */
-public interface CloudFileObject extends FileObjectImpl, FileContentImpl {
-    CloudFileSystem getFileSystem();
+public interface FileObjectX extends FileObjectImpl, FileContentImpl {
+    FileSystemX getFileSystem();
 
-    DirectoryStream<CloudFileObject> list() throws FileSystemException;
+    DirectoryStream<FileObjectX> list() throws FileSystemException;
 
-    default DirectoryStream<CloudFileObject> listRecursively() throws FileSystemException {
+    default DirectoryStream<FileObjectX> listRecursively() throws FileSystemException {
         if (!isFolder()) {
             throw new FileSystemException("vfs.provider/list-children-not-folder.error", this);
         }
@@ -40,7 +40,7 @@ public interface CloudFileObject extends FileObjectImpl, FileContentImpl {
     WritableChannel getWritableChannel() throws FileSystemException;
 
     @Override
-    default CloudFileObject getParent() throws FileSystemException {
+    default FileObjectX getParent() throws FileSystemException {
         FileName parent = getName().getParent();
         if (parent == null) {
             return null;
@@ -49,7 +49,7 @@ public interface CloudFileObject extends FileObjectImpl, FileContentImpl {
     }
 
     @Override
-    default CloudFileObject getChild(String name) throws FileSystemException {
+    default FileObjectX getChild(String name) throws FileSystemException {
         if (name.contains(org.apache.commons.vfs2.FileName.SEPARATOR)) {
             throw new IllegalArgumentException(name);
         }
@@ -70,28 +70,28 @@ public interface CloudFileObject extends FileObjectImpl, FileContentImpl {
         return Collections.singletonList(getPublicURIString());
     }
 
-    default <R> CloudFileOperation<CloudFileObject, R> getOperation(Class<? extends CloudFileOperation<CloudFileObject, R>> fileOperation) throws FileSystemException {
+    default <R> FileOperationX<FileObjectX, R> getOperation(Class<? extends FileOperationX<FileObjectX, R>> fileOperation) throws FileSystemException {
         return getFileOperations().getOperation(fileOperation, this);
     }
 
     @Override
-    default CloudFileOperations getFileOperations() throws FileSystemException {
+    default FileOperationsX getFileOperations() throws FileSystemException {
         return getFileSystem().getFileSystemProvider().getFileOperations();
     }
 
     @Override
-    default CloudFileObject getFile() {
+    default FileObjectX getFile() {
         return this;
     }
 
     @Override
-    default CloudFileObject resolveFile(String path) throws FileSystemException {
+    default FileObjectX resolveFile(String path) throws FileSystemException {
         return getFileSystem().resolveFile(URIBuilder.resolve(getName().getURI(), path));
     }
 
     @Override
-    default org.apache.commons.vfs2.FileObject[] getChildren() throws FileSystemException {
-        try (DirectoryStream<CloudFileObject> list = list()) {
+    default FileObject[] getChildren() throws FileSystemException {
+        try (DirectoryStream<FileObjectX> list = list()) {
             return StreamSupport.stream(list.spliterator(), false).toArray(org.apache.commons.vfs2.FileObject[]::new);
         } catch (FileSystemException e) {
             throw e;
@@ -118,9 +118,9 @@ public interface CloudFileObject extends FileObjectImpl, FileContentImpl {
     @Override
     default int deleteAll() throws FileSystemException {
         if (isFolder()) {
-            try (DirectoryStream<CloudFileObject> list = list()) {
+            try (DirectoryStream<FileObjectX> list = list()) {
                 int n = 0;
-                for (CloudFileObject fileObject : list) {
+                for (FileObjectX fileObject : list) {
                     if (fileObject.isFolder()) {
                         n += fileObject.deleteAll();
                     } else {

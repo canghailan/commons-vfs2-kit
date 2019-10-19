@@ -1,7 +1,7 @@
 package cc.whohow.vfs.operations;
 
-import cc.whohow.vfs.CloudFileOperation;
-import cc.whohow.vfs.CloudFileOperations;
+import cc.whohow.vfs.FileOperationX;
+import cc.whohow.vfs.FileOperationsX;
 import org.apache.commons.vfs2.FileSystemException;
 import org.apache.commons.vfs2.operations.FileOperation;
 
@@ -10,17 +10,17 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
 @SuppressWarnings("unchecked")
-public class DefaultCloudFileOperations implements CloudFileOperations {
-    private Map<Class, Supplier<? extends CloudFileOperation>> factory = new ConcurrentHashMap<>();
+public class DefaultFileOperations implements FileOperationsX {
+    private Map<Class, Supplier<? extends FileOperationX>> factory = new ConcurrentHashMap<>();
 
-    public DefaultCloudFileOperations() {
+    public DefaultFileOperations() {
         factory.put(Remove.class, DefaultRemoveOperation::new);
         factory.put(Copy.class, DefaultCopyOperation::new);
         factory.put(Move.class, DefaultMoveOperation::new);
     }
 
     @Override
-    public <T, R, O extends CloudFileOperation<T, R>> O getOperation(Class<? extends O> fileOperation, T args) throws FileSystemException {
+    public <T, R, O extends FileOperationX<T, R>> O getOperation(Class<? extends O> fileOperation, T args) throws FileSystemException {
         return (O) getOperation(fileOperation).with(args);
     }
 
@@ -30,7 +30,7 @@ public class DefaultCloudFileOperations implements CloudFileOperations {
     }
 
     @Override
-    public CloudFileOperation getOperation(Class<? extends FileOperation> operationClass) throws FileSystemException {
+    public FileOperationX getOperation(Class<? extends FileOperation> operationClass) throws FileSystemException {
         return factory.get(operationClass).get();
     }
 

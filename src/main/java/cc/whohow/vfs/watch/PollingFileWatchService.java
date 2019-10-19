@@ -58,7 +58,7 @@ public class PollingFileWatchService implements FileWatchService<PollingFileWatc
             return;
         }
         task.removeListener(listener);
-        if (task.isDone()) {
+        if (!task.hasListener()) {
             task.cancel(true);
         }
     }

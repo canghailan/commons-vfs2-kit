@@ -21,7 +21,7 @@ public class VirtualFileManager {
         this.fileSystem = fileSystem;
     }
 
-    public CloudFileObject resolve(String path) {
+    public FileObjectX resolve(String path) {
         try {
             return fileSystem.resolveFile(path);
         } catch (FileSystemException e) {

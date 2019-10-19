@@ -25,7 +25,9 @@ public class FileWatchListener implements FileListener, Predicate<FileChangeEven
 
     @Override
     public boolean test(FileChangeEvent event) {
-        return fileName.isDescendent(event.getFile().getName());
+        FileName eventFileName = event.getFile().getName();
+        return fileName.equals(eventFileName) ||
+                fileName.isDescendent(eventFileName);
     }
 
     @Override

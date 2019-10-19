@@ -1,8 +1,8 @@
 package cc.whohow.vfs.operations;
 
-import cc.whohow.vfs.CloudFileOperation;
+import cc.whohow.vfs.FileOperationX;
 
-public class Noop<T, R> implements CloudFileOperation<T, R> {
+public class Noop<T, R> implements FileOperationX<T, R> {
     private static Noop INSTANCE = new Noop();
 
     @SuppressWarnings("unchecked")
@@ -11,7 +11,7 @@ public class Noop<T, R> implements CloudFileOperation<T, R> {
     }
 
     @Override
-    public CloudFileOperation<T, R> with(T options) {
+    public FileOperationX<T, R> with(T options) {
         return this;
     }
 

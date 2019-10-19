@@ -1,14 +1,14 @@
 package cc.whohow.vfs.tree;
 
-import cc.whohow.vfs.CloudFileObject;
+import cc.whohow.vfs.FileObjectX;
 
 import java.nio.file.DirectoryStream;
 import java.util.Iterator;
 
-public class FileObjectList implements DirectoryStream<CloudFileObject> {
-    private final Iterable<CloudFileObject> list;
+public class FileObjectList implements DirectoryStream<FileObjectX> {
+    private final Iterable<FileObjectX> list;
 
-    public FileObjectList(Iterable<CloudFileObject> list) {
+    public FileObjectList(Iterable<FileObjectX> list) {
         this.list = list;
     }
 
@@ -17,7 +17,7 @@ public class FileObjectList implements DirectoryStream<CloudFileObject> {
     }
 
     @Override
-    public Iterator<CloudFileObject> iterator() {
+    public Iterator<FileObjectX> iterator() {
         return list.iterator();
     }
 }

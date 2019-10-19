@@ -1,6 +1,6 @@
 package cc.whohow.vfs.provider.s3;
 
-import cc.whohow.vfs.CloudFileObject;
+import cc.whohow.vfs.FileObjectX;
 import cc.whohow.vfs.version.FileAttributeVersionProvider;
 import cc.whohow.vfs.version.FileVersion;
 import com.aliyun.oss.internal.OSSHeaders;
@@ -14,7 +14,7 @@ public class S3FileVersionProvider extends FileAttributeVersionProvider<String> 
     }
 
     @Override
-    public FileVersion<String> getVersion(CloudFileObject fileObject) {
+    public FileVersion<String> getVersion(FileObjectX fileObject) {
         try {
             if (fileObject.isFile()) {
                 return super.getVersion(fileObject);

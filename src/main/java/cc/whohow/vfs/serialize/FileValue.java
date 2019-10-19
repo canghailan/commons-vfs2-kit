@@ -1,6 +1,6 @@
-package cc.whohow.vfs;
+package cc.whohow.vfs.serialize;
 
-import cc.whohow.vfs.serialize.Serializer;
+import cc.whohow.vfs.FileObjectX;
 import cc.whohow.vfs.util.Value;
 import org.apache.commons.vfs2.FileChangeEvent;
 import org.apache.commons.vfs2.FileListener;
@@ -10,15 +10,15 @@ import java.io.UncheckedIOException;
 import java.util.function.Consumer;
 
 public class FileValue<T> implements Value<T> {
-    protected final CloudFileObject fileObject;
+    protected final FileObjectX fileObject;
     protected final Serializer<T> serializer;
 
-    public FileValue(CloudFileObject fileObject, Serializer<T> serializer) {
+    public FileValue(FileObjectX fileObject, Serializer<T> serializer) {
         this.fileObject = fileObject;
         this.serializer = serializer;
     }
 
-    public CloudFileObject getFileObject() {
+    public FileObjectX getFileObject() {
         return fileObject;
     }
 
@@ -63,7 +63,7 @@ public class FileValue<T> implements Value<T> {
     public static class Cache<T> extends FileValue<T> implements FileListener, AutoCloseable {
         protected volatile T value;
 
-        public Cache(CloudFileObject fileObject, Serializer<T> type) {
+        public Cache(FileObjectX fileObject, Serializer<T> type) {
             super(fileObject, type);
             fileObject.getFileSystem().addListener(fileObject, this);
         }

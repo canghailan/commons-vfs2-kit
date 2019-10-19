@@ -1,6 +1,6 @@
 package cc.whohow.vfs.provider.aliyun.oss;
 
-import cc.whohow.vfs.CloudFileObject;
+import cc.whohow.vfs.FileObjectX;
 import cc.whohow.vfs.provider.s3.S3FileName;
 import cc.whohow.vfs.util.MapIterator;
 import com.aliyun.oss.model.OSSObjectSummary;
@@ -15,7 +15,7 @@ import java.util.Iterator;
  * VFS 文件遍历器
  * TODO 优化
  */
-public class AliyunOSSFileObjectIterator implements Iterator<CloudFileObject> {
+public class AliyunOSSFileObjectIterator implements Iterator<FileObjectX> {
     private final AliyunOSSFileObject base;
     private final AliyunOSSObjectListingIterator objectListingIterator;
     private Iterator<AliyunOSSFileObject> folders;
@@ -85,7 +85,7 @@ public class AliyunOSSFileObjectIterator implements Iterator<CloudFileObject> {
     }
 
     @Override
-    public CloudFileObject next() {
+    public FileObjectX next() {
         return file;
     }
 

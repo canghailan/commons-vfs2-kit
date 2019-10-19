@@ -1,6 +1,6 @@
 package cc.whohow.vfs.provider.aliyun.oss;
 
-import cc.whohow.vfs.CloudFileObject;
+import cc.whohow.vfs.FileObjectX;
 import cc.whohow.vfs.io.ReadableChannel;
 import cc.whohow.vfs.io.ReadableChannelAdapter;
 import cc.whohow.vfs.io.WritableChannel;
@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
 /**
  * 阿里云文件对象
  */
-public class AliyunOSSFileObject implements CloudFileObject {
+public class AliyunOSSFileObject implements FileObjectX {
     protected final AliyunOSSFileSystem fileSystem;
     protected final S3FileName name;
 
@@ -95,12 +95,12 @@ public class AliyunOSSFileObject implements CloudFileObject {
     }
 
     @Override
-    public DirectoryStream<CloudFileObject> list() throws FileSystemException {
+    public DirectoryStream<FileObjectX> list() throws FileSystemException {
         return new AliyunOSSFileObjectList(this, false);
     }
 
     @Override
-    public DirectoryStream<CloudFileObject> listRecursively() throws FileSystemException {
+    public DirectoryStream<FileObjectX> listRecursively() throws FileSystemException {
         return new AliyunOSSFileObjectList(this, true);
     }
 

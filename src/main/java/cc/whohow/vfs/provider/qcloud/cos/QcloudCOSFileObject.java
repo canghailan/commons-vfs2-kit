@@ -1,6 +1,6 @@
 package cc.whohow.vfs.provider.qcloud.cos;
 
-import cc.whohow.vfs.CloudFileObject;
+import cc.whohow.vfs.FileObjectX;
 import cc.whohow.vfs.io.ReadableChannel;
 import cc.whohow.vfs.io.ReadableChannelAdapter;
 import cc.whohow.vfs.io.WritableChannel;
@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class QcloudCOSFileObject implements CloudFileObject {
+public class QcloudCOSFileObject implements FileObjectX {
     protected final QcloudCOSFileSystem fileSystem;
     protected final S3FileName name;
 
@@ -83,12 +83,12 @@ public class QcloudCOSFileObject implements CloudFileObject {
     }
 
     @Override
-    public DirectoryStream<CloudFileObject> list() throws FileSystemException {
+    public DirectoryStream<FileObjectX> list() throws FileSystemException {
         return new QcloudCOSFileObjectList(this, false);
     }
 
     @Override
-    public DirectoryStream<CloudFileObject> listRecursively() throws FileSystemException {
+    public DirectoryStream<FileObjectX> listRecursively() throws FileSystemException {
         return new QcloudCOSFileObjectList(this, true);
     }
 

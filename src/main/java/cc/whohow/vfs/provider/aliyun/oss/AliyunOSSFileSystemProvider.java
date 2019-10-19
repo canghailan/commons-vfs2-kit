@@ -24,7 +24,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-public class AliyunOSSFileSystemProvider extends AbstractVfsComponent implements CloudFileSystemProvider {
+public class AliyunOSSFileSystemProvider extends AbstractVfsComponent implements FileSystemProviderX {
     private static final Set<Capability> CAPABILITIES = Collections.unmodifiableSet(EnumSet.of(
             Capability.READ_CONTENT,
             Capability.WRITE_CONTENT,
@@ -99,12 +99,12 @@ public class AliyunOSSFileSystemProvider extends AbstractVfsComponent implements
     }
 
     @Override
-    public CloudFileSystem getFileSystem(String uri) throws FileSystemException {
+    public FileSystemX getFileSystem(String uri) throws FileSystemException {
         return getFileSystem(new S3Uri(uri));
     }
 
     @Override
-    public CloudFileSystem findFileSystem(String uri) throws FileSystemException {
+    public FileSystemX findFileSystem(String uri) throws FileSystemException {
         return getFileSystem(new S3Uri(uri));
     }
 
@@ -114,7 +114,7 @@ public class AliyunOSSFileSystemProvider extends AbstractVfsComponent implements
     }
 
     @Override
-    public CloudFileObject getFileObject(String uri) throws FileSystemException {
+    public FileObjectX getFileObject(String uri) throws FileSystemException {
         S3FileName fileName = new S3FileName(uri);
         return new AliyunOSSFileObject(getFileSystem(fileName), fileName);
     }
@@ -125,7 +125,7 @@ public class AliyunOSSFileSystemProvider extends AbstractVfsComponent implements
     }
 
     @Override
-    public CloudFileOperations getFileOperations() throws FileSystemException {
+    public FileOperationsX getFileOperations() throws FileSystemException {
         return null;
     }
 
@@ -134,8 +134,8 @@ public class AliyunOSSFileSystemProvider extends AbstractVfsComponent implements
         VirtualFileSystem vfs = (VirtualFileSystem) getContext().getFileSystemManager();
 
         // credentials
-        try (DirectoryStream<CloudFileObject> list = vfs.resolveFile("conf:/providers/aliyun-oss/credentials/").list()) {
-            for (CloudFileObject credential : list) {
+        try (DirectoryStream<FileObjectX> list = vfs.resolveFile("conf:/providers/aliyun-oss/credentials/").list()) {
+            for (FileObjectX credential : list) {
                 JsonNode value = YamlSerializer.get().deserialize(credential);
                 credentials.add(new DefaultCredentials(value.get("accessKeyId").textValue(), value.get("secretAccessKey").textValue()));
             }

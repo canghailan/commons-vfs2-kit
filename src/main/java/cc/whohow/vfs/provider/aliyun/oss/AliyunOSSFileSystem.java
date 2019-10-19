@@ -1,6 +1,6 @@
 package cc.whohow.vfs.provider.aliyun.oss;
 
-import cc.whohow.vfs.CloudFileSystem;
+import cc.whohow.vfs.FileSystemX;
 import cc.whohow.vfs.VirtualFileSystem;
 import cc.whohow.vfs.provider.s3.S3FileName;
 import com.aliyun.oss.OSS;
@@ -8,7 +8,7 @@ import org.apache.commons.vfs2.FileName;
 import org.apache.commons.vfs2.FileSystemException;
 import org.apache.commons.vfs2.provider.AbstractVfsComponent;
 
-public class AliyunOSSFileSystem extends AbstractVfsComponent implements CloudFileSystem {
+public class AliyunOSSFileSystem extends AbstractVfsComponent implements FileSystemX {
     private final AliyunOSSFileSystemProvider fileSystemProvider;
     private final S3FileName root;
     private final OSS oss;

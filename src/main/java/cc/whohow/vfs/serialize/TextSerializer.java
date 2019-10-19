@@ -19,7 +19,7 @@ public class TextSerializer implements Serializer<String> {
         this.charset = charset;
     }
 
-    public static final TextSerializer utf8() {
+    public static TextSerializer utf8() {
         return UTF_8;
     }
 

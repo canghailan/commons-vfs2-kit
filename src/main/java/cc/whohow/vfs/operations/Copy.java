@@ -1,32 +1,32 @@
 package cc.whohow.vfs.operations;
 
-import cc.whohow.vfs.CloudFileObject;
-import cc.whohow.vfs.CloudFileOperation;
+import cc.whohow.vfs.FileObjectX;
+import cc.whohow.vfs.FileOperationX;
 
 import java.util.Collections;
 import java.util.Map;
 
-public interface Copy extends CloudFileOperation<Copy.Options, Object> {
+public interface Copy extends FileOperationX<Copy.Options, Object> {
     class Options {
-        private final CloudFileObject source;
-        private final CloudFileObject destination;
+        private final FileObjectX source;
+        private final FileObjectX destination;
         private final Map<String, Object> options;
 
-        public Options(CloudFileObject source, CloudFileObject destination) {
+        public Options(FileObjectX source, FileObjectX destination) {
             this(source, destination, Collections.emptyMap());
         }
 
-        public Options(CloudFileObject source, CloudFileObject destination, Map<String, Object> options) {
+        public Options(FileObjectX source, FileObjectX destination, Map<String, Object> options) {
             this.source = source;
             this.destination = destination;
             this.options = options;
         }
 
-        public CloudFileObject getSource() {
+        public FileObjectX getSource() {
             return source;
         }
 
-        public CloudFileObject getDestination() {
+        public FileObjectX getDestination() {
             return destination;
         }
 

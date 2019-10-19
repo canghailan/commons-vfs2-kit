@@ -11,7 +11,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -24,11 +23,12 @@ public class QcloudCOSWritableChannel extends WritableChannel {
     private final String bucketName;
     private final String key;
     private final int bufferSize;
+    private long position;
+
     private String uploadId;
-    private List<PartETag> partETags = Collections.emptyList();
+    private List<PartETag> partETags;
     private byte[] buffer;
     private int length;
-    private long position;
 
     public QcloudCOSWritableChannel(COS cos, String bucketName, String key) {
         this(cos, bucketName, key, 2 * MIN_PART_SIZE);
@@ -138,7 +138,7 @@ public class QcloudCOSWritableChannel extends WritableChannel {
         length = 0;
     }
 
-    private synchronized void upload(byte[] buffer, int offset, int length, boolean close) {
+    private synchronized void upload(byte[] buffer, int offset, int length, boolean last) {
         int partNumber = partETags.size() + 1;
         UploadPartResult result = cos.uploadPart(new UploadPartRequest()
                 .withBucketName(bucketName)
@@ -147,14 +147,19 @@ public class QcloudCOSWritableChannel extends WritableChannel {
                 .withPartNumber(partNumber)
                 .withInputStream(new ByteArrayInputStream(buffer, offset, length))
                 .withPartSize(length)
-                .withLastPart(close)
+                .withLastPart(last)
         );
         partETags.add(new PartETag(partNumber, result.getETag()));
     }
 
     @Override
-    public int writeAll(ByteBuffer buffer) throws IOException {
-        return (int) transferFrom(new ByteBufferReadableChannel(buffer));
+    public synchronized int writeAll(ByteBuffer buffer) throws IOException {
+        if (position > 0) {
+            throw new IllegalStateException("position: " + position);
+        }
+        position = buffer.remaining();
+        cos.putObject(bucketName, key, new ByteBufferReadableChannel(buffer), new ObjectMetadata());
+        return (int) position;
     }
 
     @Override

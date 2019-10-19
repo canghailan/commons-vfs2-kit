@@ -1,6 +1,6 @@
 package cc.whohow.vfs.version;
 
-import cc.whohow.vfs.CloudFileObject;
+import cc.whohow.vfs.FileObjectX;
 import org.apache.commons.vfs2.FileSystemException;
 
 import java.io.UncheckedIOException;
@@ -14,7 +14,7 @@ public class FileAttributeVersionProvider<T> implements FileVersionProvider<T> {
 
     @Override
     @SuppressWarnings("unchecked")
-    public FileVersion<T> getVersion(CloudFileObject fileObject) {
+    public FileVersion<T> getVersion(FileObjectX fileObject) {
         try {
             return new FileVersion<>(fileObject, (T) fileObject.getAttribute(attribute));
         } catch (FileSystemException e) {

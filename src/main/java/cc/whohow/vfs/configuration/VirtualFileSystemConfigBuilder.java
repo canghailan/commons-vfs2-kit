@@ -1,4 +1,4 @@
-package cc.whohow.vfs;
+package cc.whohow.vfs.configuration;
 
 import org.apache.commons.vfs2.FileSystem;
 import org.apache.commons.vfs2.FileSystemConfigBuilder;

@@ -1,5 +1,6 @@
 package cc.whohow.vfs;
 
+import cc.whohow.vfs.configuration.VirtualFileSystemConfigBuilder;
 import cc.whohow.vfs.operations.Copy;
 import cc.whohow.vfs.operations.Move;
 import cc.whohow.vfs.operations.Remove;
@@ -12,26 +13,26 @@ import org.apache.commons.vfs2.provider.VfsComponent;
 
 import java.net.URI;
 
-public interface CloudFileSystemProvider extends FileProvider, VfsComponent {
+public interface FileSystemProviderX extends FileProvider, VfsComponent {
     String getScheme();
 
-    CloudFileSystem getFileSystem(String uri) throws FileSystemException;
+    FileSystemX getFileSystem(String uri) throws FileSystemException;
 
-    CloudFileSystem findFileSystem(String uri) throws FileSystemException;
+    FileSystemX findFileSystem(String uri) throws FileSystemException;
 
     FileName getFileName(String uri) throws FileSystemException;
 
-    default CloudFileObject getFileObject(URI uri) throws FileSystemException {
+    default FileObjectX getFileObject(URI uri) throws FileSystemException {
         return getFileObject(uri.toString());
     }
 
-    default CloudFileObject getFileObject(String uri) throws FileSystemException {
+    default FileObjectX getFileObject(String uri) throws FileSystemException {
         return findFileSystem(uri).resolveFile(uri);
     }
 
-    CloudFileOperations getFileOperations() throws FileSystemException;
+    FileOperationsX getFileOperations() throws FileSystemException;
 
-    default Remove getRemoveOperation(CloudFileObject fileObject) throws FileSystemException {
+    default Remove getRemoveOperation(FileObjectX fileObject) throws FileSystemException {
         return getFileOperations().getOperation(Remove.class, fileObject);
     }
 
@@ -52,12 +53,12 @@ public interface CloudFileSystemProvider extends FileProvider, VfsComponent {
     }
 
     @Override
-    default CloudFileObject findFile(FileObject baseFile, String uri, FileSystemOptions fileSystemOptions) throws FileSystemException {
+    default FileObjectX findFile(FileObject baseFile, String uri, FileSystemOptions fileSystemOptions) throws FileSystemException {
         return getFileObject(URIBuilder.resolve(baseFile.getName().getURI(), uri));
     }
 
     @Override
-    default CloudFileObject createFileSystem(String scheme, FileObject file, FileSystemOptions fileSystemOptions) throws FileSystemException {
+    default FileObjectX createFileSystem(String scheme, FileObject file, FileSystemOptions fileSystemOptions) throws FileSystemException {
         throw new FileSystemException("");
     }
 

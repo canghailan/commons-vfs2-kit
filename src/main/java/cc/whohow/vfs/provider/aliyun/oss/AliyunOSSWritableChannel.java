@@ -77,7 +77,7 @@ public class AliyunOSSWritableChannel extends WritableChannel {
             throw new IllegalStateException("position: " + position);
         }
         position = buffer.remaining();
-        oss.putObject(getBucketName(), getKey(), new ByteBufferReadableChannel(buffer));
+        oss.putObject(bucketName, key, new ByteBufferReadableChannel(buffer));
         return (int) position;
     }
 
@@ -87,7 +87,7 @@ public class AliyunOSSWritableChannel extends WritableChannel {
             throw new IllegalStateException("position: " + position);
         }
         ProgressMonitorInputStream monitor = new ProgressMonitorInputStream(stream);
-        oss.putObject(getBucketName(), getKey(), monitor);
+        oss.putObject(bucketName, key, monitor);
         return position = monitor.getPosition();
     }
 

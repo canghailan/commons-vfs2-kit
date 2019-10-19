@@ -1,7 +1,7 @@
 package cc.whohow.vfs.provider.s3;
 
-import cc.whohow.vfs.CloudFileObject;
-import cc.whohow.vfs.CloudFileOperation;
+import cc.whohow.vfs.FileObjectX;
+import cc.whohow.vfs.FileOperationX;
 import cc.whohow.vfs.VirtualFileSystem;
 import cc.whohow.vfs.io.AppendableConsumer;
 import cc.whohow.vfs.operations.Copy;
@@ -28,12 +28,12 @@ import java.util.stream.Stream;
 
 public class S3FileSync implements
         Supplier<Stream<FileDiffEntry<String>>>,
-        Function<FileDiffEntry<String>, CloudFileOperation<?, ?>>, Consumer<FileDiffEntry<String>>, BiConsumer<FileDiffEntry<String>, Executor>,
+        Function<FileDiffEntry<String>, FileOperationX<?, ?>>, Consumer<FileDiffEntry<String>>, BiConsumer<FileDiffEntry<String>, Executor>,
         Callable<FileDiffStatistics> {
     private VirtualFileSystem vfs;
-    private CloudFileObject context;
-    private CloudFileObject source;
-    private CloudFileObject target;
+    private FileObjectX context;
+    private FileObjectX source;
+    private FileObjectX target;
     private boolean skipDelete = false;
 
     public S3FileSync(VirtualFileSystem vfs, String context, String source, String target) throws FileSystemException {
@@ -51,7 +51,7 @@ public class S3FileSync implements
         this.skipDelete = skipDelete;
     }
 
-    public CloudFileOperation<?, ?> copy(String path) {
+    public FileOperationX<?, ?> copy(String path) {
         try {
             return vfs.getCopyOperation(new Copy.Options(source.resolveFile(path), target.resolveFile(path)));
         } catch (FileSystemException e) {
@@ -59,7 +59,7 @@ public class S3FileSync implements
         }
     }
 
-    public CloudFileOperation<?, ?> delete(String path) {
+    public FileOperationX<?, ?> delete(String path) {
         if (skipDelete) {
             return null;
         }
@@ -71,7 +71,7 @@ public class S3FileSync implements
     }
 
     @Override
-    public CloudFileOperation<?, ?> apply(FileDiffEntry<String> diff) {
+    public FileOperationX<?, ?> apply(FileDiffEntry<String> diff) {
         switch (diff.getValue()) {
             case NOT_MODIFIED: {
                 return null;
@@ -91,7 +91,7 @@ public class S3FileSync implements
 
     @Override
     public void accept(FileDiffEntry<String> diff) {
-        CloudFileOperation<?, ?> o = apply(diff);
+        FileOperationX<?, ?> o = apply(diff);
         if (o != null) {
             o.call();
         }
@@ -99,7 +99,7 @@ public class S3FileSync implements
 
     @Override
     public void accept(FileDiffEntry<String> diff, Executor executor) {
-        CloudFileOperation<?, ?> o = apply(diff);
+        FileOperationX<?, ?> o = apply(diff);
         if (o != null) {
             o.call(executor).join();
         }
@@ -147,7 +147,8 @@ public class S3FileSync implements
 
     @Override
     public FileDiffStatistics call() {
-        try (Writer log = new OutputStreamWriter(new BufferedOutputStream(context.resolveFile("log.txt").getOutputStream(), 2 * 1024 * 1024), StandardCharsets.UTF_8)) {
+        try (Writer log = new OutputStreamWriter(new BufferedOutputStream(
+                context.resolveFile("log.txt").getOutputStream(), 2 * 1024 * 1024), StandardCharsets.UTF_8)) {
             log.write("time: ");
             log.write(DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(ZonedDateTime.now()));
             log.write("\n");

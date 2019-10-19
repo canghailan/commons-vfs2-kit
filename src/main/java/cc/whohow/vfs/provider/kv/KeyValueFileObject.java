@@ -1,8 +1,8 @@
 package cc.whohow.vfs.provider.kv;
 
-import cc.whohow.vfs.CloudFileObject;
-import cc.whohow.vfs.CloudFileSystem;
-import cc.whohow.vfs.CloudFileSystemProvider;
+import cc.whohow.vfs.FileObjectX;
+import cc.whohow.vfs.FileSystemProviderX;
+import cc.whohow.vfs.FileSystemX;
 import cc.whohow.vfs.VirtualFileSystem;
 import cc.whohow.vfs.io.ByteBufferReadableChannel;
 import cc.whohow.vfs.io.ByteBufferWritableChannel;
@@ -22,14 +22,14 @@ import java.io.OutputStream;
 import java.nio.file.DirectoryStream;
 import java.util.*;
 
-public class KeyValueFileObject<T> extends AbstractVfsComponent implements CloudFileObject, CloudFileSystem {
-    protected final CloudFileSystemProvider fileSystemProvider;
+public class KeyValueFileObject<T> extends AbstractVfsComponent implements FileObjectX, FileSystemX {
+    protected final FileSystemProviderX fileSystemProvider;
     protected final UriFileName name;
     protected final Serializer<T> type;
     protected final NavigableMap<String, T> data;
 
     public KeyValueFileObject(
-            CloudFileSystemProvider fileSystemProvider,
+            FileSystemProviderX fileSystemProvider,
             Serializer<T> type,
             NavigableMap<String, T> data,
             UriFileName name) {
@@ -67,7 +67,7 @@ public class KeyValueFileObject<T> extends AbstractVfsComponent implements Cloud
     }
 
     @Override
-    public CloudFileSystem getFileSystem() {
+    public FileSystemX getFileSystem() {
         return this;
     }
 
@@ -77,7 +77,7 @@ public class KeyValueFileObject<T> extends AbstractVfsComponent implements Cloud
     }
 
     @Override
-    public DirectoryStream<CloudFileObject> list() throws FileSystemException {
+    public DirectoryStream<FileObjectX> list() throws FileSystemException {
         Set<String> paths = new TreeSet<>();
         int index = new PathBuilder(getKey()).getNameCount();
         for (String key : data.keySet()) {
@@ -91,7 +91,7 @@ public class KeyValueFileObject<T> extends AbstractVfsComponent implements Cloud
                 }
             }
         }
-        List<CloudFileObject> list = new ArrayList<>(paths.size());
+        List<FileObjectX> list = new ArrayList<>(paths.size());
         for (String path : paths) {
             list.add(new KeyValueFileObject<>(fileSystemProvider, type, data,
                     new UriFileName(new URIBuilder(this.name.toURI()).setPath(getKey() + path).build())));
@@ -100,8 +100,8 @@ public class KeyValueFileObject<T> extends AbstractVfsComponent implements Cloud
     }
 
     @Override
-    public DirectoryStream<CloudFileObject> listRecursively() throws FileSystemException {
-        List<CloudFileObject> list = new ArrayList<>();
+    public DirectoryStream<FileObjectX> listRecursively() throws FileSystemException {
+        List<FileObjectX> list = new ArrayList<>();
         for (String key : data.keySet()) {
             if (key.startsWith(getKey())) {
                 list.add(new KeyValueFileObject<>(fileSystemProvider, type, data,
@@ -155,7 +155,7 @@ public class KeyValueFileObject<T> extends AbstractVfsComponent implements Cloud
     }
 
     @Override
-    public CloudFileSystemProvider getFileSystemProvider() {
+    public FileSystemProviderX getFileSystemProvider() {
         return fileSystemProvider;
     }
 
@@ -165,7 +165,7 @@ public class KeyValueFileObject<T> extends AbstractVfsComponent implements Cloud
     }
 
     @Override
-    public CloudFileObject resolveFile(String name) throws FileSystemException {
+    public FileObjectX resolveFile(String name) throws FileSystemException {
         return new KeyValueFileObject<>(fileSystemProvider, type, data, new UriFileName(this.name.toURI().resolve(name)));
     }
 
@@ -180,7 +180,7 @@ public class KeyValueFileObject<T> extends AbstractVfsComponent implements Cloud
     }
 
     @Override
-    public CloudFileObject resolveFile(FileName name) throws FileSystemException {
+    public FileObjectX resolveFile(FileName name) throws FileSystemException {
         return resolveFile(name.getURI());
     }
 

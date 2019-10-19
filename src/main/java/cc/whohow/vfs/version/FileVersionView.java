@@ -1,6 +1,6 @@
 package cc.whohow.vfs.version;
 
-import cc.whohow.vfs.CloudFileObject;
+import cc.whohow.vfs.FileObjectX;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -37,7 +37,7 @@ public class FileVersionView {
 
     public static <V> FileVersionView of(FileVersion<V> version, Function<V, String> stringify) {
         try {
-            CloudFileObject fileObject = version.getFileObject();
+            FileObjectX fileObject = version.getFileObject();
             if (fileObject.isFolder()) {
                 return new FileVersionView(fileObject.getName().getURI());
             } else {
@@ -100,7 +100,7 @@ public class FileVersionView {
             buffer.append(getSize());
         }
         buffer.append('\t');
-        if (getLastModifiedTime() > 0) {
+        if (getLastModifiedTime() >= 0) {
             buffer.append(DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(ZonedDateTime.ofInstant(Instant.ofEpochMilli(getLastModifiedTime()), ZoneId.systemDefault())));
         }
         buffer.append('\t');

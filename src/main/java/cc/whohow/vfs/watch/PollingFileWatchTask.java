@@ -11,9 +11,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class PollingFileWatchTask implements RunnableFuture<Void> {
-    private final PollingFileWatchKey<?> watchKey;
     private final AtomicBoolean polled = new AtomicBoolean(false);
     private final List<FileWatchListener> listeners = new CopyOnWriteArrayList<>();
+    private final PollingFileWatchKey<?> watchKey;
     private volatile ScheduledFuture<?> future;
 
     public PollingFileWatchTask(PollingFileWatchKey<?> watchKey) {
@@ -34,6 +34,10 @@ public class PollingFileWatchTask implements RunnableFuture<Void> {
 
     public void removeListener(FileWatchListener listener) {
         this.listeners.remove(listener);
+    }
+
+    public boolean hasListener() {
+        return !listeners.isEmpty();
     }
 
     @Override
@@ -65,7 +69,7 @@ public class PollingFileWatchTask implements RunnableFuture<Void> {
 
     @Override
     public boolean cancel(boolean mayInterruptIfRunning) {
-        if (this.future == null) {
+        if (future == null) {
             throw new IllegalStateException();
         }
         return future.cancel(mayInterruptIfRunning);
@@ -73,7 +77,7 @@ public class PollingFileWatchTask implements RunnableFuture<Void> {
 
     @Override
     public boolean isCancelled() {
-        if (this.future == null) {
+        if (future == null) {
             throw new IllegalStateException();
         }
         return future.isCancelled();
@@ -81,17 +85,20 @@ public class PollingFileWatchTask implements RunnableFuture<Void> {
 
     @Override
     public boolean isDone() {
-        return listeners.isEmpty();
+        if (future == null) {
+            throw new IllegalStateException();
+        }
+        return future.isDone();
     }
 
     @Override
     public Void get() {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public Void get(long timeout, TimeUnit unit) {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     public boolean poll() {

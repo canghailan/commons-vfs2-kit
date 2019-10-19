@@ -7,8 +7,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.function.Function;
 
-public interface CloudFileOperation<T, R> extends FileOperation, Function<T, R>, Runnable, Callable<R> {
-    CloudFileOperation<T, R> with(T options);
+public interface FileOperationX<T, R> extends FileOperation, Function<T, R>, Runnable, Callable<R> {
+    FileOperationX<T, R> with(T options);
 
     T getOptions();
 

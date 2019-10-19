@@ -1,6 +1,6 @@
 package cc.whohow.vfs.version;
 
-import cc.whohow.vfs.CloudFileObject;
+import cc.whohow.vfs.FileObjectX;
 import cc.whohow.vfs.FileObjects;
 import cc.whohow.vfs.io.UncheckedCloseable;
 import org.apache.commons.vfs2.FileSystemException;
@@ -12,12 +12,12 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 public interface FileVersionProvider<V> {
-    FileVersion<V> getVersion(CloudFileObject fileObject);
+    FileVersion<V> getVersion(FileObjectX fileObject);
 
-    default Stream<FileVersion<V>> getVersions(CloudFileObject fileObject) {
+    default Stream<FileVersion<V>> getVersions(FileObjectX fileObject) {
         try {
             if (fileObject.isFolder()) {
-                DirectoryStream<CloudFileObject> list = FileObjects.listRecursively(fileObject);
+                DirectoryStream<FileObjectX> list = FileObjects.listRecursively(fileObject);
                 return Stream.concat(
                         Stream.of(fileObject),
                         StreamSupport.stream(list.spliterator(), false))

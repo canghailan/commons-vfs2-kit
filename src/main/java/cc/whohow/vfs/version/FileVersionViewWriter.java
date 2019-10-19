@@ -39,8 +39,9 @@ public class FileVersionViewWriter implements Consumer<FileVersionView>, Closeab
             writer.append(Long.toString(fileVersionView.getSize()));
         }
         writer.append('\t');
-        if (fileVersionView.getLastModifiedTime() > 0) {
-            writer.append(DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(ZonedDateTime.ofInstant(Instant.ofEpochMilli(fileVersionView.getLastModifiedTime()), zoneId)));
+        if (fileVersionView.getLastModifiedTime() >= 0) {
+            writer.append(DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(
+                    ZonedDateTime.ofInstant(Instant.ofEpochMilli(fileVersionView.getLastModifiedTime()), zoneId)));
         }
         writer.append('\t');
         writer.append(fileVersionView.getName(), prefix.length(), fileVersionView.getName().length());

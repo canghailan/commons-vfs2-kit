@@ -1,6 +1,6 @@
 package cc.whohow.vfs.watch;
 
-import cc.whohow.vfs.CloudFileObject;
+import cc.whohow.vfs.FileObjectX;
 import cc.whohow.vfs.version.FileLastModifiedTimeVersionProvider;
 import cc.whohow.vfs.version.FileVersion;
 import cc.whohow.vfs.version.FileVersionProvider;
@@ -16,7 +16,7 @@ public class PollingFileWatchKey<T> implements FileWatchKey {
     private final PollingFileWatchable<T> watchable;
     private volatile Map<FileName, FileVersion<T>> versions;
 
-    public PollingFileWatchKey(CloudFileObject fileObject, FileVersionProvider<T> fileVersionProvider) {
+    public PollingFileWatchKey(FileObjectX fileObject, FileVersionProvider<T> fileVersionProvider) {
         this(new PollingFileWatchable<>(fileObject, fileVersionProvider));
     }
 
@@ -24,7 +24,7 @@ public class PollingFileWatchKey<T> implements FileWatchKey {
         this.watchable = watchable;
     }
 
-    public static PollingFileWatchKey<Long> lastModified(CloudFileObject fileObject) {
+    public static PollingFileWatchKey<Long> lastModified(FileObjectX fileObject) {
         return new PollingFileWatchKey<>(fileObject, new FileLastModifiedTimeVersionProvider());
     }
 

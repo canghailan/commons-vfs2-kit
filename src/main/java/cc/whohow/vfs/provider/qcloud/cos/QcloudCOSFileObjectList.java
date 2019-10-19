@@ -1,11 +1,11 @@
 package cc.whohow.vfs.provider.qcloud.cos;
 
-import cc.whohow.vfs.CloudFileObject;
+import cc.whohow.vfs.FileObjectX;
 
 import java.nio.file.DirectoryStream;
 import java.util.Iterator;
 
-public class QcloudCOSFileObjectList implements DirectoryStream<CloudFileObject> {
+public class QcloudCOSFileObjectList implements DirectoryStream<FileObjectX> {
     protected final QcloudCOSFileObject base;
     protected final boolean recursively;
 
@@ -16,7 +16,7 @@ public class QcloudCOSFileObjectList implements DirectoryStream<CloudFileObject>
     }
 
     @Override
-    public Iterator<CloudFileObject> iterator() {
+    public Iterator<FileObjectX> iterator() {
         return new QcloudCOSFileObjectIterator(base, recursively);
     }
 

@@ -5,7 +5,7 @@ import java.util.Map;
 public abstract class FileDiffEntry<K> implements Map.Entry<K, FileEventKind> {
     private final K key;
 
-    public FileDiffEntry(K key) {
+    protected FileDiffEntry(K key) {
         this.key = key;
     }
 

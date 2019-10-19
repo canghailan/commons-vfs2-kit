@@ -1,17 +1,17 @@
 package cc.whohow.vfs.version;
 
-import cc.whohow.vfs.CloudFileObject;
+import cc.whohow.vfs.FileObjectX;
 
 public class FileVersion<V> {
-    private final CloudFileObject fileObject;
+    private final FileObjectX fileObject;
     private final V version;
 
-    public FileVersion(CloudFileObject fileObject, V version) {
+    public FileVersion(FileObjectX fileObject, V version) {
         this.fileObject = fileObject;
         this.version = version;
     }
 
-    public CloudFileObject getFileObject() {
+    public FileObjectX getFileObject() {
         return fileObject;
     }
 

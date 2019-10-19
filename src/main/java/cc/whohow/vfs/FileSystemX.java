@@ -1,5 +1,6 @@
 package cc.whohow.vfs;
 
+import cc.whohow.vfs.configuration.VirtualFileSystemOptions;
 import cc.whohow.vfs.watch.PollingFileWatchable;
 import org.apache.commons.vfs2.*;
 import org.apache.commons.vfs2.provider.VfsComponent;
@@ -7,26 +8,26 @@ import org.apache.commons.vfs2.provider.VfsComponent;
 import java.io.UncheckedIOException;
 import java.net.URI;
 
-public interface CloudFileSystem extends FileSystemImpl, VfsComponent {
-    CloudFileSystemProvider getFileSystemProvider();
+public interface FileSystemX extends FileSystemImpl, VfsComponent {
+    FileSystemProviderX getFileSystemProvider();
 
     @Override
     VirtualFileSystem getFileSystemManager();
 
     @Override
-    CloudFileObject resolveFile(String name) throws FileSystemException;
+    FileObjectX resolveFile(String name) throws FileSystemException;
 
-    default CloudFileObject resolveFile(URI uri) throws FileSystemException {
+    default FileObjectX resolveFile(URI uri) throws FileSystemException {
         return resolveFile(uri.toString());
     }
 
     @Override
-    default CloudFileObject getRoot() throws FileSystemException {
+    default FileObjectX getRoot() throws FileSystemException {
         return resolveFile(getRootURI());
     }
 
     @Override
-    default CloudFileObject resolveFile(FileName name) throws FileSystemException {
+    default FileObjectX resolveFile(FileName name) throws FileSystemException {
         return resolveFile(name.getURI());
     }
 
@@ -48,14 +49,14 @@ public interface CloudFileSystem extends FileSystemImpl, VfsComponent {
     @Override
     default void addListener(FileObject file, FileListener listener) {
         getFileSystemManager().getWatchService().addListener(
-                new PollingFileWatchable<>((CloudFileObject) file, getFileSystemProvider().getFileVersionProvider()),
+                new PollingFileWatchable<>((FileObjectX) file, getFileSystemProvider().getFileVersionProvider()),
                 listener);
     }
 
     @Override
     default void removeListener(FileObject file, FileListener listener) {
         getFileSystemManager().getWatchService().removeListener(
-                new PollingFileWatchable<>((CloudFileObject) file, getFileSystemProvider().getFileVersionProvider()),
+                new PollingFileWatchable<>((FileObjectX) file, getFileSystemProvider().getFileVersionProvider()),
                 listener);
     }
 }

@@ -1,7 +1,7 @@
 package cc.whohow.configuration.provider;
 
 import cc.whohow.configuration.FileBasedConfigurationManager;
-import cc.whohow.vfs.CloudFileObject;
+import cc.whohow.vfs.FileObjectX;
 import cc.whohow.vfs.serialize.Serializer;
 import org.apache.commons.vfs2.FileChangeEvent;
 import org.apache.commons.vfs2.FileListener;
@@ -15,18 +15,18 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 public class VfsConfigurationManager implements FileBasedConfigurationManager, FileListener {
-    protected final CloudFileObject root;
+    protected final FileObjectX root;
 
-    public VfsConfigurationManager(CloudFileObject root) {
+    public VfsConfigurationManager(FileObjectX root) {
         this.root = root;
         root.getFileSystem().addListener(root, this);
     }
 
-    public CloudFileObject getRoot() {
+    public FileObjectX getRoot() {
         return root;
     }
 
-    protected String getKey(CloudFileObject fileObject) {
+    protected String getKey(FileObjectX fileObject) {
         try {
             return root.getName().getRelativeName(fileObject.getName());
         } catch (FileSystemException e) {
@@ -35,7 +35,7 @@ public class VfsConfigurationManager implements FileBasedConfigurationManager, F
     }
 
     @Override
-    public CloudFileObject get(String key) {
+    public FileObjectX get(String key) {
         if (key.startsWith("/") || key.endsWith("/")) {
             throw new IllegalArgumentException();
         }
@@ -48,7 +48,7 @@ public class VfsConfigurationManager implements FileBasedConfigurationManager, F
 
     @Override
     public List<String> list(String key) {
-        try (DirectoryStream<CloudFileObject> list = root.resolveFile(key).list()) {
+        try (DirectoryStream<FileObjectX> list = root.resolveFile(key).list()) {
             return StreamSupport.stream(list.spliterator(), false)
                     .map(this::getKey)
                     .collect(Collectors.toList());
