@@ -3,6 +3,7 @@ package cc.whohow.vfs;
 import cc.whohow.vfs.io.ReadableChannel;
 import cc.whohow.vfs.io.WritableChannel;
 import cc.whohow.vfs.serialize.Serializer;
+import org.apache.commons.vfs2.FileContent;
 import org.apache.commons.vfs2.FileNotFoundException;
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemException;
@@ -53,6 +54,32 @@ public class FileObjects {
         }
     }
 
+    public static long getSize(FileObject fileObject) {
+        try {
+            if (fileObject.isFolder()) {
+                long size = 0;
+                for (FileObject f : fileObject) {
+                    if (f.isFile()) {
+                        size += getFileSize(f);
+                    }
+                }
+                return size;
+            } else {
+                return getFileSize(fileObject);
+            }
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    public static long getFileSize(FileObject fileObject) {
+        try (FileContent fileContent = fileObject.getContent()) {
+            return fileContent.getSize();
+        } catch (FileSystemException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
     public static long getSize(FileObjectX fileObject) {
         try {
             if (fileObject.isFolder()) {
@@ -63,7 +90,7 @@ public class FileObjects {
                             .sum();
                 }
             } else {
-                return fileObject.getSize();
+                return getFileSize(fileObject);
             }
         } catch (IOException e) {
             throw new UncheckedIOException(e);
@@ -84,6 +111,18 @@ public class FileObjects {
         } catch (FileSystemException e) {
             throw new UncheckedIOException(e);
         }
+    }
+
+    public static FileObject[] list(FileObject fileObject) {
+        try {
+            return fileObject.getChildren();
+        } catch (FileSystemException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    public static Iterable<FileObject> listRecursively(FileObject fileObject) {
+        return fileObject;
     }
 
     public static DirectoryStream<FileObjectX> list(FileObjectX fileObject) {
