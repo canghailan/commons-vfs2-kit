@@ -97,14 +97,10 @@ public class S3Uri {
         return bucketName + "." + endpoint;
     }
 
-    protected String getPath() {
-        return "/" + key;
-    }
-
     public URI toURI() {
         if (uri == null) {
             try {
-                uri = new URI(scheme, getUserInfo(), getHost(), -1, getPath(), null, null);
+                uri = new URI(scheme, getUserInfo(), getHost(), -1, "/" + key, null, null);
             } catch (URISyntaxException e) {
                 throw new IllegalStateException(e);
             }
