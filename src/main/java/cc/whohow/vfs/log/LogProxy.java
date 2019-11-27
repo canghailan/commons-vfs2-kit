@@ -23,20 +23,25 @@ public class LogProxy implements InvocationHandler {
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
         Object r = method.invoke(target, args);
-//        if (log.isDebugEnabled()) {
-        StringBuilder buffer = new StringBuilder();
-        buffer.append(method.getName()).append("(");
-        for (Object arg : args) {
-            buffer.append(arg).append(", ");
+        if (log.isDebugEnabled()) {
+            StringBuilder buffer = new StringBuilder();
+            buffer.append(method.getName()).append("(");
+            for (Object arg : args) {
+                buffer.append(arg).append(", ");
+            }
+            if (args.length > 0) {
+                buffer.setLength(buffer.length() - ", ".length());
+            }
+            buffer.append(") -> ");
+            buffer.append(r);
+//        log.info(buffer);
+            log.debug(buffer);
         }
-        if (args.length > 0) {
-            buffer.setLength(buffer.length() - ", ".length());
-        }
-        buffer.append(") -> ");
-        buffer.append(r);
-        log.info(buffer);
-//            log.debug(buffer);
-//        }
         return r;
+    }
+
+    @Override
+    public String toString() {
+        return target.toString();
     }
 }
