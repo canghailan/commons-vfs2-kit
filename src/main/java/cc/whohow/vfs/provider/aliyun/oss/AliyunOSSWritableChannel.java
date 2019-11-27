@@ -59,6 +59,9 @@ public class AliyunOSSWritableChannel extends WritableChannel {
 
     @Override
     public synchronized void write(byte[] b, int off, int len) throws IOException {
+        if (len == 0) {
+            return;
+        }
         position = oss.appendObject(
                 new AppendObjectRequest(bucketName, key, new ByteArrayInputStream(b, off, len))
                         .withPosition(position)).getNextPosition();

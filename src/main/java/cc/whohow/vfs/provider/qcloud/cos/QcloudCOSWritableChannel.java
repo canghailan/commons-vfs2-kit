@@ -69,6 +69,9 @@ public class QcloudCOSWritableChannel extends WritableChannel {
 
     @Override
     public synchronized void write(byte[] b, int off, int len) throws IOException {
+        if (len == 0) {
+            return;
+        }
         if (uploadId == null) {
             uploadId = cos.initiateMultipartUpload(new InitiateMultipartUploadRequest(bucketName, key))
                     .getUploadId();
