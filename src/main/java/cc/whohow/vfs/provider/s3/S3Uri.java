@@ -1,6 +1,7 @@
 package cc.whohow.vfs.provider.s3;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Objects;
 
 public class S3Uri {
@@ -79,29 +80,33 @@ public class S3Uri {
         return key;
     }
 
+    protected String getUserInfo() {
+        if (accessKeyId == null || secretAccessKey == null) {
+            return null;
+        }
+        return accessKeyId + ":" + secretAccessKey;
+    }
+
+    protected String getHost() {
+        if (bucketName == null) {
+            return endpoint;
+        }
+        if (endpoint == null) {
+            return bucketName;
+        }
+        return bucketName + "." + endpoint;
+    }
+
+    private String getPath() {
+        return "/" + key;
+    }
+
     public URI toURI() {
         if (uri == null) {
-            if (bucketName == null && endpoint == null) {
-                uri = URI.create(key);
-            } else {
-                StringBuilder buffer = new StringBuilder();
-                buffer.append(scheme).append("://");
-                if (accessKeyId != null && secretAccessKey != null) {
-                    buffer.append(accessKeyId).append(':').append(secretAccessKey).append('@');
-                }
-                if (bucketName != null) {
-                    buffer.append(bucketName);
-                }
-                if (bucketName != null && endpoint != null) {
-                    buffer.append('.');
-                }
-                if (endpoint != null) {
-                    buffer.append(endpoint);
-                }
-                if (key != null) {
-                    buffer.append('/').append(key);
-                }
-                uri = URI.create(buffer.toString());
+            try {
+                uri = new URI(scheme, getUserInfo(), getHost(), -1, getPath(), null, null);
+            } catch (URISyntaxException e) {
+                throw new IllegalStateException(e);
             }
         }
         return uri;
