@@ -97,7 +97,7 @@ public class S3Uri {
         return bucketName + "." + endpoint;
     }
 
-    private String getPath() {
+    protected String getPath() {
         return "/" + key;
     }
 
