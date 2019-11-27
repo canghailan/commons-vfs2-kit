@@ -4,6 +4,7 @@ import cc.whohow.vfs.FileObjectX;
 import cc.whohow.vfs.FileOperationX;
 import cc.whohow.vfs.VirtualFileSystem;
 import cc.whohow.vfs.io.AppendableConsumer;
+import cc.whohow.vfs.io.IO;
 import cc.whohow.vfs.operations.Copy;
 import cc.whohow.vfs.version.FileVersion;
 import cc.whohow.vfs.version.FileVersionView;
@@ -34,7 +35,7 @@ public class S3FileSync implements
     protected FileObjectX context;
     protected FileObjectX source;
     protected FileObjectX target;
-    protected int bufferSize = 2 * 1024 * 1024;
+    protected int bufferSize = IO.BUFFER_SIZE;
 
     public S3FileSync(VirtualFileSystem vfs, String context, String source, String target) throws FileSystemException {
         this.vfs = vfs;
