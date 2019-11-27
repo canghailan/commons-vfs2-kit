@@ -30,11 +30,11 @@ public class S3FileSync implements
         Supplier<Stream<FileDiffEntry<String>>>,
         Function<FileDiffEntry<String>, FileOperationX<?, ?>>, Consumer<FileDiffEntry<String>>, BiConsumer<FileDiffEntry<String>, Executor>,
         Callable<FileDiffStatistics> {
-    private VirtualFileSystem vfs;
-    private FileObjectX context;
-    private FileObjectX source;
-    private FileObjectX target;
-    private boolean skipDelete = false;
+    protected VirtualFileSystem vfs;
+    protected FileObjectX context;
+    protected FileObjectX source;
+    protected FileObjectX target;
+    protected int bufferSize = 2 * 1024 * 1024;
 
     public S3FileSync(VirtualFileSystem vfs, String context, String source, String target) throws FileSystemException {
         this.vfs = vfs;
@@ -43,15 +43,7 @@ public class S3FileSync implements
         this.target = vfs.resolveFile(target);
     }
 
-    public boolean isSkipDelete() {
-        return skipDelete;
-    }
-
-    public void setSkipDelete(boolean skipDelete) {
-        this.skipDelete = skipDelete;
-    }
-
-    public FileOperationX<?, ?> copy(String path) {
+    protected FileOperationX<?, ?> copy(String path) {
         try {
             return vfs.getCopyOperation(new Copy.Options(source.resolveFile(path), target.resolveFile(path)));
         } catch (FileSystemException e) {
@@ -59,10 +51,7 @@ public class S3FileSync implements
         }
     }
 
-    public FileOperationX<?, ?> delete(String path) {
-        if (skipDelete) {
-            return null;
-        }
+    protected FileOperationX<?, ?> delete(String path) {
         try {
             return vfs.getRemoveOperation(target.resolveFile(path));
         } catch (FileSystemException e) {
@@ -105,41 +94,48 @@ public class S3FileSync implements
         }
     }
 
+    protected void listFileVersion(FileObjectX folder, String versionFile) throws IOException {
+        try (FileVersionViewWriter writer = newFileVersionViewWriter(versionFile, folder.getName().getURI())) {
+            try (Stream<FileVersion<String>> versions = new S3FileVersionProvider().getVersions(folder)) {
+                versions.map(FileVersionView::of)
+                        .forEach(writer);
+                writer.flush();
+            }
+        }
+    }
+
+    protected void diffFileVersion(String newVersionFile, String oldVersionFile, String diffFile) throws IOException {
+        try (Writer writer = newWriter(diffFile)) {
+            try (Stream<FileVersionView> newList = readFileVersionView(newVersionFile);
+                 Stream<FileVersionView> oldList = readFileVersionView(oldVersionFile)) {
+                newFileDiffIterator(newList, oldList).stream()
+                        .map(FileDiffEntry::toString)
+                        .forEach(new AppendableConsumer(writer, "", "\n"));
+                writer.flush();
+            }
+        }
+    }
+
+    protected FileDiffIterator<FileVersionView, String, String> newFileDiffIterator(Stream<FileVersionView> newList,
+                                                                                    Stream<FileVersionView> oldList) {
+        return new FileDiffIterator<>(
+                FileVersionView::getName,
+                FileVersionView::getVersion,
+                String::equalsIgnoreCase,
+                new LinkedHashMap<>(),
+                newList.iterator(),
+                oldList.iterator());
+    }
+
     @Override
     public Stream<FileDiffEntry<String>> get() {
         try {
             context.deleteAll();
-            try (FileVersionViewWriter writer = new FileVersionViewWriter(context.resolveFile("new.txt").getOutputStream(), source.getName().getURI())) {
-                try (Stream<FileVersion<String>> versions = new S3FileVersionProvider().getVersions(source)) {
-                    versions.map(FileVersionView::of)
-                            .forEach(writer);
-                    writer.flush();
-                }
-            }
-            try (FileVersionViewWriter writer = new FileVersionViewWriter(context.resolveFile("old.txt").getOutputStream(), target.getName().getURI())) {
-                try (Stream<FileVersion<String>> versions = new S3FileVersionProvider().getVersions(target)) {
-                    versions.map(FileVersionView::of)
-                            .forEach(writer);
-                    writer.flush();
-                }
-            }
-            try (Writer writer = new OutputStreamWriter(new BufferedOutputStream(context.resolveFile("diff.txt").getOutputStream(), 2 * 1024 * 1024), StandardCharsets.UTF_8)) {
-                try (Stream<FileVersionView> newList = new BufferedReader(new InputStreamReader(context.resolveFile("new.txt").getInputStream())).lines().map(FileVersionView::parse);
-                     Stream<FileVersionView> oldList = new BufferedReader(new InputStreamReader(context.resolveFile("old.txt").getInputStream())).lines().map(FileVersionView::parse)) {
-                    new FileDiffIterator<>(
-                            FileVersionView::getName,
-                            FileVersionView::getVersion,
-                            String::equalsIgnoreCase,
-                            new LinkedHashMap<>(),
-                            newList.iterator(),
-                            oldList.iterator()).stream()
-                            .map(FileDiffEntry::toString)
-                            .forEach(new AppendableConsumer(writer, "", "\n"));
-                    writer.flush();
-                }
-            }
-            return new BufferedReader(new InputStreamReader(context.resolveFile("diff.txt").getInputStream())).lines()
-                    .map(FileDiffEntry::parse);
+
+            listFileVersion(source, "new.txt");
+            listFileVersion(target, "old.txt");
+            diffFileVersion("new.txt", "old.txt", "diff.txt");
+            return readFileDiffEntry("diff.txt");
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -147,8 +143,7 @@ public class S3FileSync implements
 
     @Override
     public FileDiffStatistics call() {
-        try (Writer log = new OutputStreamWriter(new BufferedOutputStream(
-                context.resolveFile("log.txt").getOutputStream(), 2 * 1024 * 1024), StandardCharsets.UTF_8)) {
+        try (Writer log = newWriter("log.txt")) {
             log.write("time: ");
             log.write(DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(ZonedDateTime.now()));
             log.write("\n");
@@ -167,15 +162,33 @@ public class S3FileSync implements
                         .map(FileDiffEntry::toString)
                         .forEach(new AppendableConsumer(log, "", "\n"));
             }
+
             log.write("\n\n\n");
-
             log.write(statistics.toString());
-
             log.flush();
-
             return statistics;
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
+    }
+
+    public Writer newWriter(String path) throws IOException {
+        return new OutputStreamWriter(new BufferedOutputStream(
+                context.resolveFile(path).getOutputStream(), bufferSize), StandardCharsets.UTF_8);
+    }
+
+    public FileVersionViewWriter newFileVersionViewWriter(String path, String prefix) throws IOException {
+        return new FileVersionViewWriter(new BufferedOutputStream(
+                context.resolveFile(path).getOutputStream(), bufferSize), prefix);
+    }
+
+    public Stream<FileVersionView> readFileVersionView(String path) throws IOException {
+        return new BufferedReader(new InputStreamReader(context.resolveFile(path).getInputStream())).lines()
+                .map(FileVersionView::parse);
+    }
+
+    public Stream<FileDiffEntry<String>> readFileDiffEntry(String path) throws IOException {
+        return new BufferedReader(new InputStreamReader(context.resolveFile(path).getInputStream())).lines()
+                .map(FileDiffEntry::parse);
     }
 }
