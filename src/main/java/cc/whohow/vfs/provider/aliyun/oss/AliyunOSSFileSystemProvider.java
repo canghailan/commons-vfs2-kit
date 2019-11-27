@@ -65,7 +65,10 @@ public class AliyunOSSFileSystemProvider extends AbstractVfsComponent implements
             throw new IllegalArgumentException(Objects.toString(uri));
         }
         OSSClient oss = clients.computeIfAbsent(new S3Uri(uri.getScheme(), uri.getAccessKeyId(), uri.getSecretAccessKey(), null, uri.getEndpoint(), null), this::newOSS);
-        return LogProxy.newProxyInstance(getLogger(), oss, OSS.class);
+        if (getLogger() != null) {
+            return LogProxy.newProxyInstance(getLogger(), oss, OSS.class);
+        }
+        return oss;
     }
 
     protected AliyunOSSFileSystem newFileSystem(S3Uri uri) {

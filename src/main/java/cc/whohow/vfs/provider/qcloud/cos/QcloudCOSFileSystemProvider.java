@@ -61,7 +61,10 @@ public class QcloudCOSFileSystemProvider extends AbstractVfsComponent implements
             throw new IllegalArgumentException(Objects.toString(uri));
         }
         COS cos = clients.computeIfAbsent(new S3Uri(uri.getScheme(), uri.getAccessKeyId(), uri.getSecretAccessKey(), null, uri.getEndpoint(), null), this::newCOS);
-        return LogProxy.newProxyInstance(getLogger(), cos, COS.class);
+        if (getLogger() != null) {
+            return LogProxy.newProxyInstance(getLogger(), cos, COS.class);
+        }
+        return cos;
     }
 
     protected QcloudCOSFileSystem newFileSystem(S3Uri uri) {
