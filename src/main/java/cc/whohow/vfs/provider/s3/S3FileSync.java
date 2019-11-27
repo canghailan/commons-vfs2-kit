@@ -117,19 +117,15 @@ public class S3FileSync implements
         }
     }
 
-    protected FileDiffIterator<FileVersionView, String, FileVersionView> newFileDiffIterator(Stream<FileVersionView> newList,
+    protected FileDiffIterator<FileVersionView, String, ?> newFileDiffIterator(Stream<FileVersionView> newList,
                                                                                     Stream<FileVersionView> oldList) {
         return new FileDiffIterator<>(
                 FileVersionView::getName,
-                Function.identity(),
-                this::isSame,
+                FileVersionView::getVersion,
+                String::equalsIgnoreCase,
                 new LinkedHashMap<>(),
                 newList.iterator(),
                 oldList.iterator());
-    }
-
-    protected boolean isSame(FileVersionView o, FileVersionView n) {
-        return o.getSize() == n.getSize() && o.getLastModifiedTime() <= n.getLastModifiedTime();
     }
 
     @Override
