@@ -16,8 +16,6 @@ import org.apache.commons.vfs2.FileSystemException;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
@@ -95,9 +93,13 @@ public class S3FileSync implements
         }
     }
 
+    protected Stream<FileVersion<String>> getVersions(FileObjectX folder) {
+        return new S3FileVersionProvider().getVersions(folder);
+    }
+
     protected void listFileVersion(FileObjectX folder, String versionFile) throws IOException {
         try (FileVersionViewWriter writer = newFileVersionViewWriter(versionFile, folder.getName().getURI())) {
-            try (Stream<FileVersion<String>> versions = new S3FileVersionProvider().getVersions(folder)) {
+            try (Stream<FileVersion<String>> versions = getVersions(folder)) {
                 versions.map(FileVersionView::of)
                         .forEach(writer);
                 writer.flush();
@@ -118,7 +120,7 @@ public class S3FileSync implements
     }
 
     protected FileDiffIterator<FileVersionView, String, ?> newFileDiffIterator(Stream<FileVersionView> newList,
-                                                                                    Stream<FileVersionView> oldList) {
+                                                                               Stream<FileVersionView> oldList) {
         return new FileDiffIterator<>(
                 FileVersionView::getName,
                 FileVersionView::getVersion,
@@ -144,33 +146,25 @@ public class S3FileSync implements
 
     @Override
     public FileDiffStatistics call() {
-        try (Writer log = newWriter("log.txt")) {
-            log.write("time: ");
-            log.write(DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(ZonedDateTime.now()));
-            log.write("\n");
-            log.write("source: ");
-            log.write(source.getName().getURI());
-            log.write("\n");
-            log.write("target: ");
-            log.write(target.getName().getURI());
-            log.write("\n\n\n");
-
-            FileDiffStatistics statistics = new FileDiffStatistics();
-            try (Stream<FileDiffEntry<String>> diff = get()) {
-                diff.peek(statistics)
-                        .filter(FileDiffEntry::isModified)
-                        .peek(this)
-                        .map(FileDiffEntry::toString)
-                        .forEach(new AppendableConsumer(log, "", "\n"));
-            }
-
-            log.write("\n\n\n");
-            log.write(statistics.toString());
-            log.flush();
+        FileDiffStatistics statistics = new FileDiffStatistics();
+        try (Stream<FileDiffEntry<String>> diff = get()) {
+            diff.peek(statistics)
+                    .filter(FileDiffEntry::isModified)
+                    .forEach(this);
             return statistics;
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
         }
+    }
+
+    public Stream<FileVersionView> getNewFileVersion() throws IOException {
+        return readFileVersionView("new.txt");
+    }
+
+    public Stream<FileVersionView> getOldFileVersion() throws IOException {
+        return readFileVersionView("old.txt");
+    }
+
+    public Stream<FileDiffEntry<String>> getFileDiffEntry() throws IOException {
+        return readFileDiffEntry("diff.txt");
     }
 
     public Writer newWriter(String path) throws IOException {
