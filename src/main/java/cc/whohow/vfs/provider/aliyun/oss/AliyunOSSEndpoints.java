@@ -1,31 +1,43 @@
 package cc.whohow.vfs.provider.aliyun.oss;
 
+import cc.whohow.vfs.net.Ping;
 import com.aliyuncs.regions.Endpoint;
 import com.aliyuncs.regions.InternalEndpointsParser;
 import com.aliyuncs.regions.ProductDomain;
 
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.Socket;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.CompletableFuture;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * <a href="https://www.alibabacloud.com/help/zh/doc-detail/31837.htm">OSS开通Region和Endpoint对照表</a>
  */
 public class AliyunOSSEndpoints {
+    private static final String ENDPOINT_SUFFIX = ".aliyuncs.com";
+    private static final String INTERNAL_ENDPOINT_SUFFIX = "-internal.aliyuncs.com";
     private static final String DEFAULT_ENDPOINT = "oss.aliyuncs.com";
     private static final String DEFAULT_INTERNAL_ENDPOINT = "oss-internal.aliyuncs.com";
-    private static final Pattern ENDPOINT = Pattern.compile("^(?<sub>.+)\\.aliyuncs\\.com$");
-    private static volatile CompletableFuture<Long> PING = CompletableFuture.supplyAsync(() -> ping(DEFAULT_INTERNAL_ENDPOINT));
+    private static final Map<String, CompletableFuture<Long>> PING = new ConcurrentHashMap<>();
 
+    /**
+     * 默认公网endpoint
+     */
     public static String getDefaultEndpoint() {
         return DEFAULT_ENDPOINT;
     }
 
+    /**
+     * 默认公网endpoint
+     */
+    public static String getDefaultInternalEndpoint() {
+        return DEFAULT_INTERNAL_ENDPOINT;
+    }
+
+    /**
+     * 获取所有endpoint
+     */
     public static Set<String> getEndpoints() {
         Set<String> endpoints = new TreeSet<>();
         try {
@@ -41,51 +53,73 @@ public class AliyunOSSEndpoints {
         return endpoints;
     }
 
-    private static boolean isIntranet() {
-        return PING.join() > 0;
-    }
-
+    /**
+     * 自动根据网络环境选择endpoint
+     */
     public static String getEndpoint(String endpoint) {
-        return isIntranet() ? getIntranetEndpoint(endpoint) : getExtranetEndpoint(endpoint);
+        // 优先内网
+        String intranet = getIntranetEndpoint(endpoint);
+        if (ping(intranet).join() >= 0) {
+            return intranet;
+        }
+        // 默认公网
+        return getExtranetEndpoint(endpoint);
     }
 
+    /**
+     * 获取公网endpoint
+     */
     public static String getExtranetEndpoint(String endpoint) {
-        String sub = getSub(endpoint);
-        if (sub.endsWith("-internal")) {
-            return sub.substring(0, sub.length() - "-internal".length()) + ".aliyuncs.com";
-        } else {
-            return endpoint;
+        if (endpoint.endsWith(INTERNAL_ENDPOINT_SUFFIX)) {
+            return endpoint.substring(0, endpoint.length() - INTERNAL_ENDPOINT_SUFFIX.length()) + ENDPOINT_SUFFIX;
         }
+        return endpoint;
     }
 
+    /**
+     * 获取内网endpoint
+     */
     public static String getIntranetEndpoint(String endpoint) {
-        String sub = getSub(endpoint);
-        if (sub.endsWith("-internal")) {
+        if (endpoint.endsWith(INTERNAL_ENDPOINT_SUFFIX)) {
             return endpoint;
-        } else {
-            return sub + "-internal.aliyuncs.com";
         }
+        if (endpoint.endsWith(ENDPOINT_SUFFIX)) {
+            return endpoint.substring(0, endpoint.length() - ENDPOINT_SUFFIX.length()) + INTERNAL_ENDPOINT_SUFFIX;
+        }
+        return endpoint;
     }
 
-    private static String getSub(String endpoint) {
-        Matcher matcher = ENDPOINT.matcher(endpoint);
-        if (matcher.matches()) {
-            return matcher.group("sub");
+    /**
+     * 获取区域
+     */
+    public static String getRegion(String endpoint) {
+        if (endpoint.endsWith(INTERNAL_ENDPOINT_SUFFIX)) {
+            return endpoint.substring(0, endpoint.length() - INTERNAL_ENDPOINT_SUFFIX.length());
         }
-        throw new IllegalArgumentException(endpoint);
+        if (endpoint.endsWith(ENDPOINT_SUFFIX)) {
+            return endpoint.substring(0, endpoint.length() - ENDPOINT_SUFFIX.length());
+        }
+        return null;
     }
 
-    private static long ping(String address) {
-        return ping(address, 1000);
+    /**
+     * 是否内网
+     */
+    public static boolean isInternal(String endpoint) {
+        return endpoint.endsWith(INTERNAL_ENDPOINT_SUFFIX);
     }
 
-    private static long ping(String address, int timeout) {
-        long timestamp = System.currentTimeMillis();
-        try (Socket socket = new Socket()) {
-            socket.connect(new InetSocketAddress(address, 80), timeout);
-            return System.currentTimeMillis() - timestamp;
-        } catch (IOException ignore) {
-            return -1L;
-        }
+    /**
+     * ping
+     */
+    private static CompletableFuture<Long> ping(String address) {
+        return PING.computeIfAbsent(address, AliyunOSSEndpoints::pingAsync);
+    }
+
+    /**
+     * pingAsync
+     */
+    private static CompletableFuture<Long> pingAsync(String address) {
+        return CompletableFuture.supplyAsync(new Ping(address));
     }
 }
