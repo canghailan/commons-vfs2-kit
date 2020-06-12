@@ -42,6 +42,33 @@ public class PathParser {
         return new PathParser(uri).getExtension();
     }
 
+    public String getName(int index) {
+        if (iterator == null) {
+            return "";
+        }
+        iterator.absolute(index);
+        if (iterator.hasNext()) {
+            return iterator.next().toString();
+        }
+        return "";
+    }
+
+    public String getNameWithSeparator(int index) {
+        if (iterator == null) {
+            return "";
+        }
+        iterator.absolute(index);
+        if (iterator.hasNext()) {
+            CharSequence name = iterator.next();
+            if (iterator.endsWithSeparator() || iterator.hasNext()) {
+                return name.toString() + iterator.getSeparatorChar();
+            } else {
+                return name.toString();
+            }
+        }
+        return "";
+    }
+
     public String getLastName() {
         if (iterator == null) {
             return "";

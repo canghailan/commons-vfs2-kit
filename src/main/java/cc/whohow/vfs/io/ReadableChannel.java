@@ -17,6 +17,6 @@ public abstract class ReadableChannel extends InputStream implements ReadableByt
     }
 
     public long transferTo(OutputStream channel) throws IOException {
-        return IO.transfer(this, channel);
+        return IO.copy(this, channel);
     }
 }

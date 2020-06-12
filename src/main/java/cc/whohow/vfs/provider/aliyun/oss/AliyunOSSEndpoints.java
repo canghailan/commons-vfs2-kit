@@ -1,6 +1,6 @@
 package cc.whohow.vfs.provider.aliyun.oss;
 
-import cc.whohow.vfs.net.Ping;
+import cc.whohow.fs.net.Ping;
 import com.aliyuncs.regions.Endpoint;
 import com.aliyuncs.regions.InternalEndpointsParser;
 import com.aliyuncs.regions.ProductDomain;

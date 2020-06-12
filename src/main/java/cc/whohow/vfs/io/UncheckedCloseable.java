@@ -1,13 +1,13 @@
 package cc.whohow.vfs.io;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.lang.reflect.UndeclaredThrowableException;
 
 public class UncheckedCloseable implements Runnable {
-    private final Closeable closeable;
+    private final AutoCloseable closeable;
 
-    public UncheckedCloseable(Closeable closeable) {
+    public UncheckedCloseable(AutoCloseable closeable) {
         this.closeable = closeable;
     }
 
@@ -17,6 +17,8 @@ public class UncheckedCloseable implements Runnable {
             closeable.close();
         } catch (IOException e) {
             throw new UncheckedIOException(e);
+        } catch (Exception e) {
+            throw new UndeclaredThrowableException(e);
         }
     }
 }

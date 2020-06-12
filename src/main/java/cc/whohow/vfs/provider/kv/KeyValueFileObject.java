@@ -4,8 +4,6 @@ import cc.whohow.vfs.FileObjectX;
 import cc.whohow.vfs.FileSystemProviderX;
 import cc.whohow.vfs.FileSystemX;
 import cc.whohow.vfs.VirtualFileSystem;
-import cc.whohow.vfs.io.ByteBufferReadableChannel;
-import cc.whohow.vfs.io.ByteBufferWritableChannel;
 import cc.whohow.vfs.io.ReadableChannel;
 import cc.whohow.vfs.io.WritableChannel;
 import cc.whohow.vfs.path.PathBuilder;
@@ -17,7 +15,6 @@ import org.apache.commons.vfs2.FileName;
 import org.apache.commons.vfs2.FileSystemException;
 import org.apache.commons.vfs2.provider.AbstractVfsComponent;
 
-import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.DirectoryStream;
 import java.util.*;
@@ -113,24 +110,26 @@ public class KeyValueFileObject<T> extends AbstractVfsComponent implements FileO
 
     @Override
     public ReadableChannel getReadableChannel() throws FileSystemException {
-        try {
-            return new ByteBufferReadableChannel(type.serialize(data.get(getKey())));
-        } catch (FileSystemException e) {
-            throw e;
-        } catch (IOException e) {
-            throw new FileSystemException(e);
-        }
+//        try {
+//            return new ByteBufferReadableChannel(type.serialize(data.get(getKey())));
+//        } catch (FileSystemException e) {
+//            throw e;
+//        } catch (IOException e) {
+//            throw new FileSystemException(e);
+//        }
+        return null;
     }
 
     @Override
     public WritableChannel getWritableChannel() throws FileSystemException {
-        return new ByteBufferWritableChannel() {
-            @Override
-            public void close() throws IOException {
-                byteBuffer.flip();
-                data.put(getKey(), type.deserialize(byteBuffer));
-            }
-        };
+//        return new ByteBufferWritableChannel() {
+//            @Override
+//            public void close() throws IOException {
+//                buffer.flip();
+//                data.put(getKey(), type.deserialize(buffer));
+//            }
+//        };
+        return null;
     }
 
     @Override

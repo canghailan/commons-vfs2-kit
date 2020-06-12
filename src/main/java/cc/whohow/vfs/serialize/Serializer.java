@@ -1,8 +1,8 @@
 package cc.whohow.vfs.serialize;
 
+import cc.whohow.fs.channel.ByteBufferFileReadableChannel;
+import cc.whohow.fs.channel.ByteBufferFileWritableChannel;
 import cc.whohow.vfs.FileObjectX;
-import cc.whohow.vfs.io.ByteBufferReadableChannel;
-import cc.whohow.vfs.io.ByteBufferWritableChannel;
 import cc.whohow.vfs.io.ReadableChannel;
 import cc.whohow.vfs.io.WritableChannel;
 import org.apache.commons.vfs2.FileContent;
@@ -19,13 +19,13 @@ public interface Serializer<T> {
     void serialize(OutputStream stream, T value) throws IOException;
 
     default T deserialize(ByteBuffer buffer) throws IOException {
-        return deserialize(new ByteBufferReadableChannel(buffer));
+        return deserialize(new ByteBufferFileReadableChannel(buffer));
     }
 
     default ByteBuffer serialize(T value) throws IOException {
-        ByteBufferWritableChannel buffer = new ByteBufferWritableChannel();
+        ByteBufferFileWritableChannel buffer = new ByteBufferFileWritableChannel();
         serialize(buffer, value);
-        return buffer.getByteBuffer();
+        return buffer.getBuffer();
     }
 
     default T deserialize(ReadableChannel channel) throws IOException {

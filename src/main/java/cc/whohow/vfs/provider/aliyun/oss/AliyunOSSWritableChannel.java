@@ -1,6 +1,6 @@
 package cc.whohow.vfs.provider.aliyun.oss;
 
-import cc.whohow.vfs.io.ByteBufferReadableChannel;
+import cc.whohow.fs.channel.ByteBufferFileReadableChannel;
 import cc.whohow.vfs.io.ProgressMonitorInputStream;
 import cc.whohow.vfs.io.WritableChannel;
 import com.aliyun.oss.OSS;
@@ -80,7 +80,7 @@ public class AliyunOSSWritableChannel extends WritableChannel {
             throw new IllegalStateException("position: " + position);
         }
         position = buffer.remaining();
-        oss.putObject(bucketName, key, new ByteBufferReadableChannel(buffer));
+        oss.putObject(bucketName, key, new ByteBufferFileReadableChannel(buffer));
         return (int) position;
     }
 

@@ -1,6 +1,6 @@
 package cc.whohow.vfs.provider.qcloud.cos;
 
-import cc.whohow.vfs.io.ByteBufferReadableChannel;
+import cc.whohow.fs.channel.ByteBufferFileReadableChannel;
 import cc.whohow.vfs.io.ProgressMonitorInputStream;
 import cc.whohow.vfs.io.WritableChannel;
 import com.qcloud.cos.COS;
@@ -161,7 +161,7 @@ public class QcloudCOSWritableChannel extends WritableChannel {
             throw new IllegalStateException("position: " + position);
         }
         position = buffer.remaining();
-        cos.putObject(bucketName, key, new ByteBufferReadableChannel(buffer), new ObjectMetadata());
+        cos.putObject(bucketName, key, new ByteBufferFileReadableChannel(buffer), new ObjectMetadata());
         return (int) position;
     }
 

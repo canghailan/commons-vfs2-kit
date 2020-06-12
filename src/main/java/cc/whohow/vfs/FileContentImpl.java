@@ -112,7 +112,7 @@ public interface FileContentImpl extends FileContent {
     @Override
     default long write(OutputStream output, int bufferSize) throws IOException {
         try (InputStream input = getInputStream()) {
-            long n = IO.transfer(input, output, bufferSize);
+            long n = IO.copy(input, output, bufferSize);
             output.flush();
             return n;
         }

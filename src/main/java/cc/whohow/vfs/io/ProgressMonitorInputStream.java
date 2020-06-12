@@ -53,8 +53,8 @@ public class ProgressMonitorInputStream extends FilterInputStream {
     }
 
     @Override
-    public synchronized void mark(int readlimit) {
-        in.mark(readlimit);
+    public synchronized void mark(int limit) {
+        in.mark(limit);
         mark = position.get();
     }
 

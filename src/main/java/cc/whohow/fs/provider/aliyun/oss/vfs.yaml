@@ -1,0 +1,12 @@
+providers:
+  - className: cc.whohow.fs.provider.aliyun.oss.AliyunOSSFileProvider
+    profiles:
+      - accessKeyId:
+        secretAccessKey:
+      - accessKeyId:
+        secretAccessKey:
+    cdn:
+      - uri: oss://bucket/path/
+        cdn: https://cdn/path/
+      - uri: oss://bucket/path/
+        cdn: https://cdn/path/
