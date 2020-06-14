@@ -21,4 +21,15 @@ public class S3UriPath extends S3Uri implements Path {
     public boolean isSame(S3UriPath path) {
         return Objects.equals(getKey(), path.getKey()) && Objects.equals(getBucketName(), path.getBucketName());
     }
+
+    @Override
+    public S3UriPath getParent() {
+        // TODO
+        return null;
+    }
+
+    @Override
+    public S3UriPath resolve(String relative) {
+        return new S3UriPath(uri.resolve(relative));
+    }
 }

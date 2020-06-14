@@ -16,6 +16,8 @@ public interface VirtualFileSystem extends AutoCloseable {
 
     Collection<Provider> getProviders();
 
+    Collection<FileSystem<?, ?>> getFileSystems();
+
     File<?, ?> get(String uri);
 
     void load(Provider provider);
@@ -25,6 +27,10 @@ public interface VirtualFileSystem extends AutoCloseable {
     void mount(String uri, FileResolver<?, ?> fileResolver);
 
     void umount(String uri);
+
+    void registerFileSystem(FileSystem<?, ?> fileSystem);
+
+    void unregisterFileSystem(FileSystem<?, ?> fileSystem);
 
     void installCommand(String name, FileCommandBuilder<? extends FileCommand<?>> commandBuilder);
 

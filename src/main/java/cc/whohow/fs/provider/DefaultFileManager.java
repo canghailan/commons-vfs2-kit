@@ -158,7 +158,7 @@ public class DefaultFileManager implements FileManager {
         try {
             return vfs.newCopyCommand(source, destination).call().getPublicUri();
         } catch (Exception e) {
-            throw UncheckedFileSystemException.unchecked(e);
+            throw UncheckedException.unchecked(e);
         }
     }
 
@@ -168,7 +168,7 @@ public class DefaultFileManager implements FileManager {
             return CompletableFuture.supplyAsync(vfs.newCopyCommand(source, destination), vfs.getExecutor())
                     .thenApply(File::getPublicUri);
         } catch (Exception e) {
-            throw UncheckedFileSystemException.unchecked(e);
+            throw UncheckedException.unchecked(e);
         }
     }
 
@@ -177,7 +177,7 @@ public class DefaultFileManager implements FileManager {
         try {
             return vfs.newMoveCommand(source, destination).call().getPublicUri();
         } catch (Exception e) {
-            throw UncheckedFileSystemException.unchecked(e);
+            throw UncheckedException.unchecked(e);
         }
     }
 
@@ -187,7 +187,7 @@ public class DefaultFileManager implements FileManager {
             return CompletableFuture.supplyAsync(vfs.newMoveCommand(source, destination), vfs.getExecutor())
                     .thenApply(File::getPublicUri);
         } catch (Exception e) {
-            throw UncheckedFileSystemException.unchecked(e);
+            throw UncheckedException.unchecked(e);
         }
     }
 
@@ -197,7 +197,7 @@ public class DefaultFileManager implements FileManager {
         try {
             return (T) vfs.newCommand(args).call();
         } catch (Exception e) {
-            throw UncheckedFileSystemException.unchecked(e);
+            throw UncheckedException.unchecked(e);
         }
     }
 
@@ -207,7 +207,7 @@ public class DefaultFileManager implements FileManager {
         try {
             return (CompletableFuture<T>) CompletableFuture.supplyAsync(vfs.newCommand(args), vfs.getExecutor());
         } catch (Exception e) {
-            throw UncheckedFileSystemException.unchecked(e);
+            throw UncheckedException.unchecked(e);
         }
     }
 }

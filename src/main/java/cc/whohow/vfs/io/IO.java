@@ -128,6 +128,14 @@ public class IO {
         return n;
     }
 
+    public static int write(WritableByteChannel channel, ByteBuffer buffer) throws IOException {
+        int n = buffer.remaining();
+        while (buffer.hasRemaining()) {
+            channel.write(buffer);
+        }
+        return n;
+    }
+
     public static void close(AutoCloseable... closeable) {
         for (AutoCloseable c : closeable) {
             close(c);

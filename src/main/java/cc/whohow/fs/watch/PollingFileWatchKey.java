@@ -11,23 +11,17 @@ public class PollingFileWatchKey<P extends Path, F extends File<P, F>> implement
     private F watchable;
     private List<Consumer<FileWatchEvent<P, F>>> listeners;
 
-    public void notify(FileWatchEvent<P, F> event) {
-        if (watchable.equals(event.watchable())) {
-
-        }
+    public F watchable() {
+        return watchable;
     }
 
-    protected void notifyAll(FileWatchEvent<P, F> event) {
+    @Override
+    public void accept(FileWatchEvent<P, F> event) {
         for (Consumer<FileWatchEvent<P, F>> listener : listeners) {
             try {
                 listener.accept(event);
             } catch (Exception ignore) {
             }
         }
-    }
-
-    @Override
-    public void accept(FileWatchEvent<P, F> event) {
-
     }
 }

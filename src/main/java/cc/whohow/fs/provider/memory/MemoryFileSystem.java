@@ -54,12 +54,17 @@ public class MemoryFileSystem implements FileSystem<KeyPath, MemoryFile> {
     }
 
     @Override
-    public KeyPath resolve(CharSequence path) {
-        String key = path.toString();
-        if (key.startsWith("/")) {
-            throw new IllegalArgumentException(key);
+    public KeyPath resolve(URI uri) {
+        URI key = this.uri.relativize(uri);
+        if (key.isAbsolute() || key.toString().startsWith("/")) {
+            throw new IllegalArgumentException(uri.toString());
         }
-        return new KeyPath(URI.create(uri + key), key);
+        return new KeyPath(uri, key.toString());
+    }
+
+    @Override
+    public KeyPath getParent(KeyPath path) {
+        return null;
     }
 
     @Override

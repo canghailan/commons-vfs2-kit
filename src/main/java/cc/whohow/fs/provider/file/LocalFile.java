@@ -4,8 +4,8 @@ import cc.whohow.fs.File;
 import cc.whohow.fs.FileSystem;
 
 public class LocalFile implements File<LocalPath, LocalFile> {
-    private LocalFileSystem fileSystem;
-    private LocalPath path;
+    private final LocalFileSystem fileSystem;
+    private final LocalPath path;
 
     public LocalFile(LocalFileSystem fileSystem, LocalPath path) {
         this.fileSystem = fileSystem;

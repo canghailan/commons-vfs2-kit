@@ -2,17 +2,17 @@ package cc.whohow.fs.configuration;
 
 import cc.whohow.fs.File;
 import cc.whohow.fs.FileSystem;
+import cc.whohow.fs.FileWritableChannel;
 import cc.whohow.fs.provider.memory.MemoryFileSystem;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.URI;
-import java.nio.channels.WritableByteChannel;
 import java.nio.charset.StandardCharsets;
 
 public class ConfigurationBuilder {
     protected FileSystem<?, ?> conf;
-    protected WritableByteChannel vfs;
+    protected FileWritableChannel vfsConfiguration;
 
     public ConfigurationBuilder() {
         this(URI.create("etc:///"));
@@ -24,7 +24,7 @@ public class ConfigurationBuilder {
 
     public ConfigurationBuilder(FileSystem<?, ?> conf) {
         this.conf = conf;
-        this.vfs = conf.get("vfs").newWritableChannel();
+        this.vfsConfiguration = conf.get("vfs").newWritableChannel();
     }
 
     public ConfigurationBuilder configureVfs(String path, String mounted) {
@@ -35,7 +35,7 @@ public class ConfigurationBuilder {
             throw new IllegalArgumentException(mounted);
         }
         try {
-            vfs.write(StandardCharsets.UTF_8.encode(path + ": " + mounted + "\n"));
+            vfsConfiguration.write(StandardCharsets.UTF_8.encode(path + ": " + mounted + "\n"));
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -49,7 +49,7 @@ public class ConfigurationBuilder {
 
     public File<?, ?> build() {
         try {
-            vfs.close();
+            vfsConfiguration.close();
             return conf.get("");
         } catch (IOException e) {
             throw new UncheckedIOException(e);

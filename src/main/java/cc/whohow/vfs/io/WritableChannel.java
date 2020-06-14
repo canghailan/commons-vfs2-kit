@@ -9,7 +9,7 @@ import java.nio.channels.WritableByteChannel;
 public abstract class WritableChannel extends OutputStream implements WritableByteChannel {
     @Override
     public int write(ByteBuffer src) throws IOException {
-        return IO.write(this, src);
+        return IO.write((WritableByteChannel) this, src);
     }
 
     public int writeAll(ByteBuffer buffer) throws IOException {

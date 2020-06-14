@@ -7,25 +7,25 @@ public interface FileWatchEvent<P extends Path, F extends File<P, F>> {
 
     File<P, F> file();
 
-    class Kind {
-        public static final Kind CREATE = new Kind("+");
-        public static final Kind DELETE = new Kind("-");
-        public static final Kind MODIFY = new Kind("*");
-        public static final Kind NOT_MODIFIED = new Kind("=");
+    enum  Kind {
+         CREATE("+"),
+        DELETE("-"),
+        MODIFY("*"),
+        NOT_MODIFIED("=");
 
-        private final String name;
+        private final String symbol;
 
-        public Kind(String name) {
-            this.name = name;
+         Kind(String symbol) {
+            this.symbol = symbol;
         }
 
-        public String name() {
-            return name;
+        public String symbol() {
+            return symbol;
         }
 
         @Override
         public String toString() {
-            return name;
+            return symbol;
         }
     }
 }

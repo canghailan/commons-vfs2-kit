@@ -13,7 +13,7 @@ import java.nio.charset.Charset;
 
 class BinaryObjectFile implements MemoryObjectFile {
     private final URI uri;
-    private FileAttributes attributes;
+    private final FileAttributes attributes;
     private ByteBuffer content;
 
     BinaryObjectFile(URI uri, FileAttributes attributes, ByteBuffer content) {

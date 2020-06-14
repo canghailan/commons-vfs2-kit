@@ -4,6 +4,7 @@ import cc.whohow.fs.Attribute;
 import cc.whohow.fs.Attributes;
 import cc.whohow.fs.FileSystemAttributes;
 import cc.whohow.fs.attribute.StringAttribute;
+import cc.whohow.fs.provider.aliyun.cdn.AliyunCDNConfiguration;
 import com.aliyun.oss.model.Bucket;
 
 import java.util.*;
@@ -20,7 +21,7 @@ public class AliyunOSSFileSystemAttributes implements FileSystemAttributes {
     private final String provider;
     private Bucket bucket;
     private String endpoint;
-    private Map<String, String> cnameMap;
+    private List<AliyunCDNConfiguration> cdnConfiguration;
 
     public AliyunOSSFileSystemAttributes(String provider) {
         this.provider = provider;
@@ -67,12 +68,12 @@ public class AliyunOSSFileSystemAttributes implements FileSystemAttributes {
         return bucket.getIntranetEndpoint();
     }
 
-    public Map<String, String> getCnameMap() {
-        return cnameMap;
+    public List<AliyunCDNConfiguration> getCdnConfiguration() {
+        return cdnConfiguration;
     }
 
-    public void setCnameMap(Map<String, String> cnameMap) {
-        this.cnameMap = cnameMap;
+    public void setCdnConfiguration(List<AliyunCDNConfiguration> cdnConfiguration) {
+        this.cdnConfiguration = cdnConfiguration;
     }
 
     @Override

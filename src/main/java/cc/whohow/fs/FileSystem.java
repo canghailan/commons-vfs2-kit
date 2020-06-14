@@ -34,15 +34,28 @@ public interface FileSystem<P extends Path, F extends File<P, F>> extends Object
     FileSystemAttributes readAttributes();
 
     /**
-     * 解析文件路径
+     * @see URI#resolve(java.lang.String)
+     * 解析文件路径，默认应用此方法解析，复用URI.resolve来处理各种复杂情况
      */
-    P resolve(CharSequence path);
+    default P resolve(CharSequence path) {
+        return resolve(getUri().resolve(path.toString()));
+    }
+
+    /**
+     * 解析URI
+     */
+    P resolve(URI uri);
+
+    /**
+     * 获取上级路径
+     */
+    P getParent(P path);
 
     /**
      * 解析相对文件路径
      */
-    default P resolve(P base, CharSequence path) {
-        return resolve(getUri().relativize(base.toUri().resolve(path.toString())).toString());
+    default P resolve(P base, CharSequence relative) {
+        return resolve(base.toUri().resolve(relative.toString()));
     }
 
     /**
@@ -57,6 +70,13 @@ public interface FileSystem<P extends Path, F extends File<P, F>> extends Object
 
     default F get(CharSequence path) {
         return get(resolve(path));
+    }
+
+    /**
+     * 获取文件对象
+     */
+    default F get(URI uri) {
+        return get(resolve(uri));
     }
 
     /**
@@ -98,11 +118,11 @@ public interface FileSystem<P extends Path, F extends File<P, F>> extends Object
      */
     void delete(P path);
 
-    default void watch(P path, Consumer<FileWatchEvent<P, F>> listener) {
+    default void watch(P path, Consumer<? extends FileWatchEvent<P, F>> listener) {
         throw new UnsupportedOperationException();
     }
 
-    default void unwatch(P path, Consumer<FileWatchEvent<P, F>> listener) {
+    default void unwatch(P path, Consumer<? extends FileWatchEvent<P, F>> listener) {
         throw new UnsupportedOperationException();
     }
 

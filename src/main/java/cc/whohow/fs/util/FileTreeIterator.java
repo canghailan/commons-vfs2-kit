@@ -21,8 +21,8 @@ public class FileTreeIterator<P extends Path, F extends File<P, F>> implements F
     private static final Logger log = LogManager.getLogger(FileTreeIterator.class);
     private final FileSystem<P, F> fileSystem;
     private final P path;
-    private int maxDepth;
-    private Deque<FileIterator<F>> queue = new LinkedList<>();
+    private final int maxDepth;
+    private final Deque<FileIterator<F>> queue = new LinkedList<>();
     private int depth;
     private F file;
 

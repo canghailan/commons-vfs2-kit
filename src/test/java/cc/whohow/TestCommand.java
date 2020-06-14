@@ -16,8 +16,8 @@ public class TestCommand {
         VirtualFileSystem vfs = new DefaultVirtualFileSystem(configurationBuilder.build());
         vfs.load(new LocalFileProvider());
 
-        vfs.newCopyCommand("file:///D:/a.txt", "file:///D:/b.txt").call();
-        vfs.newCopyCommand("file:///D:/temp/", "file:///D:/temp-copy/").call();
+//        vfs.newCopyCommand("file:///D:/a.txt", "file:///D:/b.txt").call();
+        vfs.newCopyCommand("file:///D:/app/Fira_Code/", "file:///D:/temp-copy/").call();
 
         vfs.close();
     }

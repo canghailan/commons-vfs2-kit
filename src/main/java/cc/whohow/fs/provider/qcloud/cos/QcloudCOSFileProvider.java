@@ -2,7 +2,7 @@ package cc.whohow.fs.provider.qcloud.cos;
 
 import cc.whohow.fs.File;
 import cc.whohow.fs.Provider;
-import cc.whohow.fs.UncheckedFileSystemException;
+import cc.whohow.fs.UncheckedException;
 import cc.whohow.fs.VirtualFileSystem;
 import cc.whohow.fs.provider.s3.S3FileResolver;
 import cc.whohow.fs.provider.s3.S3Uri;
@@ -147,7 +147,7 @@ public class QcloudCOSFileProvider implements Provider {
         log.debug("newQcloudCOSFileSystem: {}", bucketName);
         Bucket bucket = buckets.get(bucketName);
         if (bucket == null) {
-            throw new UncheckedFileSystemException(bucketName + " not exists");
+            throw new UncheckedException(bucketName + " not exists");
         }
         COSCredentials credentials = bucketCredentials.get(bucketName);
 

@@ -22,9 +22,19 @@ import java.nio.channels.ReadableByteChannel;
  */
 public class AliyunOSSFileWritableChannel extends OutputStream implements FileWritableChannel {
     private static final Logger log = LogManager.getLogger(AliyunOSSFileWritableChannel.class);
+    private static final int BUFFER_SIZE = 2 * 1024 * 1024;
     private final OSS oss;
     private final String bucketName;
     private final String key;
+    // 缓冲区大小
+    private final int bufferSize;
+
+    // 读写缓冲区，参考Netty ByteBuf
+    // 0 <= readIndex <= writeIndex < buffer.length
+    private byte[] buffer;
+    private int readIndex;
+    private int writeIndex;
+
     private long position;
 
     public AliyunOSSFileWritableChannel(OSS oss, String bucketName, String key) {
@@ -32,9 +42,14 @@ public class AliyunOSSFileWritableChannel extends OutputStream implements FileWr
     }
 
     public AliyunOSSFileWritableChannel(OSS oss, String bucketName, String key, long position) {
+        this(oss, bucketName, key, BUFFER_SIZE, position);
+    }
+
+    public AliyunOSSFileWritableChannel(OSS oss, String bucketName, String key, int bufferSize, long position) {
         this.oss = oss;
         this.bucketName = bucketName;
         this.key = key;
+        this.bufferSize = bufferSize;
         this.position = position;
     }
 
@@ -55,8 +70,14 @@ public class AliyunOSSFileWritableChannel extends OutputStream implements FileWr
     }
 
     @Override
-    public void write(int b) throws IOException {
-        write(new byte[]{(byte) b});
+    public synchronized void write(int b) throws IOException {
+        initializeBuffer();
+        if (writableBytes() < 1) {
+            // 缓冲区不足
+            // 提交缓冲区
+            flush();
+        }
+        buffer[writeIndex++] = (byte) b;
     }
 
     @Override
@@ -69,15 +90,43 @@ public class AliyunOSSFileWritableChannel extends OutputStream implements FileWr
         if (len == 0) {
             return;
         }
-        log.trace("appendObject: oss://{}/{} {}", bucketName, key, position);
-        position = oss.appendObject(
-                new AppendObjectRequest(bucketName, key, new ByteArrayInputStream(b, off, len))
-                        .withPosition(position)).getNextPosition();
+
+        initializeBuffer();
+        if (len < buffer.length) {
+            // 小数据块写入
+            if (writableBytes() < len) {
+                // 缓冲区不足
+                // 提交缓冲区
+                flush();
+                if (len * 2 > buffer.length) {
+                    // 较大数据块，直接提交
+                    flush(b, off, len);
+                } else {
+                    // 较小数据块，写入缓冲区
+                    append(b, off, len);
+                }
+            } else {
+                // 缓冲区足够，写入缓冲区
+                append(b, off, len);
+            }
+        } else {
+            // 大数据块写入
+            // 提交缓冲区
+            flush();
+            // 提交数据块
+            flush(b, off, len);
+        }
     }
 
     @Override
     public synchronized void close() throws IOException {
+        if (buffer != null) {
+            // 如果有缓冲区，提交缓冲区
+            flush();
+        }
         if (position == 0) {
+            // 空文件
+            log.debug("empty file: oss://{}/{}", bucketName, key);
             overwrite(ByteBuffer.allocate(0));
         }
     }
@@ -89,15 +138,36 @@ public class AliyunOSSFileWritableChannel extends OutputStream implements FileWr
 
     @Override
     public synchronized int write(ByteBuffer src) throws IOException {
-        int n = src.remaining();
-        if (n == 0) {
+        if (!src.hasRemaining()) {
             return 0;
         }
-        log.trace("appendObject: oss://{}/{} {}", bucketName, key, position);
-        position = oss.appendObject(
-                new AppendObjectRequest(bucketName, key, new ByteBufferReadableChannel(src))
-                        .withPosition(position)).getNextPosition();
-        return n;
+        if (src.hasArray()) {
+            // 如果有底层数组，复用write(byte[], int, int)
+            int len = src.remaining();
+            write(src.array(), src.arrayOffset() + src.position(), len);
+            src.position(src.position() + len);
+            return len;
+        }
+
+        // 没有底层数组
+        initializeBuffer();
+        int len = src.remaining();
+        if (writableBytes() < len) {
+            // 缓冲区不够
+            // 提交缓冲区
+            flush();
+            if (len * 2 > buffer.length) {
+                // 较大数据块，直接提交
+                flush(src);
+            } else {
+                // 较小数据块，写入缓冲区
+                append(src);
+            }
+        } else {
+            // 缓冲区足够
+            append(src);
+        }
+        return len;
     }
 
     @Override
@@ -134,5 +204,64 @@ public class AliyunOSSFileWritableChannel extends OutputStream implements FileWr
     @Override
     public long transferFrom(FileReadableChannel channel) throws IOException {
         return transferFrom(channel.stream());
+    }
+
+    @Override
+    public synchronized void flush() throws IOException {
+        if (buffer != null) {
+            int length = readableBytes();
+            if (length > 0) {
+                flush(buffer, readIndex, length);
+                readIndex = 0;
+                writeIndex = 0;
+            }
+        }
+    }
+
+    protected synchronized void flush(byte[] buf, int off, int len) {
+        log.trace("appendObject: oss://{}/{}?position={}&length={}", bucketName, key, position, len);
+        position = oss.appendObject(
+                new AppendObjectRequest(bucketName, key, new ByteArrayInputStream(buf, off, len))
+                        .withPosition(position)).getNextPosition();
+    }
+
+    protected synchronized void flush(ByteBuffer buf) {
+        log.trace("appendObject: oss://{}/{}?position={}&length={}", bucketName, key, position, buf.remaining());
+        position = oss.appendObject(
+                new AppendObjectRequest(bucketName, key, new ByteBufferReadableChannel(buf))
+                        .withPosition(position)).getNextPosition();
+    }
+
+    /**
+     * 可写入缓冲区大小
+     */
+    protected synchronized int writableBytes() {
+        return buffer.length - writeIndex;
+    }
+
+    /**
+     * 可读取缓冲区大小
+     */
+    protected synchronized int readableBytes() {
+        return writeIndex - readIndex;
+    }
+
+    protected synchronized void append(byte[] buf, int off, int len) {
+        System.arraycopy(buf, off, buffer, writeIndex, len);
+        writeIndex += len;
+    }
+
+    protected synchronized void append(ByteBuffer buf) {
+        int len = buf.remaining();
+        buf.get(buffer, writeIndex, len);
+        writeIndex += len;
+    }
+
+    protected synchronized void initializeBuffer() {
+        if (buffer == null) {
+            buffer = new byte[bufferSize];
+            readIndex = 0;
+            writeIndex = 0;
+        }
     }
 }

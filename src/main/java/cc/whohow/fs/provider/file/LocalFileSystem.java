@@ -43,24 +43,31 @@ public class LocalFileSystem implements FileSystem<LocalPath, LocalFile> {
     }
 
     @Override
-    public LocalPath resolve(CharSequence path) {
-        String ps = path.toString();
-        java.nio.file.Path pp = Paths.get(ps);
-        if (ps.endsWith(File.separator) || ps.endsWith("/")) {
-            try {
-                if (java.nio.file.Files.notExists(pp)) {
-                    java.nio.file.Files.createDirectories(pp);
+    public LocalPath resolve(URI uri) {
+        if ("file".equals(uri.getScheme())) {
+            java.nio.file.Path path = Paths.get(uri);
+            if (uri.getPath().endsWith("/")) {
+                try {
+                    if (java.nio.file.Files.notExists(path)) {
+                        java.nio.file.Files.createDirectories(path);
+                    }
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
                 }
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
             }
+            return new LocalPath(path);
         }
-        return new LocalPath(pp);
+        throw new IllegalArgumentException(uri.toString());
     }
 
     @Override
-    public LocalPath resolve(LocalPath base, CharSequence path) {
-        return new LocalPath(base.getPath().resolve(path.toString()));
+    public LocalPath resolve(LocalPath base, CharSequence relative) {
+        return new LocalPath(base.getPath().resolve(relative.toString()));
+    }
+
+    @Override
+    public LocalPath getParent(LocalPath path) {
+        return null;
     }
 
     @Override

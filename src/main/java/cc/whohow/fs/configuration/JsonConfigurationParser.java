@@ -49,7 +49,7 @@ public class JsonConfigurationParser {
         } else {
             StringJoiner name = new StringJoiner("/");
             path.forEach(name::add);
-            configurationBuilder.configure(name.toString(), node.asText(null));
+            configurationBuilder.configure(name.toString(), node.asText(""));
         }
 
         path.removeLast();

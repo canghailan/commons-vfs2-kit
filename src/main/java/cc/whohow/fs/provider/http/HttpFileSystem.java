@@ -57,8 +57,8 @@ public class HttpFileSystem implements FileSystem<UriPath, HttpFile> {
     }
 
     @Override
-    public UriPath resolve(CharSequence path) {
-        return resolve(URI.create(path.toString()));
+    public UriPath getParent(UriPath path) {
+        return null;
     }
 
     @Override
@@ -100,7 +100,7 @@ public class HttpFileSystem implements FileSystem<UriPath, HttpFile> {
             } catch (Exception ex) {
                 log.warn("close HttpResponse error", ex);
             }
-            throw UncheckedFileSystemException.unchecked(e);
+            throw UncheckedException.unchecked(e);
         }
     }
 

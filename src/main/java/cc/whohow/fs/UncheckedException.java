@@ -3,16 +3,16 @@ package cc.whohow.fs;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 
-public class UncheckedFileSystemException extends RuntimeException {
-    public UncheckedFileSystemException(String message) {
+public class UncheckedException extends RuntimeException {
+    public UncheckedException(String message) {
         super(message);
     }
 
-    public UncheckedFileSystemException(String message, Throwable cause) {
+    public UncheckedException(String message, Throwable cause) {
         super(message, cause);
     }
 
-    public UncheckedFileSystemException(Throwable cause) {
+    public UncheckedException(Throwable cause) {
         super(cause);
     }
 
@@ -23,6 +23,6 @@ public class UncheckedFileSystemException extends RuntimeException {
         if (e instanceof IOException) {
             return new UncheckedIOException((IOException) e);
         }
-        return new UncheckedFileSystemException(e);
+        return new UncheckedException(e);
     }
 }

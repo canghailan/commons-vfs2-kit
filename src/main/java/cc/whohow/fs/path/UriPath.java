@@ -21,7 +21,21 @@ public class UriPath implements Path {
     }
 
     @Override
+    public UriPath getParent() {
+        // TODO
+        return null;
+    }
+
+    @Override
+    public UriPath resolve(String relative) {
+        return new UriPath(uri.resolve(relative));
+    }
+
+    @Override
     public boolean equals(Object o) {
+        if (o == this) {
+            return true;
+        }
         if (o instanceof UriPath) {
             UriPath that = (UriPath) o;
             return that.uri.equals(this.uri);

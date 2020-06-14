@@ -1,7 +1,6 @@
 package cc.whohow.vfs;
 
 import cc.whohow.vfs.path.URIBuilder;
-import cc.whohow.vfs.provider.FileAttributeContentInfoFactory;
 import org.apache.commons.vfs2.*;
 import org.apache.commons.vfs2.cache.NullFilesCache;
 import org.apache.commons.vfs2.provider.VfsComponent;

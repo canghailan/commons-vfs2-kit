@@ -5,8 +5,13 @@ providers:
         secretAccessKey:
       - accessKeyId:
         secretAccessKey:
+    scheme: oss
+    automount: true
     cdn:
-      - uri: oss://bucket/path/
+      - origin: oss://bucket/path/
         cdn: https://cdn/path/
-      - uri: oss://bucket/path/
+      - origin: oss://bucket/path/
         cdn: https://cdn/path/
+        type: A
+        key:
+        ttl:

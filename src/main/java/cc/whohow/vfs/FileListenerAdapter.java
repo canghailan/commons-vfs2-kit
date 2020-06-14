@@ -1,0 +1,63 @@
+package cc.whohow.vfs;
+
+import cc.whohow.fs.FileWatchEvent;
+import org.apache.commons.vfs2.FileListener;
+import org.apache.commons.vfs2.events.ChangedEvent;
+import org.apache.commons.vfs2.events.CreateEvent;
+import org.apache.commons.vfs2.events.DeleteEvent;
+
+import java.util.Objects;
+import java.util.function.Consumer;
+
+public class FileListenerAdapter<E extends FileWatchEvent<?, ?>> implements Consumer<E> {
+    protected final FileSystemAdapter fileSystem;
+    protected final FileListener fileListener;
+
+    public FileListenerAdapter(FileSystemAdapter fileSystem, FileListener fileListener) {
+        this.fileSystem = fileSystem;
+        this.fileListener = fileListener;
+    }
+
+    @Override
+    public void accept(E fileWatchEvent) {
+        try {
+            switch (fileWatchEvent.kind()) {
+                case CREATE: {
+                    fileListener.fileCreated(new CreateEvent(
+                            new FileObjectAdapter(new FilePath(fileSystem, fileWatchEvent.file()))));
+                }
+                case DELETE: {
+                    fileListener.fileDeleted(new DeleteEvent(
+                            new FileObjectAdapter(new FilePath(fileSystem, fileWatchEvent.file()))));
+                }
+                case MODIFY: {
+                    fileListener.fileChanged(new ChangedEvent(
+                            new FileObjectAdapter(new FilePath(fileSystem, fileWatchEvent.file()))));
+                }
+                default: {
+                    break;
+                }
+            }
+        } catch (Exception e) {
+            throw FileSystemExceptions.unchecked(e);
+        }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o instanceof FileListenerAdapter) {
+            FileListenerAdapter<?> that = (FileListenerAdapter<?>) o;
+            return that.fileSystem.equals(this.fileSystem) &&
+                    that.fileListener.equals(this.fileListener);
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(fileSystem, fileListener);
+    }
+}

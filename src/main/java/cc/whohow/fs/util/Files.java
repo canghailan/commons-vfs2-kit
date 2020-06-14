@@ -1,15 +1,21 @@
 package cc.whohow.fs.util;
 
-import cc.whohow.fs.FileAttributes;
-import cc.whohow.fs.FileIterator;
-import cc.whohow.fs.FileStream;
-import cc.whohow.fs.FileSystemAttributes;
+import cc.whohow.fs.*;
 
 import java.io.Closeable;
 import java.nio.file.DirectoryStream;
 import java.util.Iterator;
+import java.util.Optional;
 
 public class Files {
+    public static <F extends File<?, ?>> Optional<F> optional(F file) {
+        if (file != null && file.exists()) {
+            return Optional.of(file);
+        } else {
+            return Optional.empty();
+        }
+    }
+
     public static FileAttributes emptyFileAttributes() {
         return EmptyFileAttributes.get();
     }

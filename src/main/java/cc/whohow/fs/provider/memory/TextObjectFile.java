@@ -11,9 +11,9 @@ import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 
 class TextObjectFile implements MemoryObjectFile {
-    private URI uri;
-    private Charset charset;
-    private FileAttributes attributes;
+    private final URI uri;
+    private final Charset charset;
+    private final FileAttributes attributes;
     private CharSequence content;
 
     TextObjectFile(URI uri, Charset charset, FileAttributes attributes, CharSequence content) {

@@ -46,6 +46,10 @@ public interface File<P extends Path, F extends File<P, F>> extends ObjectFile {
         return getPath().getName();
     }
 
+    default String getExtension() {
+        return getPath().getExtension();
+    }
+
     /**
      * @see Files#isRegularFile(java.nio.file.Path, java.nio.file.LinkOption...)
      */
@@ -122,6 +126,17 @@ public interface File<P extends Path, F extends File<P, F>> extends ObjectFile {
     }
 
     /**
+     * @see java.io.File#getParent()
+     */
+    default F getParent() {
+        P parent = getFileSystem().getParent(getPath());
+        if (parent == null) {
+            return null;
+        }
+        return getFileSystem().get(parent);
+    }
+
+    /**
      * @see Files#newDirectoryStream(java.nio.file.Path)
      */
     default DirectoryStream<F> newDirectoryStream() {
@@ -149,11 +164,11 @@ public interface File<P extends Path, F extends File<P, F>> extends ObjectFile {
         getFileSystem().delete(getPath());
     }
 
-    default void watch(Consumer<FileWatchEvent<P, F>> listener) {
+    default void watch(Consumer<? extends FileWatchEvent<P, F>> listener) {
         getFileSystem().watch(getPath(), listener);
     }
 
-    default void unwatch(Consumer<FileWatchEvent<P, F>> listener) {
+    default void unwatch(Consumer<? extends FileWatchEvent<P, F>> listener) {
         getFileSystem().unwatch(getPath(), listener);
     }
 

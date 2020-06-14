@@ -11,6 +11,16 @@ public interface Path extends Comparable<Path> {
         return new PathParser(toUri().getPath()).getLastName();
     }
 
+    default String getExtension() {
+        String name = getName();
+        int index = name.lastIndexOf(name);
+        // index == 0 不是扩展名
+        if (index > 0) {
+            return name.substring(index + 1);
+        }
+        return "";
+    }
+
     default boolean isRegularFile() {
         return !isDirectory();
     }
@@ -19,8 +29,16 @@ public interface Path extends Comparable<Path> {
         return toUri().getPath().endsWith("/");
     }
 
+    Path getParent();
+
+    Path resolve(String relative);
+
     default String relativize(Path path) {
-        return toUri().relativize(path.toUri()).toString();
+        URI relative = toUri().relativize(path.toUri());
+        if (relative.isAbsolute() || relative.toString().startsWith("/")) {
+            throw new IllegalArgumentException(path.toString());
+        }
+        return relative.toString();
     }
 
     default int compareTo(Path o) {

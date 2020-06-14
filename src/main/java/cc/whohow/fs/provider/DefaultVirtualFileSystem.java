@@ -1,7 +1,11 @@
 package cc.whohow.fs.provider;
 
 import cc.whohow.fs.*;
+import cc.whohow.fs.command.BestMatchCommandBuilder;
+import cc.whohow.fs.command.DefaultFileCopyCommand;
+import cc.whohow.fs.command.DefaultFileMoveCommand;
 import cc.whohow.fs.util.FileSystemThreadFactory;
+import cc.whohow.fs.util.Files;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import org.apache.logging.log4j.LogManager;
@@ -19,25 +23,19 @@ public class DefaultVirtualFileSystem implements VirtualFileSystem {
     protected final List<Provider> providers = new CopyOnWriteArrayList<>();
     protected final Map<String, String> vfsConfiguration = new LinkedHashMap<>();
     protected final NavigableMap<String, FileResolver<?, ?>> vfs = new ConcurrentSkipListMap<>(Comparator.reverseOrder());
-    protected final List<FileCommandBuilder<? extends FileCopyCommand>> fileCopyCommandBuilders = new CopyOnWriteArrayList<>();
-    protected final List<FileCommandBuilder<? extends FileMoveCommand>> fileMoveCommandBuilders = new CopyOnWriteArrayList<>();
-    protected final Map<String, List<FileCommandBuilder<? extends FileCommand<?>>>> fileCommandBuilders = new ConcurrentHashMap<>();
+    protected final Collection<FileSystem<?, ?>> fileSystems = new CopyOnWriteArraySet<>();
+    protected final Map<String, FileCommandBuilder<? extends FileCommand<?>>> fileCommandBuilders = new ConcurrentHashMap<>();
+    protected FileCommandBuilder<? extends FileCopyCommand> fileCopyCommandBuilder;
+    protected FileCommandBuilder<? extends FileMoveCommand> fileMoveCommandBuilder;
     protected ExecutorService executor;
     protected ScheduledExecutorService scheduledExecutor;
     protected Cache<String, File<?, ?>> cache;
 
     public DefaultVirtualFileSystem(File<?, ?> context) {
         this.context = context;
+        this.fileCopyCommandBuilder = this::newDefaultFileCopyCommand;
+        this.fileMoveCommandBuilder = this::newDefaultFileMoveCommand;
         this.initialize();
-    }
-
-    protected Optional<String> getConfiguration(String path) {
-        File<?, ?> file = context.resolve(path);
-        if (file.exists()) {
-            return Optional.of(file.readUtf8());
-        } else {
-            return Optional.empty();
-        }
     }
 
     protected void initialize() {
@@ -50,11 +48,9 @@ public class DefaultVirtualFileSystem implements VirtualFileSystem {
             initializeCache();
             parseVfsConfiguration();
             loadProviders();
-            installCopyCommand(this::newDefaultFileCopyCommand);
-            installMoveCommand(this::newDefaultFileMoveCommand);
         } catch (Exception e) {
             log.error("initialize vfs error", e);
-            throw UncheckedFileSystemException.unchecked(e);
+            throw UncheckedException.unchecked(e);
         }
 
         log.debug("initialized");
@@ -65,16 +61,20 @@ public class DefaultVirtualFileSystem implements VirtualFileSystem {
         if (executor != null) {
             throw new IllegalStateException();
         }
-        int corePoolSize = getConfiguration("threadPool/corePoolSize")
+        int corePoolSize = Files.optional(context.resolve("executor/corePoolSize"))
+                .map(File::readUtf8)
                 .map(Integer::parseInt)
                 .orElse(8);
-        int maximumPoolSize = getConfiguration("threadPool/maximumPoolSize")
+        int maximumPoolSize = Files.optional(context.resolve("executor/maximumPoolSize"))
+                .map(File::readUtf8)
                 .map(Integer::parseInt)
                 .orElse(corePoolSize * 4);
-        Duration keepAliveTime = getConfiguration("threadPool/keepAliveTime")
+        Duration keepAliveTime = Files.optional(context.resolve("executor/keepAliveTime"))
+                .map(File::readUtf8)
                 .map(Duration::parse)
                 .orElse(Duration.ofMinutes(1));
-        int maximumQueueSize = getConfiguration("threadPool/maximumQueueSize")
+        int maximumQueueSize = Files.optional(context.resolve("executor/maximumQueueSize"))
+                .map(File::readUtf8)
                 .map(Integer::parseInt)
                 .orElse(corePoolSize * 32);
 
@@ -93,7 +93,8 @@ public class DefaultVirtualFileSystem implements VirtualFileSystem {
         if (scheduledExecutor != null) {
             throw new IllegalStateException();
         }
-        int corePoolSize = getConfiguration("scheduler/corePoolSize")
+        int corePoolSize = Files.optional(context.resolve("scheduler/corePoolSize"))
+                .map(File::readUtf8)
                 .map(Integer::parseInt)
                 .orElse(1);
         this.scheduledExecutor = new ScheduledThreadPoolExecutor(
@@ -107,10 +108,12 @@ public class DefaultVirtualFileSystem implements VirtualFileSystem {
         if (cache != null) {
             throw new IllegalStateException();
         }
-        Duration ttl = getConfiguration("cache/ttl")
+        Duration ttl = Files.optional(context.resolve("cache/ttl"))
+                .map(File::readUtf8)
                 .map(Duration::parse)
                 .orElse(Duration.ofMinutes(15));
-        int maximumSize = getConfiguration("cache/maximumSize")
+        int maximumSize = Files.optional(context.resolve("cache/maximumSize"))
+                .map(File::readUtf8)
                 .map(Integer::parseInt)
                 .orElse(1024);
         this.cache = Caffeine.newBuilder()
@@ -183,6 +186,11 @@ public class DefaultVirtualFileSystem implements VirtualFileSystem {
     }
 
     @Override
+    public Collection<FileSystem<?, ?>> getFileSystems() {
+        return Collections.unmodifiableCollection(fileSystems);
+    }
+
+    @Override
     public File<?, ?> get(String uri) {
         return cache.get(uri, this::doGet);
     }
@@ -200,7 +208,7 @@ public class DefaultVirtualFileSystem implements VirtualFileSystem {
                 }
             }
         }
-        throw new UncheckedFileSystemException("get error: " + uri);
+        throw new UncheckedException("get error: " + uri);
     }
 
     @Override
@@ -212,7 +220,7 @@ public class DefaultVirtualFileSystem implements VirtualFileSystem {
             provider.initialize(this, context);
             providers.add(provider);
         } catch (Exception e) {
-            throw UncheckedFileSystemException.unchecked(e);
+            throw UncheckedException.unchecked(e);
         }
     }
 
@@ -234,7 +242,7 @@ public class DefaultVirtualFileSystem implements VirtualFileSystem {
             provider.initialize(this, context);
             providers.add(provider);
         } catch (Exception e) {
-            throw UncheckedFileSystemException.unchecked(e);
+            throw UncheckedException.unchecked(e);
         }
     }
 
@@ -251,24 +259,41 @@ public class DefaultVirtualFileSystem implements VirtualFileSystem {
     }
 
     @Override
-    public void installCommand(String name, FileCommandBuilder<? extends FileCommand<?>> commandBuilder) {
+    public void registerFileSystem(FileSystem<?, ?> fileSystem) {
+        log.debug("registerFileSystem({})", fileSystem);
+        fileSystems.add(fileSystem);
+    }
+
+    @Override
+    public void unregisterFileSystem(FileSystem<?, ?> fileSystem) {
+        log.debug("unregisterFileSystem({})", fileSystem);
+        fileSystems.remove(fileSystem);
+    }
+
+    @Override
+    public synchronized void installCommand(String name, FileCommandBuilder<? extends FileCommand<?>> commandBuilder) {
         log.debug("installCommand: {}", name);
         if ("copy".equals(name) || "move".equals(name)) {
             throw new IllegalArgumentException("copy/move -> installCopyCommand/installMoveCommand");
         }
-        fileCommandBuilders.computeIfAbsent(name, (key) -> new CopyOnWriteArrayList<>()).add(commandBuilder);
+        FileCommandBuilder<? extends FileCommand<?>> fileCommandBuilder = fileCommandBuilders.get(name);
+        if (fileCommandBuilder == null) {
+            fileCommandBuilders.put(name, commandBuilder);
+        } else {
+            fileCommandBuilders.put(name, new BestMatchCommandBuilder<>(fileCommandBuilder, commandBuilder));
+        }
     }
 
     @Override
-    public void installCopyCommand(FileCommandBuilder<? extends FileCopyCommand> commandBuilder) {
+    public synchronized void installCopyCommand(FileCommandBuilder<? extends FileCopyCommand> commandBuilder) {
         log.debug("installCopy");
-        fileCopyCommandBuilders.add(commandBuilder);
+        fileCopyCommandBuilder = new BestMatchCommandBuilder<>(commandBuilder, fileCopyCommandBuilder);
     }
 
     @Override
-    public void installMoveCommand(FileCommandBuilder<? extends FileMoveCommand> commandBuilder) {
+    public synchronized void installMoveCommand(FileCommandBuilder<? extends FileMoveCommand> commandBuilder) {
         log.debug("installMove");
-        fileMoveCommandBuilders.add(commandBuilder);
+        fileMoveCommandBuilder = new BestMatchCommandBuilder<>(commandBuilder, fileMoveCommandBuilder);
     }
 
     @Override
@@ -280,46 +305,34 @@ public class DefaultVirtualFileSystem implements VirtualFileSystem {
         log.trace("newCommand: {}", commandName);
         switch (commandName) {
             case "copy":
-                return newCommand(fileCopyCommandBuilders, args);
+                return fileCopyCommandBuilder.newCommand(args)
+                        .orElseThrow(AssertionError::new);
             case "move":
-                return newCommand(fileMoveCommandBuilders, args);
-            default:
-                return newCommand(fileCommandBuilders.get(commandName), args);
+                return fileMoveCommandBuilder.newCommand(args)
+                        .orElseThrow(AssertionError::new);
+            default: {
+                FileCommandBuilder<? extends FileCommand<?>> commandBuilder = fileCommandBuilders.get(commandName);
+                if (commandBuilder != null) {
+                    Optional<? extends FileCommand<?>> command = commandBuilder.newCommand(args);
+                    if (command.isPresent()) {
+                        return command.get();
+                    }
+                }
+                throw new IllegalArgumentException("command not supported: " + String.join(" ", args));
+            }
         }
     }
 
     @Override
     public FileCopyCommand newCopyCommand(String source, String destination) {
-        return newCommand(fileCopyCommandBuilders, "copy", source, destination);
+        return fileCopyCommandBuilder.newCommand("copy", source, destination)
+                .orElseThrow(AssertionError::new);
     }
 
     @Override
     public FileMoveCommand newMoveCommand(String source, String destination) {
-        return newCommand(fileMoveCommandBuilders, "move", source, destination);
-    }
-
-    protected <C extends FileCommand<?>> C newCommand(List<FileCommandBuilder<? extends C>> commandBuilders, String... args) {
-        if (commandBuilders == null || commandBuilders.isEmpty()) {
-            throw new IllegalStateException("Unsupported Command: " + String.join(" ", args));
-        }
-        C whichCommand = null;
-        for (FileCommandBuilder<? extends C> commandBuilder : commandBuilders) {
-            Optional<? extends C> c = commandBuilder.newCommand(args);
-            if (!c.isPresent()) {
-                continue;
-            }
-            C command = c.get();
-            if (command.getMatchingScore() == FileCommand.MatchingScore.HIGH) {
-                return command;
-            }
-            if (whichCommand == null || whichCommand.getMatchingScore() < command.getMatchingScore()) {
-                whichCommand = command;
-            }
-        }
-        if (whichCommand == null) {
-            throw new IllegalStateException("Unsupported Command: " + String.join(" ", args));
-        }
-        return whichCommand;
+        return fileMoveCommandBuilder.newCommand("move", source, destination)
+                .orElseThrow(AssertionError::new);
     }
 
     @Override

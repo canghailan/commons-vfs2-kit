@@ -1,15 +1,15 @@
-package cc.whohow.fs.provider;
+package cc.whohow.fs.command;
 
 import cc.whohow.fs.File;
 import cc.whohow.fs.FileMoveCommand;
 import cc.whohow.fs.VirtualFileSystem;
 
 public class DefaultFileMoveCommand implements FileMoveCommand {
-    private final VirtualFileSystem virtualFileSystem;
+    private final VirtualFileSystem vfs;
     private final String[] arguments;
 
-    public DefaultFileMoveCommand(VirtualFileSystem virtualFileSystem, String... arguments) {
-        this.virtualFileSystem = virtualFileSystem;
+    public DefaultFileMoveCommand(VirtualFileSystem vfs, String... arguments) {
+        this.vfs = vfs;
         this.arguments = arguments;
     }
 
@@ -20,7 +20,7 @@ public class DefaultFileMoveCommand implements FileMoveCommand {
 
     @Override
     public VirtualFileSystem getVirtualFileSystem() {
-        return virtualFileSystem;
+        return vfs;
     }
 
     @Override
@@ -30,7 +30,7 @@ public class DefaultFileMoveCommand implements FileMoveCommand {
 
     @Override
     public File<?, ?> call() throws Exception {
-        File<?, ?> file = virtualFileSystem.newCopyCommand(arguments[1], arguments[2]).call();
+        File<?, ?> file = vfs.newCopyCommand(arguments[1], arguments[2]).call();
         getSource().delete();
         return file;
     }

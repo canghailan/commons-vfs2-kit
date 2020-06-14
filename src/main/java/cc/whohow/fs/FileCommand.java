@@ -32,7 +32,7 @@ public interface FileCommand<R> extends Callable<R>, Supplier<R> {
         try {
             return call();
         } catch (Exception e) {
-            throw UncheckedFileSystemException.unchecked(e);
+            throw UncheckedException.unchecked(e);
         }
     }
 

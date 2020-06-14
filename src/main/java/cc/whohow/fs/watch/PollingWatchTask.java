@@ -25,7 +25,7 @@ public class PollingWatchTask<P extends Path, F extends File<P, F>, V> implement
     }
 
     @Override
-    public void run() {
+    public synchronized void run() {
         Map<P, V> oldSnapshot = snapshot;
         Map<P, V> newSnapshot = takeSnapshot();
 
@@ -37,19 +37,20 @@ public class PollingWatchTask<P extends Path, F extends File<P, F>, V> implement
             V newValue = e.getValue();
             V oldValue = oldSnapshot.remove(e.getKey());
             if (oldValue == null) {
-                notify(new DefaultFileWatchEvent<>(FileWatchEvent.Kind.CREATE, watchable, watchable.getFileSystem().get(e.getKey())));
+                notify(FileWatchEvent.Kind.CREATE, e.getKey());
             } else if (!Objects.equals(newValue, oldValue)) {
-                notify(new DefaultFileWatchEvent<>(FileWatchEvent.Kind.MODIFY, watchable, watchable.getFileSystem().get(e.getKey())));
+                notify(FileWatchEvent.Kind.MODIFY, e.getKey());
             }
         }
         for (Map.Entry<P, V> e : oldSnapshot.entrySet()) {
-            notify(new DefaultFileWatchEvent<>(FileWatchEvent.Kind.DELETE, watchable, watchable.getFileSystem().get(e.getKey())));
+            notify(FileWatchEvent.Kind.DELETE, e.getKey());
         }
     }
 
-    protected void notify(FileWatchEvent<P, F> event) {
+    protected void notify(FileWatchEvent.Kind kind, P path) {
+        F file = watchable.getFileSystem().get(path);
         for (PollingFileWatchKey<P, F> watchKey : watchKeys) {
-            watchKey.accept(event);
+            watchKey.accept(new DefaultFileWatchEvent<>(kind, watchKey.watchable(), file));
         }
     }
 

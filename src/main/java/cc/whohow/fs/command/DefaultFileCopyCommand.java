@@ -1,12 +1,11 @@
-package cc.whohow.fs.provider;
+package cc.whohow.fs.command;
 
 import cc.whohow.fs.*;
+import cc.whohow.fs.util.CompletableCounter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
-import java.util.LinkedList;
-import java.util.Queue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
@@ -45,7 +44,7 @@ public class DefaultFileCopyCommand implements FileCopyCommand {
             if (dst.isDirectory()) {
                 return copyDirectory(src, dst);
             } else {
-                throw new UnsupportedOperationException("Unable Copy Directory to File");
+                throw new IllegalArgumentException("copy directory to file: " + src + " -> " + dst);
             }
         } else {
             if (dst.isDirectory()) {
@@ -69,31 +68,31 @@ public class DefaultFileCopyCommand implements FileCopyCommand {
         }
     }
 
+    protected File<?, ?> copyFileToDirectory(File<?, ?> src, File<?, ?> dst) throws IOException {
+        return copyFile(src, dst.resolve(src.getName()));
+    }
+
     protected File<?, ?> copyDirectory(File<?, ?> src, File<?, ?> dst) throws IOException {
-        Queue<CompletableFuture<File<?, ?>>> queue = new LinkedList<>();
+        CompletableCounter completableCounter = new CompletableCounter();
         try (FileStream<? extends File<?, ?>> files = src.tree()) {
             for (File<?, ?> file : files) {
                 if (file.isRegularFile()) {
-                    queue.offer(copyFileAsync(file, dst.resolve(src.getUri().relativize(file.getUri()).toString())));
+                    completableCounter.increment();
+                    copyFileAsync(file, dst.resolve(src.getUri().relativize(file.getUri()).toString()))
+                            .whenComplete(completableCounter::decrement);
                 }
             }
         }
-        while (!queue.isEmpty()) {
-            File<?, ?> file = queue.poll().join();
-            log.trace("await copy: {}", file);
-        }
+        Long count = completableCounter.join();
+        log.trace("copy completed: {}", count);
         return dst;
-    }
-
-    protected File<?, ?> copyFileToDirectory(File<?, ?> src, File<?, ?> dst) throws IOException {
-        return copyFile(src, dst.resolve(src.getName()));
     }
 
     protected CompletableFuture<File<?, ?>> copyFileAsync(File<?, ?> src, File<?, ?> dst) {
         return CompletableFuture.supplyAsync(new Task(src, dst), vfs.getExecutor());
     }
 
-    public static class Task implements Callable<File<?, ?>>, Supplier<File<?, ?>> {
+    protected static class Task implements Callable<File<?, ?>>, Supplier<File<?, ?>> {
         private final File<?, ?> source;
         private final File<?, ?> destination;
 
@@ -121,7 +120,7 @@ public class DefaultFileCopyCommand implements FileCopyCommand {
             try {
                 return call();
             } catch (Exception e) {
-                throw UncheckedFileSystemException.unchecked(e);
+                throw UncheckedException.unchecked(e);
             }
         }
     }

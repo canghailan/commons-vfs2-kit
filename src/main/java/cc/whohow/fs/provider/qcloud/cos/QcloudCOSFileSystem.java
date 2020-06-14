@@ -33,8 +33,7 @@ public class QcloudCOSFileSystem implements FileSystem<S3UriPath, QcloudCOSFile>
                 uri.getSecretAccessKey() != null ||
                 uri.getBucketName() == null ||
                 uri.getEndpoint() != null ||
-                uri.getKey() == null ||
-                !uri.getKey().isEmpty()) {
+                uri.getKey() == null) {
             throw new IllegalArgumentException(uri.toString());
         }
         this.uri = uri;
@@ -57,8 +56,25 @@ public class QcloudCOSFileSystem implements FileSystem<S3UriPath, QcloudCOSFile>
     }
 
     @Override
-    public S3UriPath resolve(CharSequence path) {
-        return new S3UriPath(uri.getScheme(), uri.getBucketName(), path.toString());
+    public S3UriPath resolve(URI uri) {
+        if (this.uri.getScheme().equals(uri.getScheme())) {
+            S3UriPath path = new S3UriPath(uri);
+            if (path.getAccessKeyId() == null &&
+                    path.getSecretAccessKey() == null &&
+                    path.getEndpoint() == null &&
+                    path.getBucketName() != null &&
+                    path.getKey() != null &&
+                    path.getBucketName().equals(this.uri.getBucketName()) &&
+                    path.getKey().startsWith(this.uri.getKey())) {
+                return path;
+            }
+        }
+        throw new IllegalArgumentException(uri.toString());
+    }
+
+    @Override
+    public S3UriPath getParent(S3UriPath path) {
+        return null;
     }
 
     @Override

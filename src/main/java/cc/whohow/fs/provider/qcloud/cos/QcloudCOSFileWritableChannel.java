@@ -29,13 +29,13 @@ public class QcloudCOSFileWritableChannel extends OutputStream implements FileWr
     private final COS cos;
     private final String bucketName;
     private final String key;
+    // 缓冲区大小
+    private final int bufferSize;
 
     // 分块上传ID、列表
     private String uploadId;
     private List<PartETag> parts;
 
-    // 缓冲区大小
-    private int bufferSize;
     // 读写缓冲区，参考Netty ByteBuf
     // 0 <= readIndex <= writeIndex < buffer.length
     private byte[] buffer;
@@ -76,11 +76,11 @@ public class QcloudCOSFileWritableChannel extends OutputStream implements FileWr
 
     @Override
     public synchronized void write(int b) throws IOException {
+        initiateMultipartUpload();
         if (writableBytes() < 1) {
             // 缓冲区不足
-            // 首先尝试上传缓冲区
+            // 提交、压缩缓冲区
             flush();
-            // 然后尝试压缩缓冲区
             compact();
         }
         buffer[writeIndex++] = (byte) b;
@@ -99,20 +99,18 @@ public class QcloudCOSFileWritableChannel extends OutputStream implements FileWr
 
         // 初始化分块上传
         initiateMultipartUpload();
-
         if (len < buffer.length) {
             // 小数据块写入
             if (writableBytes() < len) {
                 // 缓冲区不足
-                // 首先尝试上传缓冲区
+                // 提交、压缩缓冲区
                 flush();
-                // 然后尝试压缩缓冲区
                 compact();
             }
             // 缓冲区可写大小
             int n = writableBytes();
             if (n < len) {
-                // 缓冲区不足写入全部数据块，部分写入
+                // 缓冲区不足写入全部数据块，填充剩余缓冲区
                 append(b, off, n);
                 // 缓冲区满，上传缓冲区数据块
                 flush();
@@ -126,21 +124,20 @@ public class QcloudCOSFileWritableChannel extends OutputStream implements FileWr
             // 大数据块写入
             if (readableBytes() > 0) {
                 // 有未上传缓冲区数据块
-                // 首先尝试提交缓冲区
+                // 提交、压缩缓冲区
                 flush();
-                // 然后尝试压缩缓冲区
                 compact();
             }
             if (readableBytes() > 0) {
                 // 有未上传缓冲区数据块
                 // 缓冲区可写大小
                 int n = writableBytes();
-                // 部分写入
+                // 填充剩余缓冲区
                 append(b, off, n);
                 // 缓冲区满，上传缓冲区数据块
                 flush();
-                if (len - n > MIN_PART_SIZE) {
-                    // 剩余数据块满足上传最小要求，直接上传
+                if ((len - n) > MIN_PART_SIZE && (len - n) * 2 > buffer.length) {
+                    // 剩余数据块满足上传最小要求，较大数据块，直接上传
                     uploadPart(b, off + n, len - n, false);
                 } else {
                     // 剩余数据块较小，写入到缓冲区
@@ -160,16 +157,18 @@ public class QcloudCOSFileWritableChannel extends OutputStream implements FileWr
 
     @Override
     public synchronized void close() throws IOException {
-        int length = readableBytes();
-        if (length > 0) {
-            uploadPart(buffer, readIndex, length, true);
-        }
         if (uploadId != null) {
+            // 如果有未提交缓冲区，提交缓冲区
+            int length = readableBytes();
+            if (length > 0) {
+                uploadPart(buffer, readIndex, length, true);
+            }
             log.trace("completeMultipartUpload: cos://{}/{}?uploadId={}&parts={}", bucketName, key, uploadId, parts.size());
             cos.completeMultipartUpload(new CompleteMultipartUploadRequest(bucketName, key, uploadId, parts));
         }
         if (position == 0) {
-            log.debug("write empty file: cos://{}/{}", bucketName, key);
+            // 空文件
+            log.debug("empty file: cos://{}/{}", bucketName, key);
             overwrite(ByteBuffer.allocate(0));
         }
     }
@@ -212,40 +211,54 @@ public class QcloudCOSFileWritableChannel extends OutputStream implements FileWr
         }
         if (src.hasArray()) {
             // 如果有底层数组，复用write(byte[], int, int)
-            int n = src.remaining();
-            write(src.array(), src.arrayOffset() + src.position(), n);
-            src.position(src.position() + n);
-            return n;
+            int len = src.remaining();
+            write(src.array(), src.arrayOffset() + src.position(), len);
+            src.position(src.position() + len);
+            return len;
         }
 
         // 没有底层数组
-
-        // 初始化分块上传
         initiateMultipartUpload();
-
         if (writableBytes() < src.remaining()) {
-            // 缓冲区不足
-            // 首先尝试上传缓冲区
+            // 缓冲区不够
+            // 提交、压缩缓冲区
             flush();
-            // 然后尝试压缩缓冲区
             compact();
+            if (readableBytes() > 0) {
+                // 有未提交缓冲区，填充剩余缓冲区
+                int len = Integer.min(writableBytes(), src.remaining());
+                append(src, len);
+                return len;
+            } else {
+                // 无未提交缓冲区
+                int len = src.remaining();
+                if (len > MIN_PART_SIZE && len * 2 > buffer.length) {
+                    // 满足上传最小要求，较大数据块，直接提交
+                    uploadPart(src);
+                } else {
+                    // 较小数据块，写入缓冲区
+                    append(src);
+                }
+                return len;
+            }
+        } else {
+            // 缓冲区足够
+            int len = src.remaining();
+            append(src);
+            return len;
         }
-
-        // 将内容复制到缓冲区
-        int n = Integer.min(writableBytes(), src.remaining());
-        src.get(buffer, writeIndex, n);
-        writeIndex += n;
-        return n;
     }
 
     @Override
     public synchronized void flush() throws IOException {
-        int length = readableBytes();
-        if (length > MIN_PART_SIZE) {
-            // 达到上传最小块要求
-            uploadPart(buffer, readIndex, length, false);
-            readIndex = 0;
-            writeIndex = 0;
+        if (uploadId != null) {
+            int length = readableBytes();
+            if (length > MIN_PART_SIZE) {
+                // 达到上传最小块要求
+                uploadPart(buffer, readIndex, length, false);
+                readIndex = 0;
+                writeIndex = 0;
+            }
         }
     }
 
@@ -278,6 +291,32 @@ public class QcloudCOSFileWritableChannel extends OutputStream implements FileWr
     protected synchronized void append(byte[] buf, int off, int len) {
         System.arraycopy(buf, off, buffer, writeIndex, len);
         writeIndex += len;
+    }
+
+    protected synchronized void append(ByteBuffer src) {
+        append(src, src.remaining());
+    }
+
+    protected synchronized void append(ByteBuffer src, int len) {
+        src.get(buffer, writeIndex, len);
+        writeIndex += len;
+    }
+
+    protected synchronized void uploadPart(ByteBuffer buf) {
+        int length = buf.remaining();
+        int partNumber = parts.size() + 1;
+        log.trace("uploadPart: cos://{}/{}?uploadId={}&part={}&position={}&length={}", bucketName, key, uploadId, partNumber, position, length);
+        UploadPartResult result = cos.uploadPart(new UploadPartRequest()
+                .withBucketName(bucketName)
+                .withKey(key)
+                .withUploadId(uploadId)
+                .withPartNumber(partNumber)
+                .withInputStream(new ByteBufferReadableChannel(buf))
+                .withPartSize(length)
+                .withLastPart(false)
+        );
+        parts.add(result.getPartETag());
+        position += length;
     }
 
     protected synchronized void uploadPart(byte[] buffer, int offset, int length, boolean last) {

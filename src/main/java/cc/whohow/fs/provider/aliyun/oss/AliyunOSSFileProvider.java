@@ -2,11 +2,12 @@ package cc.whohow.fs.provider.aliyun.oss;
 
 import cc.whohow.fs.File;
 import cc.whohow.fs.Provider;
-import cc.whohow.fs.UncheckedFileSystemException;
 import cc.whohow.fs.VirtualFileSystem;
 import cc.whohow.fs.net.Ping;
+import cc.whohow.fs.provider.aliyun.cdn.AliyunCDNConfiguration;
 import cc.whohow.fs.provider.s3.S3FileResolver;
 import cc.whohow.fs.provider.s3.S3Uri;
+import cc.whohow.fs.util.Files;
 import com.aliyun.oss.ClientConfiguration;
 import com.aliyun.oss.OSS;
 import com.aliyun.oss.OSSClient;
@@ -20,6 +21,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.DirectoryStream;
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
@@ -33,12 +35,13 @@ public class AliyunOSSFileProvider implements Provider {
     private final Map<String, Credentials> bucketCredentials = new ConcurrentHashMap<>();
     private final Map<S3Uri, OSS> pool = new ConcurrentHashMap<>();
     private final Map<String, AliyunOSSFileSystem> fileSystems = new ConcurrentHashMap<>();
-    private volatile String scheme;
-    private volatile ClientConfiguration clientConfiguration;
-    private volatile List<Credentials> credentialsConfiguration;
-    private volatile NavigableMap<String, String> cdnConfiguration;
     private volatile VirtualFileSystem vfs;
     private volatile File<?, ?> context;
+    private volatile String scheme;
+    private volatile boolean automount;
+    private volatile ClientConfiguration clientConfiguration;
+    private volatile List<Credentials> credentialsConfiguration;
+    private volatile List<AliyunCDNConfiguration> cdnConfiguration;
 
     @Override
     public void initialize(VirtualFileSystem vfs, File<?, ?> context) throws Exception {
@@ -47,10 +50,10 @@ public class AliyunOSSFileProvider implements Provider {
         this.vfs = vfs;
         this.context = context;
 
-        this.scheme = parseScheme();
-        this.clientConfiguration = parseClientConfiguration();
-        this.credentialsConfiguration = parseProfilesConfiguration();
-        this.cdnConfiguration = parseCdnConfiguration();
+        parseConfiguration();
+        parseClientConfiguration();
+        parseProfilesConfiguration();
+        parseCdnConfiguration();
 
         log.debug("scan buckets");
         for (Credentials credentials : credentialsConfiguration) {
@@ -69,10 +72,10 @@ public class AliyunOSSFileProvider implements Provider {
 
         log.debug("collect mount points");
         Map<String, S3FileResolver<?, ?>> mount = new TreeMap<>();
-        if (isScanEnabled()) {
-            log.debug("scan enabled, mount all buckets");
+        if (automount) {
+            log.debug("automount enabled, mount all buckets");
             for (Bucket bucket : buckets.values()) {
-                S3Uri s3Uri = new S3Uri(scheme, null, null, bucket.getName(), null, null);
+                S3Uri s3Uri = new S3Uri(scheme, null, null, bucket.getName(), null, "");
                 log.debug("mount bucket {}: ", s3Uri);
                 AliyunOSSFileSystem fileSystem = getAliyunOSSFileSystem(s3Uri);
                 S3FileResolver<?, ?> fileResolver = new S3FileResolver<>(fileSystem);
@@ -83,13 +86,13 @@ public class AliyunOSSFileProvider implements Provider {
         }
 
         log.debug("mount cdn");
-        for (Map.Entry<String, String> e : cdnConfiguration.entrySet()) {
-            log.debug("mount cdn: {} -> {}", e.getValue(), e.getKey());
-            URI uri = URI.create(e.getKey());
+        for (AliyunCDNConfiguration cdnConf : cdnConfiguration) {
+            log.debug("mount cdn: {} -> {}", cdnConf.getCdn(), cdnConf.getOrigin());
+            URI uri = URI.create(cdnConf.getOrigin());
             S3Uri s3Uri = new S3Uri(uri);
             AliyunOSSFileSystem fileSystem = getAliyunOSSFileSystem(s3Uri);
             S3FileResolver<?, ?> fileResolver = new S3FileResolver<>(fileSystem, s3Uri.getKey());
-            vfs.mount(e.getValue(), fileResolver);
+            vfs.mount(cdnConf.getOrigin(), fileResolver);
             for (String fileSystemUri : fileSystem.getUris()) {
                 mount.put(fileSystemUri + fileResolver.getBase(), fileResolver);
             }
@@ -116,61 +119,70 @@ public class AliyunOSSFileProvider implements Provider {
         }
     }
 
-    protected boolean isScanEnabled() {
-        return false;
-    }
-
     /**
-     * 解析scheme
+     * 解析配置
      */
-    protected String parseScheme() {
-        log.debug("parseScheme");
-        return "oss";
+    protected void parseConfiguration() {
+        scheme = Files.optional(context.resolve("scheme"))
+                .map(File::readUtf8)
+                .orElse("oss");
+        automount = Files.optional(context.resolve("automount"))
+                .map(File::readUtf8)
+                .map(Boolean::parseBoolean)
+                .orElse(Boolean.TRUE);
     }
 
     /**
      * 解析客户端配置
      */
-    public ClientConfiguration parseClientConfiguration() {
+    public void parseClientConfiguration() {
         log.debug("parseClientConfiguration");
-        return new ClientConfiguration();
+        clientConfiguration = new ClientConfiguration();
     }
 
     /**
      * 解析账号配置
      */
-    protected List<Credentials> parseProfilesConfiguration() throws IOException {
+    protected void parseProfilesConfiguration() throws IOException {
         log.debug("parseProfilesConfiguration");
-        File<?, ?> profilesConfiguration = context.resolve("profiles/");
-        try (DirectoryStream<? extends File<?, ?>> profileConfigurations = profilesConfiguration.newDirectoryStream()) {
-            List<Credentials> result = new ArrayList<>();
-            for (File<?, ?> profileConfiguration : profileConfigurations) {
-                String accessKeyId = profileConfiguration.resolve("accessKeyId").readUtf8();
-                String secretAccessKey = profileConfiguration.resolve("secretAccessKey").readUtf8();
-                result.add(new DefaultCredentials(accessKeyId, secretAccessKey));
+        credentialsConfiguration = new ArrayList<>();
+        File<?, ?> configurations = context.resolve("profiles/");
+        try (DirectoryStream<? extends File<?, ?>> stream = configurations.newDirectoryStream()) {
+            for (File<?, ?> configuration : stream) {
+                String accessKeyId = configuration.resolve("accessKeyId").readUtf8();
+                String secretAccessKey = configuration.resolve("secretAccessKey").readUtf8();
+                credentialsConfiguration.add(new DefaultCredentials(accessKeyId, secretAccessKey));
             }
-            return result;
         }
     }
 
     /**
      * 解析CDN配置
      */
-    protected NavigableMap<String, String> parseCdnConfiguration() throws IOException {
+    protected void parseCdnConfiguration() throws IOException {
         log.debug("parseCdnConfiguration");
-        File<?, ?> cdnsConfiguration = context.resolve("cdn/");
-        NavigableMap<String, String> result = new TreeMap<>(Comparator.reverseOrder());
-        if (cdnsConfiguration.exists()) {
-            try (DirectoryStream<? extends File<?, ?>> cdnConfigurations = cdnsConfiguration.newDirectoryStream()) {
-                for (File<?, ?> cdnConfiguration : cdnConfigurations) {
-                    String uri = cdnConfiguration.resolve("uri").readUtf8();
-                    String cdn = cdnConfiguration.resolve("cdn").readUtf8();
-                    result.put(uri, cdn);
+        cdnConfiguration = new ArrayList<>();
+        File<?, ?> configurations = context.resolve("cdn/");
+        if (configurations.exists()) {
+            try (DirectoryStream<? extends File<?, ?>> stream = configurations.newDirectoryStream()) {
+                for (File<?, ?> configuration : stream) {
+                    String origin = configuration.resolve("origin").readUtf8();
+                    String cdn = configuration.resolve("cdn").readUtf8();
+                    Optional<String> type = Files.optional(configuration.resolve("type"))
+                            .map(File::readUtf8);
+                    Optional<String> key = Files.optional(configuration.resolve("key"))
+                            .map(File::readUtf8);
+                    Optional<Duration> ttl = Files.optional(configuration.resolve("ttl"))
+                            .map(File::readUtf8)
+                            .map(Duration::parse);
+                    if (key.isPresent()) {
+                        cdnConfiguration.add(new AliyunCDNConfiguration(origin, cdn,
+                                type.orElse("A"), key.get(), ttl.orElse(Duration.ofMinutes(120))));
+                    } else {
+                        cdnConfiguration.add(new AliyunCDNConfiguration(origin, cdn));
+                    }
                 }
-                return result;
             }
-        } else {
-            return result;
         }
     }
 
@@ -189,7 +201,7 @@ public class AliyunOSSFileProvider implements Provider {
         log.debug("newAliyunOSSFileSystem: {}", bucketName);
         Bucket bucket = buckets.get(bucketName);
         if (bucket == null) {
-            throw new UncheckedFileSystemException(bucketName + " not exists");
+            throw new IllegalArgumentException(bucketName + " not exists");
         }
         Credentials credentials = bucketCredentials.get(bucketName);
 
@@ -201,7 +213,7 @@ public class AliyunOSSFileProvider implements Provider {
         AliyunOSSFileSystemAttributes fileSystemAttributes = new AliyunOSSFileSystemAttributes(NAME);
         fileSystemAttributes.setBucket(bucket);
         fileSystemAttributes.setEndpoint(endpoint);
-        fileSystemAttributes.setCnameMap(cdnConfiguration);
+        fileSystemAttributes.setCdnConfiguration(cdnConfiguration);
 
         return new AliyunOSSFileSystem(uri, fileSystemAttributes, oss);
     }

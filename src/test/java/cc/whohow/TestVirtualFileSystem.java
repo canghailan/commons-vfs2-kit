@@ -67,8 +67,6 @@ public class TestVirtualFileSystem {
 
         print(configuration);
 
-        System.out.println(vfs.get("file:///D:/a.txt").readUtf8());
-//        System.out.println(vfs.get("https://www.baidu.com").readUtf8());
         System.out.println(vfs.get("oss://yt-temp/temp/a.txt").readUtf8());
         System.out.println(vfs.get("oss://yt-temp/temp/a.txt").getUris());
         System.out.println(vfs.get("oss://yt-temp/temp/a.txt").getName());

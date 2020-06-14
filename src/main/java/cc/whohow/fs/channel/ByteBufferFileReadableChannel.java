@@ -33,11 +33,7 @@ public class ByteBufferFileReadableChannel extends ByteBufferReadableChannel imp
 
     @Override
     public long transferTo(WritableByteChannel channel) throws IOException {
-        long n = 0;
-        while (buffer.hasRemaining()) {
-            n += channel.write(buffer);
-        }
-        return n;
+        return IO.write(channel, buffer);
     }
 
     @Override

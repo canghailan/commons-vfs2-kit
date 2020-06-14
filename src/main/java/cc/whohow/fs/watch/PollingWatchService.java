@@ -12,9 +12,9 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class PollingWatchService<P extends Path, F extends File<P, F>, V> {
-    private ScheduledExecutorService scheduledExecutor;
-    private Function<F, V> compareKey;
-    private Map<Path, ScheduledFutureTask<PollingWatchTask<P, F, V>>> tasks = new ConcurrentSkipListMap<>();
+    private final ScheduledExecutorService scheduledExecutor;
+    private final Function<F, V> compareKey;
+    private final Map<Path, ScheduledFutureTask<PollingWatchTask<P, F, V>>> tasks = new ConcurrentSkipListMap<>();
 
     public PollingWatchService(ScheduledExecutorService scheduledExecutor, Function<F, V> compareKey) {
         this.scheduledExecutor = scheduledExecutor;
