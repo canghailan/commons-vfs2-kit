@@ -2,8 +2,8 @@ package cc.whohow.fs.channel;
 
 import cc.whohow.fs.FileReadableChannel;
 import cc.whohow.fs.FileWritableChannel;
-import cc.whohow.io.ByteBufferWritableChannel;
-import cc.whohow.vfs.io.ByteBuffers;
+import cc.whohow.fs.io.ByteBufferWritableChannel;
+import cc.whohow.fs.io.ByteBuffers;
 
 import java.io.IOException;
 import java.io.InputStream;

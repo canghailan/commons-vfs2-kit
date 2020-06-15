@@ -9,7 +9,6 @@ import cc.whohow.fs.util.MappingIterable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.URI;
@@ -61,8 +60,8 @@ public class LocalFileSystem implements FileSystem<LocalPath, LocalFile> {
     }
 
     @Override
-    public LocalPath resolve(LocalPath base, CharSequence relative) {
-        return new LocalPath(base.getPath().resolve(relative.toString()));
+    public LocalPath resolve(LocalPath base, CharSequence path) {
+        return new LocalPath(base.getPath().resolve(path.toString()));
     }
 
     @Override

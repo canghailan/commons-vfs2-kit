@@ -1,14 +1,32 @@
 package cc.whohow.configuration.provider;
 
-import cc.whohow.configuration.Configuration;
-import cc.whohow.vfs.FileObjectX;
-import cc.whohow.vfs.serialize.FileValue;
-import cc.whohow.vfs.serialize.PropertiesSerializer;
+import cc.whohow.fs.io.ByteBufferReadableChannel;
+import cc.whohow.fs.io.ByteBufferWritableChannel;
+import org.apache.commons.vfs2.FileObject;
 
+import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.Properties;
 
-public class PropertiesConfiguration extends FileValue.Cache<Properties> implements Configuration<Properties> {
-    public PropertiesConfiguration(FileObjectX fileObject) {
-        super(fileObject, PropertiesSerializer.get());
+public class PropertiesConfiguration extends AbstractFileBasedConfiguration<Properties> {
+    public PropertiesConfiguration(FileObject fileObject) {
+        super(fileObject);
+    }
+
+    @Override
+    protected ByteBuffer serialize(Properties value) throws IOException {
+        try (ByteBufferWritableChannel channel = new ByteBufferWritableChannel()) {
+            value.store(channel, null);
+            return channel.getByteBuffer();
+        }
+    }
+
+    @Override
+    protected Properties deserialize(ByteBuffer bytes) throws IOException {
+        try (ByteBufferReadableChannel channel = new ByteBufferReadableChannel(bytes)) {
+            Properties properties = new Properties();
+            properties.load(channel);
+            return properties;
+        }
     }
 }

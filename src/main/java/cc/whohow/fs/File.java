@@ -164,15 +164,15 @@ public interface File<P extends Path, F extends File<P, F>> extends ObjectFile {
         getFileSystem().delete(getPath());
     }
 
-    default void watch(Consumer<? extends FileWatchEvent<P, F>> listener) {
+    default void watch(Consumer<FileWatchEvent<P, F>> listener) {
         getFileSystem().watch(getPath(), listener);
     }
 
-    default void unwatch(Consumer<? extends FileWatchEvent<P, F>> listener) {
+    default void unwatch(Consumer<FileWatchEvent<P, F>> listener) {
         getFileSystem().unwatch(getPath(), listener);
     }
 
-    default File<P, F> resolve(CharSequence relative) {
-        return getFileSystem().get(getFileSystem().resolve(getPath(), relative));
+    default File<P, F> resolve(CharSequence path) {
+        return getFileSystem().get(getFileSystem().resolve(getPath(), path));
     }
 }

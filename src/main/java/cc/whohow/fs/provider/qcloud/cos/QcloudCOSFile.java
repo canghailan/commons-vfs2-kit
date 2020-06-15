@@ -22,6 +22,10 @@ public class QcloudCOSFile implements File<S3UriPath, QcloudCOSFile> {
         return path;
     }
 
+    public String getETag() {
+        return readAttributes().getAsString(QcloudCOSFileAttributes.ETAG).orElse("");
+    }
+
     @Override
     public String toString() {
         return getPath().toString();

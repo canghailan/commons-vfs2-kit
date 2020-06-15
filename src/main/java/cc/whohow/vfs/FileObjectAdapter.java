@@ -4,9 +4,8 @@ import cc.whohow.fs.Attribute;
 import cc.whohow.fs.File;
 import cc.whohow.fs.FileAttributes;
 import cc.whohow.fs.FileReadableChannel;
+import cc.whohow.fs.io.IO;
 import cc.whohow.fs.util.MappingIterator;
-import cc.whohow.vfs.io.IO;
-import cc.whohow.vfs.selector.ImmutableFileSelectInfo;
 import org.apache.commons.vfs2.*;
 import org.apache.commons.vfs2.impl.DefaultFileContentInfo;
 import org.apache.commons.vfs2.operations.FileOperations;
@@ -25,7 +24,7 @@ import java.util.*;
 
 public class FileObjectAdapter implements FileObject, FileContent {
     private static final Logger log = LogManager.getLogger(FileObjectAdapter.class);
-    protected final FilePath path;
+    protected FilePath path;
 
     public FileObjectAdapter(FilePath path) {
         this.path = path;
@@ -117,17 +116,15 @@ public class FileObjectAdapter implements FileObject, FileContent {
 
     @Override
     public OutputStream getOutputStream(boolean bAppend) throws FileSystemException {
-        log.trace("getOutputStream({}): {}", bAppend, this);
         if (bAppend) {
-            throw new FileSystemException("");
+            throw new FileSystemException("vfs.provider/write-append-not-supported.error");
         }
         return getOutputStream();
     }
 
     @Override
     public RandomAccessContent getRandomAccessContent(RandomAccessMode mode) throws FileSystemException {
-        log.trace("getRandomAccessContent({}): {}", mode, this);
-        throw new FileSystemException("");
+        throw new FileSystemException("vfs.provider/random-access-not-supported.error");
     }
 
     @Override
@@ -151,14 +148,12 @@ public class FileObjectAdapter implements FileObject, FileContent {
 
     @Override
     public void removeAttribute(String attrName) throws FileSystemException {
-        log.trace("removeAttribute({}): {}", attrName, this);
-        throw new FileSystemException("");
+        throw new FileSystemException("vfs.provider/remove-attribute-not-supported.error");
     }
 
     @Override
     public void setAttribute(String attrName, Object value) throws FileSystemException {
-        log.trace("setAttribute({}, {}): {}", attrName, value, this);
-        throw new FileSystemException("");
+        throw new FileSystemException("vfs.provider/set-attribute-not-supported.error");
     }
 
     @Override
@@ -193,24 +188,30 @@ public class FileObjectAdapter implements FileObject, FileContent {
 
     @Override
     public void copyFrom(FileObject srcFile, FileSelector selector) throws FileSystemException {
-        if (srcFile.isFolder()) {
+        if (srcFile.getType().hasChildren()) {
             if (isFolder()) {
                 log.trace("copyFrom[folder->folder]({}): -> {}", srcFile, this);
                 DepthFirstFileTreeIterator iterator = new DepthFirstFileTreeIterator(srcFile, selector);
                 try {
+                    FileObject baseFolder = this;
                     while (iterator.hasNext()) {
                         FileSelectInfo fileSelectInfo = iterator.next();
                         if (fileSelectInfo.getDepth() == 0) {
-                            createFolder();
+                            baseFolder = resolveFile(fileSelectInfo.getFile().getName().getBaseName() + "/");
+                            baseFolder.createFolder();
                             continue;
                         }
                         try (FileObject fileObject = fileSelectInfo.getFile()) {
-                            try (FileObject newFileObject = resolveFile(
-                                    fileSelectInfo.getBaseFolder().getName()
-                                            .getRelativeName(fileSelectInfo.getFile().getName()))) {
-                                if (fileObject.isFolder()) {
+                            if (fileObject.isFolder()) {
+                                try (FileObject newFileObject = baseFolder.resolveFile(
+                                        fileSelectInfo.getBaseFolder().getName()
+                                                .getRelativeName(fileSelectInfo.getFile().getName()))) {
                                     newFileObject.createFolder();
-                                } else {
+                                }
+                            } else {
+                                try (FileObject newFileObject = baseFolder.resolveFile(
+                                        fileSelectInfo.getBaseFolder().getName()
+                                                .getRelativeName(fileSelectInfo.getFile().getName()))) {
                                     newFileObject.createFile();
                                     newFileObject.copyFrom(fileObject, Selectors.SELECT_SELF);
                                 }
@@ -260,11 +261,19 @@ public class FileObjectAdapter implements FileObject, FileContent {
 
     @Override
     public void createFile() throws FileSystemException {
-        log.trace("createFile: {}", this);
+        if (path.isFile()) {
+            log.trace("createFile: {}", this);
+        } else {
+            throw new FileSystemException("vfs.provider/create-file.error", this);
+        }
     }
 
     @Override
-    public void createFolder() throws FileSystemException {
+    public synchronized void createFolder() throws FileSystemException {
+        if (path.isFile()) {
+            File<?, ?> file = path.toFile();
+            path = new FilePath(path.getFileSystem(), file.getFileSystem().get(file.getUri().resolve(file.getName() + "/")));
+        }
         log.trace("createFolder: {}", this);
     }
 
@@ -377,19 +386,14 @@ public class FileObjectAdapter implements FileObject, FileContent {
 
     @Override
     public void findFiles(FileSelector selector, boolean depthwise, List<FileObject> selected) throws FileSystemException {
-        log.trace("findFiles({}): {}", depthwise, this);
+        log.trace("findFiles({}): {}", depthwise ? "DepthFirst" : "BreadthFirst", this);
         try {
             if (isFolder()) {
-                if (depthwise) {
-                    DepthFirstFileTreeIterator iterator = new DepthFirstFileTreeIterator(this, selector);
-                    while (iterator.hasNext()) {
-                        selected.add(iterator.next().getFile());
-                    }
-                } else {
-                    BreadthFirstFileTreeIterator iterator = new BreadthFirstFileTreeIterator(this, selector);
-                    if (iterator.hasNext()) {
-                        selected.add(iterator.next().getFile());
-                    }
+                Iterator<FileSelectInfo> iterator = depthwise ?
+                        new DepthFirstFileTreeIterator(this, selector) :
+                        new BreadthFirstFileTreeIterator(this, selector);
+                while (iterator.hasNext()) {
+                    selected.add(iterator.next().getFile());
                 }
             } else {
                 if (selector.includeFile(new ImmutableFileSelectInfo(null, this, 0))) {
@@ -404,35 +408,42 @@ public class FileObjectAdapter implements FileObject, FileContent {
     @Override
     public FileObject getChild(String name) throws FileSystemException {
         log.trace("getChild({}): {}", name, this);
-        try (DirectoryStream<? extends File<?, ?>> stream = path.toFile().newDirectoryStream()) {
-            for (File<?, ?> file : stream) {
-                if (file.getName().equals(name)) {
-                    return new FileObjectAdapter(new FilePath(path.getFileSystem(), file));
+        if (getType().hasChildren()) {
+            try (DirectoryStream<? extends File<?, ?>> stream = path.toFile().newDirectoryStream()) {
+                for (File<?, ?> file : stream) {
+                    if (file.getName().equals(name)) {
+                        return new FileObjectAdapter(new FilePath(path.getFileSystem(), file));
+                    }
                 }
+                return null;
+            } catch (IOException e) {
+                throw FileSystemExceptions.rethrow(e);
             }
-            return null;
-        } catch (IOException e) {
-            throw FileSystemExceptions.rethrow(e);
+        } else {
+            throw new FileSystemException("vfs.provider/list-children-not-folder.error", this);
         }
     }
 
     @Override
     public FileObject[] getChildren() throws FileSystemException {
         log.trace("getChildren: {}", this);
-        try (DirectoryStream<? extends File<?, ?>> stream = path.toFile().newDirectoryStream()) {
-            List<FileObject> list = new ArrayList<>();
-            for (File<?, ?> file : stream) {
-                list.add(new FileObjectAdapter(new FilePath(path.getFileSystem(), file)));
+        if (getType().hasChildren()) {
+            try (DirectoryStream<? extends File<?, ?>> stream = path.toFile().newDirectoryStream()) {
+                List<FileObject> list = new ArrayList<>();
+                for (File<?, ?> file : stream) {
+                    list.add(new FileObjectAdapter(new FilePath(path.getFileSystem(), file)));
+                }
+                return list.toArray(new FileObject[0]);
+            } catch (IOException e) {
+                throw FileSystemExceptions.rethrow(e);
             }
-            return list.toArray(new FileObject[0]);
-        } catch (IOException e) {
-            throw FileSystemExceptions.rethrow(e);
+        } else {
+            throw new FileSystemException("vfs.provider/list-children-not-folder.error", this);
         }
     }
 
     @Override
     public FileContent getContent() throws FileSystemException {
-        log.trace("getContent: {}", this);
         return this;
     }
 
@@ -444,41 +455,35 @@ public class FileObjectAdapter implements FileObject, FileContent {
 
     @Override
     public FileSystem getFileSystem() {
-        log.trace("getFileSystem: {}", this);
-        return null;
+        return path.getFileSystem();
     }
 
     @Override
     public FileName getName() {
-        log.trace("getName: {}", this);
         return path;
     }
 
     @Override
     public FileObject getParent() throws FileSystemException {
-        log.trace("getParent: {}", this);
-        return null;
+        FilePath parent = path.getParent();
+        if (parent == null) {
+            return null;
+        }
+        return new FileObjectAdapter(parent);
     }
 
     @Override
     public String getPublicURIString() {
-        log.trace("getPublicURIString: {}", this);
         return path.toFile().getPublicUri();
     }
 
     @Override
     public FileType getType() throws FileSystemException {
-        log.trace("getType: {}", this);
-        if (path.toFile().isDirectory()) {
-            return FileType.FOLDER;
-        } else {
-            return FileType.FILE;
-        }
+        return path.getType();
     }
 
     @Override
     public URL getURL() throws FileSystemException {
-        log.trace("getURL: {}", this);
         try {
             return new URL(path.toFile().getPublicUri());
         } catch (MalformedURLException e) {
@@ -506,14 +511,12 @@ public class FileObjectAdapter implements FileObject, FileContent {
 
     @Override
     public boolean isFile() throws FileSystemException {
-        log.trace("isFile: {}", this);
-        return path.toFile().isRegularFile();
+        return getType() == FileType.FILE;
     }
 
     @Override
     public boolean isFolder() throws FileSystemException {
-        log.trace("isFolder: {}", this);
-        return path.toFile().isDirectory();
+        return getType() == FileType.FOLDER;
     }
 
     @Override
@@ -537,7 +540,7 @@ public class FileObjectAdapter implements FileObject, FileContent {
     @Override
     public void moveTo(FileObject fileObject) throws FileSystemException {
         log.trace("moveTo({}): <- {}", fileObject, this);
-        fileObject.copyFrom(this, Selectors.SELECT_ALL);
+        fileObject.copyFrom(this, Selectors.EXCLUDE_SELF);
         deleteAll();
     }
 
@@ -549,31 +552,54 @@ public class FileObjectAdapter implements FileObject, FileContent {
     @Override
     public FileObject resolveFile(String path) throws FileSystemException {
         log.trace("resolveFile({}): {}", path, this);
-        return null;
+        return resolveFile(path, NameScope.FILE_SYSTEM);
     }
 
     @Override
     public FileObject resolveFile(String name, NameScope scope) throws FileSystemException {
         log.trace("resolveFile({}, {}): {}", name, scope, this);
-        return null;
+        FileObject fileObject = getFileSystem().getFileSystemManager().resolveFile(this, name);
+        switch (scope) {
+            case FILE_SYSTEM: {
+                return fileObject;
+            }
+            case CHILD: {
+                if (equals(fileObject.getParent())) {
+                    return fileObject;
+                }
+                throw new FileSystemException("vfs.provider/resolve-file.error", fileObject);
+            }
+            case DESCENDENT: {
+                if (getName().isDescendent(fileObject.getName())) {
+                    return fileObject;
+                }
+                throw new FileSystemException("vfs.provider/resolve-file.error", fileObject);
+            }
+            case DESCENDENT_OR_SELF: {
+                if (equals(fileObject) || getName().isDescendent(fileObject.getName())) {
+                    return fileObject;
+                }
+                throw new FileSystemException("vfs.provider/resolve-file.error", fileObject);
+            }
+            default: {
+                throw new IllegalStateException();
+            }
+        }
     }
 
     @Override
     public boolean setExecutable(boolean executable, boolean ownerOnly) throws FileSystemException {
-        log.trace("setExecutable({}, {}): {}", executable, ownerOnly, this);
-        return false;
+        throw new FileSystemException("vfs.provider/set-executable.error", this);
     }
 
     @Override
     public boolean setReadable(boolean readable, boolean ownerOnly) throws FileSystemException {
-        log.trace("setReadable({}, {}): {}", readable, ownerOnly, this);
-        return false;
+        throw new FileSystemException("vfs.provider/set-writeable.error", this);
     }
 
     @Override
     public boolean setWritable(boolean writable, boolean ownerOnly) throws FileSystemException {
-        log.trace("setWritable({}, {}): {}", writable, ownerOnly, this);
-        return false;
+        throw new FileSystemException("vfs.provider/set-readable.error", this);
     }
 
     @Override
@@ -584,9 +610,13 @@ public class FileObjectAdapter implements FileObject, FileContent {
     @Override
     public Iterator<FileObject> iterator() {
         log.trace("iterator: {}", this);
-        return new MappingIterator<>(
-                new DepthFirstFileTreeIterator(this, Selectors.EXCLUDE_SELF),
-                FileSelectInfo::getFile);
+        try {
+            return new MappingIterator<>(
+                    new DepthFirstFileTreeIterator(this, Selectors.EXCLUDE_SELF),
+                    FileSelectInfo::getFile);
+        } catch (FileSystemException e) {
+            throw FileSystemExceptions.unchecked(e);
+        }
     }
 
     @Override

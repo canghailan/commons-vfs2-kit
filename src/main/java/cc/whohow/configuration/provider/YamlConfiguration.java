@@ -1,43 +1,71 @@
 package cc.whohow.configuration.provider;
 
-import cc.whohow.configuration.Configuration;
-import cc.whohow.vfs.FileObjectX;
-import cc.whohow.vfs.serialize.FileValue;
-import cc.whohow.vfs.serialize.YamlSerializer;
+import cc.whohow.fs.io.ByteBufferReadableChannel;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
+import org.apache.commons.vfs2.FileObject;
 
-public class YamlConfiguration<T> extends FileValue.Cache<T> implements Configuration<T> {
-    public YamlConfiguration(FileObjectX fileObject, Class<T> type) {
-        super(fileObject, new YamlSerializer<>(type));
+import java.io.IOException;
+import java.nio.ByteBuffer;
+
+public class YamlConfiguration<T> extends AbstractFileBasedConfiguration<T> {
+    protected static final YAMLMapper OBJECT_MAPPER = new YAMLMapper();
+
+    static {
+        OBJECT_MAPPER.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, true);
+        OBJECT_MAPPER.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     }
 
-    public YamlConfiguration(FileObjectX fileObject, TypeReference<T> type) {
-        super(fileObject, new YamlSerializer<>(type));
+    protected final JavaType type;
+    protected final ObjectMapper objectMapper;
+
+    public YamlConfiguration(FileObject fileObject, Class<T> type) {
+        this(fileObject, type, OBJECT_MAPPER);
     }
 
-    public YamlConfiguration(FileObjectX fileObject, String type) {
-        super(fileObject, new YamlSerializer<>(type));
+    public YamlConfiguration(FileObject fileObject, TypeReference<T> type) {
+        this(fileObject, type, OBJECT_MAPPER);
     }
 
-    public YamlConfiguration(FileObjectX fileObject, JavaType type) {
-        super(fileObject, new YamlSerializer<>(type));
+    public YamlConfiguration(FileObject fileObject, String type) {
+        this(fileObject, type, OBJECT_MAPPER);
     }
 
-    public YamlConfiguration(FileObjectX fileObject, Class<T> type, ObjectMapper objectMapper) {
-        super(fileObject, new YamlSerializer<>(objectMapper, type));
+    public YamlConfiguration(FileObject fileObject, JavaType type) {
+        this(fileObject, type, OBJECT_MAPPER);
     }
 
-    public YamlConfiguration(FileObjectX fileObject, TypeReference<T> type, ObjectMapper objectMapper) {
-        super(fileObject, new YamlSerializer<>(objectMapper, type));
+    public YamlConfiguration(FileObject fileObject, Class<T> type, ObjectMapper objectMapper) {
+        this(fileObject, objectMapper.getTypeFactory().constructType(type), objectMapper);
     }
 
-    public YamlConfiguration(FileObjectX fileObject, String type, ObjectMapper objectMapper) {
-        super(fileObject, new YamlSerializer<>(objectMapper, type));
+
+    public YamlConfiguration(FileObject fileObject, TypeReference<T> type, ObjectMapper objectMapper) {
+        this(fileObject, objectMapper.getTypeFactory().constructType(type), objectMapper);
     }
 
-    public YamlConfiguration(FileObjectX fileObject, JavaType type, ObjectMapper objectMapper) {
-        super(fileObject, new YamlSerializer<>(objectMapper, type));
+
+    public YamlConfiguration(FileObject fileObject, String type, ObjectMapper objectMapper) {
+        this(fileObject, objectMapper.getTypeFactory().constructFromCanonical(type), objectMapper);
+    }
+
+    public YamlConfiguration(FileObject fileObject, JavaType type, ObjectMapper objectMapper) {
+        super(fileObject);
+        this.type = type;
+        this.objectMapper = objectMapper;
+    }
+
+    @Override
+    protected ByteBuffer serialize(T value) throws IOException {
+        return ByteBuffer.wrap(objectMapper.writeValueAsBytes(value));
+    }
+
+    @Override
+    protected T deserialize(ByteBuffer bytes) throws IOException {
+        return objectMapper.readValue(new ByteBufferReadableChannel(bytes), type);
     }
 }

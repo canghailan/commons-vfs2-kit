@@ -54,8 +54,8 @@ public interface FileSystem<P extends Path, F extends File<P, F>> extends Object
     /**
      * 解析相对文件路径
      */
-    default P resolve(P base, CharSequence relative) {
-        return resolve(base.toUri().resolve(relative.toString()));
+    default P resolve(P base, CharSequence path) {
+        return resolve(base.toUri().resolve(path.toString()));
     }
 
     /**
@@ -118,11 +118,11 @@ public interface FileSystem<P extends Path, F extends File<P, F>> extends Object
      */
     void delete(P path);
 
-    default void watch(P path, Consumer<? extends FileWatchEvent<P, F>> listener) {
+    default void watch(P path, Consumer<FileWatchEvent<P, F>> listener) {
         throw new UnsupportedOperationException();
     }
 
-    default void unwatch(P path, Consumer<? extends FileWatchEvent<P, F>> listener) {
+    default void unwatch(P path, Consumer<FileWatchEvent<P, F>> listener) {
         throw new UnsupportedOperationException();
     }
 

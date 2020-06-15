@@ -2,7 +2,7 @@ package cc.whohow.fs.provider.aliyun.oss;
 
 import cc.whohow.fs.ObjectFile;
 import cc.whohow.fs.ObjectFileManager;
-import cc.whohow.vfs.provider.s3.S3Uri;
+import cc.whohow.fs.provider.s3.S3Uri;
 import com.aliyun.oss.ClientConfiguration;
 import com.aliyun.oss.OSS;
 import com.aliyun.oss.OSSClient;

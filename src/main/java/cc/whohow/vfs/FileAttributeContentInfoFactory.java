@@ -21,7 +21,7 @@ public class FileAttributeContentInfoFactory implements FileContentInfoFactory {
         return new DefaultFileContentInfo(contentType, contentEncoding);
     }
 
-    private Optional<?> getAttribute(FileContent fileContent, String... attrNames) throws FileSystemException {
+    protected Optional<?> getAttribute(FileContent fileContent, String... attrNames) throws FileSystemException {
         for (String attrName : attrNames) {
             Object attr = fileContent.getAttribute(attrName);
             if (attr != null) {
@@ -31,7 +31,7 @@ public class FileAttributeContentInfoFactory implements FileContentInfoFactory {
         return Optional.empty();
     }
 
-    private String probeContentType(FileContent fileContent) {
+    protected String probeContentType(FileContent fileContent) {
         return URLConnection.getFileNameMap().getContentTypeFor(fileContent.getFile().getName().getBaseName());
     }
 }

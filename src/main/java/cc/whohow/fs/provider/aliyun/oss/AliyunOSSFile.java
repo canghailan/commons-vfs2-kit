@@ -22,6 +22,10 @@ public class AliyunOSSFile implements File<S3UriPath, AliyunOSSFile> {
         return path;
     }
 
+    public String getETag() {
+        return readAttributes().getAsString(AliyunOSSFileAttributes.ETAG).orElse("");
+    }
+
     @Override
     public String toString() {
         return getPath().toString();

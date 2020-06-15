@@ -7,7 +7,9 @@ import cc.whohow.fs.net.Ping;
 import cc.whohow.fs.provider.aliyun.cdn.AliyunCDNConfiguration;
 import cc.whohow.fs.provider.s3.S3FileResolver;
 import cc.whohow.fs.provider.s3.S3Uri;
+import cc.whohow.fs.provider.s3.S3UriPath;
 import cc.whohow.fs.util.Files;
+import cc.whohow.fs.watch.PollingWatchService;
 import com.aliyun.oss.ClientConfiguration;
 import com.aliyun.oss.OSS;
 import com.aliyun.oss.OSSClient;
@@ -35,6 +37,7 @@ public class AliyunOSSFileProvider implements Provider {
     private final Map<String, Credentials> bucketCredentials = new ConcurrentHashMap<>();
     private final Map<S3Uri, OSS> pool = new ConcurrentHashMap<>();
     private final Map<String, AliyunOSSFileSystem> fileSystems = new ConcurrentHashMap<>();
+    private volatile PollingWatchService<S3UriPath, AliyunOSSFile, String> watchService;
     private volatile VirtualFileSystem vfs;
     private volatile File<?, ?> context;
     private volatile String scheme;
@@ -42,6 +45,7 @@ public class AliyunOSSFileProvider implements Provider {
     private volatile ClientConfiguration clientConfiguration;
     private volatile List<Credentials> credentialsConfiguration;
     private volatile List<AliyunCDNConfiguration> cdnConfiguration;
+    private volatile Duration watchInterval;
 
     @Override
     public void initialize(VirtualFileSystem vfs, File<?, ?> context) throws Exception {
@@ -54,6 +58,10 @@ public class AliyunOSSFileProvider implements Provider {
         parseClientConfiguration();
         parseProfilesConfiguration();
         parseCdnConfiguration();
+
+        if (vfs.getScheduledExecutor() != null) {
+            watchService = new PollingWatchService<>(vfs.getScheduledExecutor(), watchInterval, AliyunOSSFile::getETag);
+        }
 
         log.debug("scan buckets");
         for (Credentials credentials : credentialsConfiguration) {
@@ -130,6 +138,10 @@ public class AliyunOSSFileProvider implements Provider {
                 .map(File::readUtf8)
                 .map(Boolean::parseBoolean)
                 .orElse(Boolean.TRUE);
+        watchInterval = Files.optional(context.resolve("watch/interval"))
+                .map(File::readUtf8)
+                .map(Duration::parse)
+                .orElse(Duration.ofSeconds(1));
     }
 
     /**
@@ -215,7 +227,9 @@ public class AliyunOSSFileProvider implements Provider {
         fileSystemAttributes.setEndpoint(endpoint);
         fileSystemAttributes.setCdnConfiguration(cdnConfiguration);
 
-        return new AliyunOSSFileSystem(uri, fileSystemAttributes, oss);
+        AliyunOSSFileSystem fileSystem = new AliyunOSSFileSystem(uri, fileSystemAttributes, oss);
+        fileSystem.initializeWatchService(watchService);
+        return fileSystem;
     }
 
     /**
@@ -265,6 +279,13 @@ public class AliyunOSSFileProvider implements Provider {
     @Override
     public void close() throws Exception {
         log.debug("close AliyunOSSFileProvider");
+        if (watchService != null) {
+            try {
+                watchService.close();
+            } catch (Throwable e) {
+                log.debug("close WatchService error", e);
+            }
+        }
         for (AliyunOSSFileSystem fileSystem : fileSystems.values()) {
             try {
                 fileSystem.close();

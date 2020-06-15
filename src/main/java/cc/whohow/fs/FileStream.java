@@ -1,6 +1,6 @@
 package cc.whohow.fs;
 
-import cc.whohow.vfs.io.UncheckedCloseable;
+import cc.whohow.fs.io.UncheckedCloseable;
 
 import java.io.Closeable;
 import java.util.stream.Stream;

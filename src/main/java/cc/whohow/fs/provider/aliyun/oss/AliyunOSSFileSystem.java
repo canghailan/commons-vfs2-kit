@@ -18,6 +18,7 @@ import org.apache.logging.log4j.Logger;
 import java.net.URI;
 import java.nio.file.DirectoryStream;
 import java.util.Collections;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class AliyunOSSFileSystem implements FileSystem<S3UriPath, AliyunOSSFile> {
@@ -25,6 +26,7 @@ public class AliyunOSSFileSystem implements FileSystem<S3UriPath, AliyunOSSFile>
     protected final S3Uri uri;
     protected final AliyunOSSFileSystemAttributes attributes;
     protected final OSS oss;
+    protected volatile FileWatchService<S3UriPath, AliyunOSSFile> watchService;
 
     public AliyunOSSFileSystem(S3Uri uri, AliyunOSSFileSystemAttributes attributes, OSS oss) {
         if (uri.getScheme() == null ||
@@ -38,6 +40,10 @@ public class AliyunOSSFileSystem implements FileSystem<S3UriPath, AliyunOSSFile>
         this.uri = uri;
         this.attributes = attributes;
         this.oss = oss;
+    }
+
+    public void initializeWatchService(FileWatchService<S3UriPath, AliyunOSSFile> watchService) {
+        this.watchService = watchService;
     }
 
     public OSS getOSS() {
@@ -62,8 +68,8 @@ public class AliyunOSSFileSystem implements FileSystem<S3UriPath, AliyunOSSFile>
                     path.getSecretAccessKey() == null &&
                     path.getEndpoint() == null &&
                     path.getBucketName() != null &&
-                    path.getKey() != null &&
                     path.getBucketName().equals(this.uri.getBucketName()) &&
+                    path.getKey() != null &&
                     path.getKey().startsWith(this.uri.getKey())) {
                 return path;
             }
@@ -143,6 +149,24 @@ public class AliyunOSSFileSystem implements FileSystem<S3UriPath, AliyunOSSFile>
         } else {
             log.trace("deleteObject: oss://{}/{}", path.getBucketName(), path.getKey());
             oss.deleteObject(path.getBucketName(), path.getKey());
+        }
+    }
+
+    @Override
+    public void watch(S3UriPath path, Consumer<FileWatchEvent<S3UriPath, AliyunOSSFile>> listener) {
+        if (watchService != null) {
+            watchService.watch(get(path), listener);
+        } else {
+            throw new UnsupportedOperationException("watch");
+        }
+    }
+
+    @Override
+    public void unwatch(S3UriPath path, Consumer<FileWatchEvent<S3UriPath, AliyunOSSFile>> listener) {
+        if (watchService != null) {
+            watchService.unwatch(get(path), listener);
+        } else {
+            throw new UnsupportedOperationException("unwatch");
         }
     }
 

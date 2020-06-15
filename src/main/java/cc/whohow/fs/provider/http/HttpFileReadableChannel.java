@@ -2,7 +2,7 @@ package cc.whohow.fs.provider.http;
 
 import cc.whohow.fs.FileWritableChannel;
 import cc.whohow.fs.channel.FileReadableStream;
-import cc.whohow.vfs.io.IO;
+import cc.whohow.fs.io.IO;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 

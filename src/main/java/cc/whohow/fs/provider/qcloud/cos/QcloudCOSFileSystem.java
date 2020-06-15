@@ -19,6 +19,7 @@ import java.net.URI;
 import java.nio.file.DirectoryStream;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class QcloudCOSFileSystem implements FileSystem<S3UriPath, QcloudCOSFile> {
@@ -26,6 +27,7 @@ public class QcloudCOSFileSystem implements FileSystem<S3UriPath, QcloudCOSFile>
     protected final S3Uri uri;
     protected final QcloudCOSFileSystemAttributes attributes;
     protected final COS cos;
+    protected volatile FileWatchService<S3UriPath, QcloudCOSFile> watchService;
 
     public QcloudCOSFileSystem(S3Uri uri, QcloudCOSFileSystemAttributes attributes, COS cos) {
         if (uri.getScheme() == null ||
@@ -39,6 +41,10 @@ public class QcloudCOSFileSystem implements FileSystem<S3UriPath, QcloudCOSFile>
         this.uri = uri;
         this.attributes = attributes;
         this.cos = cos;
+    }
+
+    public void initializeWatchService(FileWatchService<S3UriPath, QcloudCOSFile> watchService) {
+        this.watchService = watchService;
     }
 
     public COS getCOS() {
@@ -63,8 +69,8 @@ public class QcloudCOSFileSystem implements FileSystem<S3UriPath, QcloudCOSFile>
                     path.getSecretAccessKey() == null &&
                     path.getEndpoint() == null &&
                     path.getBucketName() != null &&
-                    path.getKey() != null &&
                     path.getBucketName().equals(this.uri.getBucketName()) &&
+                    path.getKey() != null &&
                     path.getKey().startsWith(this.uri.getKey())) {
                 return path;
             }
@@ -144,6 +150,24 @@ public class QcloudCOSFileSystem implements FileSystem<S3UriPath, QcloudCOSFile>
         } else {
             log.trace("deleteObject: cos://{}/{}", path.getBucketName(), path.getKey());
             cos.deleteObject(path.getBucketName(), path.getKey());
+        }
+    }
+
+    @Override
+    public void watch(S3UriPath path, Consumer<FileWatchEvent<S3UriPath, QcloudCOSFile>> listener) {
+        if (watchService != null) {
+            watchService.watch(get(path), listener);
+        } else {
+            throw new UnsupportedOperationException("watch");
+        }
+    }
+
+    @Override
+    public void unwatch(S3UriPath path, Consumer<FileWatchEvent<S3UriPath, QcloudCOSFile>> listener) {
+        if (watchService != null) {
+            watchService.unwatch(get(path), listener);
+        } else {
+            throw new UnsupportedOperationException("unwatch");
         }
     }
 

@@ -1,32 +1,28 @@
 package cc.whohow.configuration.provider;
 
 import cc.whohow.configuration.FileBasedConfigurationManager;
-import cc.whohow.vfs.FileObjectX;
-import cc.whohow.vfs.serialize.Serializer;
 import org.apache.commons.vfs2.FileChangeEvent;
 import org.apache.commons.vfs2.FileListener;
+import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemException;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
-import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.nio.file.DirectoryStream;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 public class VfsConfigurationManager implements FileBasedConfigurationManager, FileListener {
-    protected final FileObjectX root;
+    private static final Logger log = LogManager.getLogger(VfsConfigurationManager.class);
+    protected final FileObject root;
 
-    public VfsConfigurationManager(FileObjectX root) {
+    public VfsConfigurationManager(FileObject root) {
         this.root = root;
-        root.getFileSystem().addListener(root, this);
+        this.root.getFileSystem().addListener(this.root, this);
     }
 
-    public FileObjectX getRoot() {
-        return root;
-    }
-
-    protected String getKey(FileObjectX fileObject) {
+    protected String getKey(FileObject fileObject) {
         try {
             return root.getName().getRelativeName(fileObject.getName());
         } catch (FileSystemException e) {
@@ -35,7 +31,7 @@ public class VfsConfigurationManager implements FileBasedConfigurationManager, F
     }
 
     @Override
-    public FileObjectX get(String key) {
+    public FileObject get(String key) {
         if (key.startsWith("/") || key.endsWith("/")) {
             throw new IllegalArgumentException();
         }
@@ -48,36 +44,27 @@ public class VfsConfigurationManager implements FileBasedConfigurationManager, F
 
     @Override
     public List<String> list(String key) {
-        try (DirectoryStream<FileObjectX> list = root.resolveFile(key).list()) {
-            return StreamSupport.stream(list.spliterator(), false)
+        try {
+            return Arrays.stream(root.resolveFile(key).getChildren())
                     .map(this::getKey)
                     .collect(Collectors.toList());
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
-    }
-
-    @Override
-    public <T> T get(String key, Serializer<T> serializer) {
-        try {
-            return serializer.deserialize(get(key));
-        } catch (IOException e) {
+        } catch (FileSystemException e) {
             throw new UncheckedIOException(e);
         }
     }
 
     @Override
     public void fileCreated(FileChangeEvent event) throws Exception {
-
+        log.debug("fileCreated: {}", event.getFileObject());
     }
 
     @Override
     public void fileDeleted(FileChangeEvent event) throws Exception {
-
+        log.debug("fileDeleted: {}", event.getFileObject());
     }
 
     @Override
     public void fileChanged(FileChangeEvent event) throws Exception {
-
+        log.debug("fileChanged: {}", event.getFileObject());
     }
 }

@@ -17,8 +17,8 @@ public class HttpFileProvider implements Provider {
         log.debug("initialize HttpFileProvider: {}", context);
         httpFileSystem = new HttpFileSystem(URI.create("http:/"));
 
-        vfs.mount("http:", new HttpFileResolver(httpFileSystem, "http:"));
-        vfs.mount("https:", new HttpFileResolver(httpFileSystem, "https:"));
+        vfs.mount("http://", new HttpFileResolver(httpFileSystem, "http://"));
+        vfs.mount("https://", new HttpFileResolver(httpFileSystem, "https://"));
     }
 
     @Override

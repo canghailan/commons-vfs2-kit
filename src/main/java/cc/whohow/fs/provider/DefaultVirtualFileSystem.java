@@ -372,4 +372,9 @@ public class DefaultVirtualFileSystem implements VirtualFileSystem {
             Thread.currentThread().interrupt();
         }
     }
+
+    @Override
+    public String toString() {
+        return "vfs: " + vfs.keySet().toString();
+    }
 }

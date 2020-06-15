@@ -1,6 +1,7 @@
 package cc.whohow.vfs;
 
 import cc.whohow.fs.File;
+import cc.whohow.fs.util.Paths;
 import org.apache.commons.vfs2.FileName;
 import org.apache.commons.vfs2.FileSystemException;
 import org.apache.commons.vfs2.FileType;
@@ -78,7 +79,7 @@ public class FilePath implements FileName {
     }
 
     @Override
-    public FileName getParent() {
+    public FilePath getParent() {
         File<?, ?> parent = file.getParent();
         if (parent == null) {
             return null;
@@ -93,17 +94,21 @@ public class FilePath implements FileName {
 
     @Override
     public boolean isAncestor(FileName ancestor) {
-        return ancestor.getURI().startsWith(getURI());
+        return Paths.startsWith(URI.create(ancestor.getURI()), file.getUri());
     }
 
     @Override
     public boolean isDescendent(FileName descendent) {
-        return getURI().startsWith(descendent.getURI());
+        return Paths.startsWith(URI.create(descendent.getURI()), file.getUri());
     }
 
     @Override
     public boolean isDescendent(FileName descendent, NameScope nameScope) {
-        return false;
+        if (nameScope == NameScope.CHILD) {
+            return equals(descendent.getParent());
+        } else {
+            return Paths.startsWith(URI.create(descendent.getURI()), file.getUri());
+        }
     }
 
     @Override

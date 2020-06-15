@@ -1,6 +1,6 @@
 package cc.whohow.fs;
 
-import cc.whohow.vfs.path.PathParser;
+import cc.whohow.fs.util.Paths;
 
 import java.net.URI;
 
@@ -8,17 +8,11 @@ public interface Path extends Comparable<Path> {
     URI toUri();
 
     default String getName() {
-        return new PathParser(toUri().getPath()).getLastName();
+        return Paths.getName(toUri().getPath());
     }
 
     default String getExtension() {
-        String name = getName();
-        int index = name.lastIndexOf(name);
-        // index == 0 不是扩展名
-        if (index > 0) {
-            return name.substring(index + 1);
-        }
-        return "";
+        return Paths.getExtension(getName());
     }
 
     default boolean isRegularFile() {
@@ -26,19 +20,30 @@ public interface Path extends Comparable<Path> {
     }
 
     default boolean isDirectory() {
-        return toUri().getPath().endsWith("/");
+        String path = toUri().getPath();
+        return path != null && path.endsWith("/");
     }
 
     Path getParent();
 
     Path resolve(String relative);
 
+    /**
+     * @see java.nio.file.Path#startsWith(java.nio.file.Path)
+     */
+    default boolean startsWith(Path path) {
+        return Paths.startsWith(toUri(), path.toUri());
+    }
+
+    /**
+     * @see java.nio.file.Path#startsWith(java.lang.String)
+     */
+    default boolean startsWith(String path) {
+        return Paths.startsWith(toUri(), URI.create(path));
+    }
+
     default String relativize(Path path) {
-        URI relative = toUri().relativize(path.toUri());
-        if (relative.isAbsolute() || relative.toString().startsWith("/")) {
-            throw new IllegalArgumentException(path.toString());
-        }
-        return relative.toString();
+        return Paths.relativize(toUri(), path.toUri());
     }
 
     default int compareTo(Path o) {

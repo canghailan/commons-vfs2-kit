@@ -1,14 +1,21 @@
 package cc.whohow.configuration.provider;
 
-import cc.whohow.configuration.Configuration;
-import cc.whohow.vfs.FileObjectX;
-import cc.whohow.vfs.serialize.BinarySerializer;
-import cc.whohow.vfs.serialize.FileValue;
+import org.apache.commons.vfs2.FileObject;
 
 import java.nio.ByteBuffer;
 
-public class FileConfiguration extends FileValue.Cache<ByteBuffer> implements Configuration<ByteBuffer> {
-    public FileConfiguration(FileObjectX fileObject) {
-        super(fileObject, BinarySerializer.get());
+public class FileConfiguration extends AbstractFileBasedConfiguration<ByteBuffer> {
+    public FileConfiguration(FileObject fileObject) {
+        super(fileObject);
+    }
+
+    @Override
+    protected ByteBuffer serialize(ByteBuffer value) {
+        return value.duplicate();
+    }
+
+    @Override
+    protected ByteBuffer deserialize(ByteBuffer bytes) {
+        return bytes;
     }
 }

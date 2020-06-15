@@ -1,14 +1,20 @@
 package cc.whohow.configuration;
 
-import cc.whohow.vfs.FileObjectX;
-import cc.whohow.vfs.serialize.Serializer;
+import org.apache.commons.vfs2.FileObject;
 
 import java.util.List;
 
+/**
+ * 基于文件的配置管理器
+ */
 public interface FileBasedConfigurationManager {
-    FileObjectX get(String key);
+    /**
+     * 获取配置文件
+     */
+    FileObject get(String key);
 
+    /**
+     * 下级配置文件/文件夹列表
+     */
     List<String> list(String key);
-
-    <T> T get(String key, Serializer<T> serializer);
 }

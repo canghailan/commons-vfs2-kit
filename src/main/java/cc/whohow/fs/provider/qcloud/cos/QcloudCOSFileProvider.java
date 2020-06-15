@@ -6,6 +6,8 @@ import cc.whohow.fs.UncheckedException;
 import cc.whohow.fs.VirtualFileSystem;
 import cc.whohow.fs.provider.s3.S3FileResolver;
 import cc.whohow.fs.provider.s3.S3Uri;
+import cc.whohow.fs.provider.s3.S3UriPath;
+import cc.whohow.fs.watch.PollingWatchService;
 import com.qcloud.cos.COS;
 import com.qcloud.cos.COSClient;
 import com.qcloud.cos.ClientConfig;
@@ -19,6 +21,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.DirectoryStream;
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
@@ -30,11 +33,13 @@ public class QcloudCOSFileProvider implements Provider {
     private final Map<String, COSCredentials> bucketCredentials = new ConcurrentHashMap<>();
     private final Map<S3Uri, COSClient> pool = new ConcurrentHashMap<>();
     private final Map<String, QcloudCOSFileSystem> fileSystems = new ConcurrentHashMap<>();
+    private volatile PollingWatchService<S3UriPath, QcloudCOSFile, String> watchService;
     private volatile String scheme;
     private volatile ClientConfig clientConfig;
     private volatile List<COSCredentials> credentialsConfiguration;
     private volatile VirtualFileSystem vfs;
     private volatile File<?, ?> context;
+    private volatile Duration watchInterval;
 
     @Override
     public void initialize(VirtualFileSystem vfs, File<?, ?> context) throws Exception {
@@ -46,6 +51,10 @@ public class QcloudCOSFileProvider implements Provider {
         this.scheme = parseScheme();
         this.clientConfig = parseClientConfig();
         this.credentialsConfiguration = parseProfilesConfiguration();
+
+        if (vfs.getScheduledExecutor() != null) {
+            watchService = new PollingWatchService<>(vfs.getScheduledExecutor(), watchInterval, QcloudCOSFile::getETag);
+        }
 
         log.debug("scan buckets");
         for (COSCredentials credentials : credentialsConfiguration) {
@@ -158,7 +167,9 @@ public class QcloudCOSFileProvider implements Provider {
         QcloudCOSFileSystemAttributes fileSystemAttributes = new QcloudCOSFileSystemAttributes(NAME);
         fileSystemAttributes.setBucket(bucket);
 
-        return new QcloudCOSFileSystem(uri, fileSystemAttributes, cos);
+        QcloudCOSFileSystem fileSystem = new QcloudCOSFileSystem(uri, fileSystemAttributes, cos);
+        fileSystem.initializeWatchService(watchService);
+        return fileSystem;
     }
 
     /**
@@ -186,6 +197,13 @@ public class QcloudCOSFileProvider implements Provider {
     @Override
     public void close() throws Exception {
         log.debug("close QcloudCOSFileProvider");
+        if (watchService != null) {
+            try {
+                watchService.close();
+            } catch (Throwable e) {
+                log.debug("close WatchService error", e);
+            }
+        }
         for (QcloudCOSFileSystem fileSystem : fileSystems.values()) {
             try {
                 fileSystem.close();

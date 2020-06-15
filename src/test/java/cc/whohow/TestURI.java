@@ -15,6 +15,7 @@ public class TestURI {
         System.out.println(URI.create("http:///"));
         System.out.println(URI.create("http:///").getScheme());
     }
+
     @Test
     public void testRelativize() {
         System.out.println(URI.create("http:///").relativize(URI.create("http://example.com/demo")));

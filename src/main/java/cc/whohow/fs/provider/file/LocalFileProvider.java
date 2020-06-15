@@ -19,7 +19,7 @@ public class LocalFileProvider implements Provider {
         log.debug("initialize LocalFileProvider: {}", context);
         localFileSystem = new LocalFileSystem(URI.create("file:///"));
 
-        FileResolver<LocalPath, LocalFile> localFileResolver = new DefaultFileResolver<>(localFileSystem);
+        FileResolver<LocalPath, LocalFile> localFileResolver = new DefaultFileResolver<>(localFileSystem, "file:///");
         vfs.mount("file:///", localFileResolver);
     }
 

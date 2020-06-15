@@ -1,7 +1,7 @@
 package cc.whohow.fs.channel;
 
 import cc.whohow.fs.FileReadableChannel;
-import cc.whohow.vfs.io.IO;
+import cc.whohow.fs.io.IO;
 
 import java.io.IOException;
 import java.io.InputStream;

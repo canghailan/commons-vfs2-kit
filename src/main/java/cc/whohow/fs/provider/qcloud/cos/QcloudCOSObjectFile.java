@@ -5,7 +5,7 @@ import cc.whohow.fs.FileReadableChannel;
 import cc.whohow.fs.FileWritableChannel;
 import cc.whohow.fs.ObjectFile;
 import cc.whohow.fs.channel.FileReadableStream;
-import cc.whohow.vfs.provider.s3.S3Uri;
+import cc.whohow.fs.provider.s3.S3Uri;
 import com.qcloud.cos.COS;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -24,7 +24,7 @@ public class QcloudCOSObjectFile implements ObjectFile {
 
     @Override
     public URI getUri() {
-        return uri.toURI();
+        return uri.toUri();
     }
 
     @Override

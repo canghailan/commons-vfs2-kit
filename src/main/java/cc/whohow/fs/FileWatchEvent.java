@@ -7,15 +7,15 @@ public interface FileWatchEvent<P extends Path, F extends File<P, F>> {
 
     File<P, F> file();
 
-    enum  Kind {
-         CREATE("+"),
+    enum Kind {
+        CREATE("+"),
         DELETE("-"),
         MODIFY("*"),
         NOT_MODIFIED("=");
 
         private final String symbol;
 
-         Kind(String symbol) {
+        Kind(String symbol) {
             this.symbol = symbol;
         }
 

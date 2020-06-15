@@ -1,43 +1,70 @@
 package cc.whohow.configuration.provider;
 
-import cc.whohow.configuration.Configuration;
-import cc.whohow.vfs.FileObjectX;
-import cc.whohow.vfs.serialize.FileValue;
-import cc.whohow.vfs.serialize.JsonSerializer;
+import cc.whohow.fs.io.ByteBufferReadableChannel;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import org.apache.commons.vfs2.FileObject;
 
-public class JsonConfiguration<T> extends FileValue.Cache<T> implements Configuration<T> {
-    public JsonConfiguration(FileObjectX fileObject, Class<T> type) {
-        super(fileObject, new JsonSerializer<>(type));
+import java.io.IOException;
+import java.nio.ByteBuffer;
+
+public class JsonConfiguration<T> extends AbstractFileBasedConfiguration<T> {
+    protected static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
+    static {
+        OBJECT_MAPPER.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, true);
+        OBJECT_MAPPER.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     }
 
-    public JsonConfiguration(FileObjectX fileObject, TypeReference<T> type) {
-        super(fileObject, new JsonSerializer<>(type));
+    protected final JavaType type;
+    protected final ObjectMapper objectMapper;
+
+    public JsonConfiguration(FileObject fileObject, Class<T> type) {
+        this(fileObject, type, OBJECT_MAPPER);
     }
 
-    public JsonConfiguration(FileObjectX fileObject, String type) {
-        super(fileObject, new JsonSerializer<>(type));
+    public JsonConfiguration(FileObject fileObject, TypeReference<T> type) {
+        this(fileObject, type, OBJECT_MAPPER);
     }
 
-    public JsonConfiguration(FileObjectX fileObject, JavaType type) {
-        super(fileObject, new JsonSerializer<>(type));
+    public JsonConfiguration(FileObject fileObject, String type) {
+        this(fileObject, type, OBJECT_MAPPER);
     }
 
-    public JsonConfiguration(FileObjectX fileObject, Class<T> type, ObjectMapper objectMapper) {
-        super(fileObject, new JsonSerializer<>(objectMapper, type));
+    public JsonConfiguration(FileObject fileObject, JavaType type) {
+        this(fileObject, type, OBJECT_MAPPER);
     }
 
-    public JsonConfiguration(FileObjectX fileObject, TypeReference<T> type, ObjectMapper objectMapper) {
-        super(fileObject, new JsonSerializer<>(objectMapper, type));
+    public JsonConfiguration(FileObject fileObject, Class<T> type, ObjectMapper objectMapper) {
+        this(fileObject, objectMapper.getTypeFactory().constructType(type), objectMapper);
     }
 
-    public JsonConfiguration(FileObjectX fileObject, String type, ObjectMapper objectMapper) {
-        super(fileObject, new JsonSerializer<>(objectMapper, type));
+
+    public JsonConfiguration(FileObject fileObject, TypeReference<T> type, ObjectMapper objectMapper) {
+        this(fileObject, objectMapper.getTypeFactory().constructType(type), objectMapper);
     }
 
-    public JsonConfiguration(FileObjectX fileObject, JavaType type, ObjectMapper objectMapper) {
-        super(fileObject, new JsonSerializer<>(objectMapper, type));
+
+    public JsonConfiguration(FileObject fileObject, String type, ObjectMapper objectMapper) {
+        this(fileObject, objectMapper.getTypeFactory().constructFromCanonical(type), objectMapper);
+    }
+
+    public JsonConfiguration(FileObject fileObject, JavaType type, ObjectMapper objectMapper) {
+        super(fileObject);
+        this.type = type;
+        this.objectMapper = objectMapper;
+    }
+
+    @Override
+    protected ByteBuffer serialize(T value) throws IOException {
+        return ByteBuffer.wrap(objectMapper.writeValueAsBytes(value));
+    }
+
+    @Override
+    protected T deserialize(ByteBuffer bytes) throws IOException {
+        return objectMapper.readValue(new ByteBufferReadableChannel(bytes), type);
     }
 }

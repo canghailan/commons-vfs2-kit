@@ -12,6 +12,7 @@ import java.net.URI;
 public class FileSystemAdapter implements FileSystem, VfsComponent {
     protected final cc.whohow.fs.FileSystem<?, ?> fileSystem;
     protected volatile VfsComponentContext context;
+    protected volatile Log logger;
 
     public FileSystemAdapter(cc.whohow.fs.FileSystem<?, ?> fileSystem) {
         this.fileSystem = fileSystem;
@@ -130,7 +131,7 @@ public class FileSystemAdapter implements FileSystem, VfsComponent {
 
     @Override
     public void setLogger(Log logger) {
-
+        this.logger = logger;
     }
 
     @Override
@@ -150,5 +151,27 @@ public class FileSystemAdapter implements FileSystem, VfsComponent {
         } catch (Exception e) {
             throw FileSystemExceptions.unchecked(e);
         }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o instanceof FileSystemAdapter) {
+            FileSystemAdapter that = (FileSystemAdapter) o;
+            return that.fileSystem.equals(this.fileSystem);
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return fileSystem.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return fileSystem.toString();
     }
 }

@@ -21,6 +21,7 @@ public class TestCommand {
 
         vfs.close();
     }
+
     @Test
     public void testMove() throws Exception {
         ConfigurationBuilder configurationBuilder = new ConfigurationBuilder(URI.create("conf:///"));

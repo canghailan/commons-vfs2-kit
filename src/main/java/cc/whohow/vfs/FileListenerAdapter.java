@@ -1,10 +1,8 @@
 package cc.whohow.vfs;
 
 import cc.whohow.fs.FileWatchEvent;
+import org.apache.commons.vfs2.FileChangeEvent;
 import org.apache.commons.vfs2.FileListener;
-import org.apache.commons.vfs2.events.ChangedEvent;
-import org.apache.commons.vfs2.events.CreateEvent;
-import org.apache.commons.vfs2.events.DeleteEvent;
 
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -23,15 +21,15 @@ public class FileListenerAdapter<E extends FileWatchEvent<?, ?>> implements Cons
         try {
             switch (fileWatchEvent.kind()) {
                 case CREATE: {
-                    fileListener.fileCreated(new CreateEvent(
+                    fileListener.fileCreated(new FileChangeEvent(
                             new FileObjectAdapter(new FilePath(fileSystem, fileWatchEvent.file()))));
                 }
                 case DELETE: {
-                    fileListener.fileDeleted(new DeleteEvent(
+                    fileListener.fileDeleted(new FileChangeEvent(
                             new FileObjectAdapter(new FilePath(fileSystem, fileWatchEvent.file()))));
                 }
                 case MODIFY: {
-                    fileListener.fileChanged(new ChangedEvent(
+                    fileListener.fileChanged(new FileChangeEvent(
                             new FileObjectAdapter(new FilePath(fileSystem, fileWatchEvent.file()))));
                 }
                 default: {
