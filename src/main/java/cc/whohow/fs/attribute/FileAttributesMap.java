@@ -6,22 +6,15 @@ import cc.whohow.fs.util.FileTimes;
 
 import java.nio.file.attribute.FileTime;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Optional;
 
-public class FileAttributesMap implements FileAttributes {
-    protected final Map<String, Attribute<?>> attributes;
-
+public class FileAttributesMap extends AttributesMap implements FileAttributes {
     public FileAttributesMap(Iterable<? extends Attribute<?>> attributes) {
-        this.attributes = new LinkedHashMap<>();
-        for (Attribute<?> attribute : attributes) {
-            this.attributes.put(attribute.name(), attribute);
-        }
+        super(attributes);
     }
 
     public FileAttributesMap(Map<String, Attribute<?>> attributes) {
-        this.attributes = attributes;
+        super(attributes);
     }
 
     @Override
@@ -45,12 +38,7 @@ public class FileAttributesMap implements FileAttributes {
     }
 
     @Override
-    public Optional<? extends Attribute<?>> get(String name) {
-        return Optional.ofNullable(attributes.get(name));
-    }
-
-    @Override
     public Iterator<Attribute<?>> iterator() {
-        return attributes.values().iterator();
+        return super.iterator();
     }
 }

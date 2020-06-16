@@ -18,22 +18,12 @@ public class AliyunOSSFileSystemAttributes implements FileSystemAttributes {
     public static final String EXTRANET_ENDPOINT = "extranetEndpoint";
     public static final String INTRANET_ENDPOINT = "intranetEndpoint";
 
-    private final String provider;
     private Bucket bucket;
     private String endpoint;
     private List<AliyunCDNConfiguration> cdnConfiguration;
 
-    public AliyunOSSFileSystemAttributes(String provider) {
-        this.provider = provider;
-    }
-
     public void setBucket(Bucket bucket) {
         this.bucket = bucket;
-    }
-
-    @Override
-    public String provider() {
-        return provider;
     }
 
     public String getEndpoint() {
@@ -80,8 +70,6 @@ public class AliyunOSSFileSystemAttributes implements FileSystemAttributes {
     public Optional<? extends Attribute<?>> get(String name) {
         Objects.requireNonNull(name);
         switch (name) {
-            case PROVIDER:
-                return Optional.of(new StringAttribute(PROVIDER, provider()));
             case OWNER_ID:
                 return Optional.of(new StringAttribute(OWNER_ID, getOwnerId()));
             case ENDPOINT:
@@ -104,7 +92,6 @@ public class AliyunOSSFileSystemAttributes implements FileSystemAttributes {
     @Override
     public Iterator<Attribute<?>> iterator() {
         return Arrays.<Attribute<?>>asList(
-                new StringAttribute(PROVIDER, provider()),
                 new StringAttribute(OWNER_ID, getOwnerId()),
                 new StringAttribute(ENDPOINT, getEndpoint()),
                 new StringAttribute(BUCKET_NAME, getBucketName()),

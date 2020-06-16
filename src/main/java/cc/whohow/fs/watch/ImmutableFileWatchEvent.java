@@ -29,4 +29,9 @@ public class ImmutableFileWatchEvent<P extends Path, F extends File<P, F>> imple
     public File<P, F> file() {
         return file;
     }
+
+    @Override
+    public String toString() {
+        return kind + " " + file;
+    }
 }

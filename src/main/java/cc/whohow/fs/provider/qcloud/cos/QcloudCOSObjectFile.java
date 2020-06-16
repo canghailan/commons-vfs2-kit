@@ -4,7 +4,7 @@ import cc.whohow.fs.FileAttributes;
 import cc.whohow.fs.FileReadableChannel;
 import cc.whohow.fs.FileWritableChannel;
 import cc.whohow.fs.ObjectFile;
-import cc.whohow.fs.channel.FileReadableStream;
+import cc.whohow.fs.io.FileReadableStream;
 import cc.whohow.fs.provider.s3.S3Uri;
 import com.qcloud.cos.COS;
 import org.apache.logging.log4j.LogManager;

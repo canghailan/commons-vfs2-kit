@@ -17,11 +17,6 @@ class EmptyFileSystemAttributes implements FileSystemAttributes {
     }
 
     @Override
-    public String provider() {
-        return "";
-    }
-
-    @Override
     public Iterator<Attribute<?>> iterator() {
         return Collections.emptyIterator();
     }

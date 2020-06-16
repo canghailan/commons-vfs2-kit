@@ -1,9 +1,7 @@
-package cc.whohow.fs.channel;
+package cc.whohow.fs.io;
 
 import cc.whohow.fs.FileReadableChannel;
 import cc.whohow.fs.FileWritableChannel;
-import cc.whohow.fs.io.ByteBufferReadableChannel;
-import cc.whohow.fs.io.IO;
 
 import java.io.IOException;
 import java.io.InputStream;

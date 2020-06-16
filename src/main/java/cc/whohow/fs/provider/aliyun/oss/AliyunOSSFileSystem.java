@@ -1,7 +1,7 @@
 package cc.whohow.fs.provider.aliyun.oss;
 
 import cc.whohow.fs.*;
-import cc.whohow.fs.channel.FileReadableStream;
+import cc.whohow.fs.io.FileReadableStream;
 import cc.whohow.fs.provider.s3.S3Uri;
 import cc.whohow.fs.provider.s3.S3UriPath;
 import cc.whohow.fs.util.FileTree;
@@ -28,7 +28,7 @@ public class AliyunOSSFileSystem implements FileSystem<S3UriPath, AliyunOSSFile>
     protected final OSS oss;
     protected volatile FileWatchService<S3UriPath, AliyunOSSFile> watchService;
 
-    public AliyunOSSFileSystem(S3Uri uri, AliyunOSSFileSystemAttributes attributes, OSS oss) {
+    public AliyunOSSFileSystem(AliyunOSSFileProvider provider, S3Uri uri, AliyunOSSFileSystemAttributes attributes, OSS oss) {
         if (uri.getScheme() == null ||
                 uri.getAccessKeyId() != null ||
                 uri.getSecretAccessKey() != null ||
@@ -40,10 +40,7 @@ public class AliyunOSSFileSystem implements FileSystem<S3UriPath, AliyunOSSFile>
         this.uri = uri;
         this.attributes = attributes;
         this.oss = oss;
-    }
-
-    public void initializeWatchService(FileWatchService<S3UriPath, AliyunOSSFile> watchService) {
-        this.watchService = watchService;
+        this.watchService = provider.getWatchService();
     }
 
     public OSS getOSS() {
@@ -183,6 +180,8 @@ public class AliyunOSSFileSystem implements FileSystem<S3UriPath, AliyunOSSFile>
     public FileStream<AliyunOSSFile> tree(S3UriPath path, int maxDepth) {
         if (path.isDirectory()) {
             switch (maxDepth) {
+                case 0:
+                    return Files.newFileStream(Collections.singleton(get(path)));
                 case 1:
                     return new AliyunOSSFileTree(this, path, false);
                 case Integer.MAX_VALUE:

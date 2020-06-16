@@ -1,8 +1,6 @@
 package cc.whohow.fs.provider.aliyun.oss;
 
-import cc.whohow.fs.File;
-import cc.whohow.fs.Provider;
-import cc.whohow.fs.VirtualFileSystem;
+import cc.whohow.fs.*;
 import cc.whohow.fs.net.Ping;
 import cc.whohow.fs.provider.aliyun.cdn.AliyunCDNConfiguration;
 import cc.whohow.fs.provider.s3.S3FileResolver;
@@ -27,9 +25,9 @@ import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.ExecutorService;
 
-public class AliyunOSSFileProvider implements Provider {
-    public static final String NAME = "aliyun-oss";
+public class AliyunOSSFileProvider implements FileSystemProvider<S3UriPath, AliyunOSSFile> {
     private static final Logger log = LogManager.getLogger(AliyunOSSFileProvider.class);
     private static final String DEFAULT_ENDPOINT = "oss.aliyuncs.com";
     private final Map<String, Ping> ping = new ConcurrentHashMap<>();
@@ -49,10 +47,9 @@ public class AliyunOSSFileProvider implements Provider {
 
     @Override
     public void initialize(VirtualFileSystem vfs, File<?, ?> context) throws Exception {
-        log.debug("initialize AliyunOSSFileProvider: {}", context);
-
         this.vfs = vfs;
         this.context = context;
+        log.debug("initialize AliyunOSSFileProvider: {}", context);
 
         parseConfiguration();
         parseClientConfiguration();
@@ -107,7 +104,7 @@ public class AliyunOSSFileProvider implements Provider {
         }
 
         log.debug("mount vfs");
-        for (Map.Entry<String, String> e : vfs.getVfsConfiguration().entrySet()) {
+        for (Map.Entry<String, String> e : vfs.getMountPoints().entrySet()) {
             URI uri = URI.create(e.getValue());
             if (uri.getScheme().equals(scheme)) {
                 log.debug("mount vfs: {} -> {}", e.getKey(), e.getValue());
@@ -137,7 +134,7 @@ public class AliyunOSSFileProvider implements Provider {
         automount = Files.optional(context.resolve("automount"))
                 .map(File::readUtf8)
                 .map(Boolean::parseBoolean)
-                .orElse(Boolean.TRUE);
+                .orElse(Boolean.FALSE);
         watchInterval = Files.optional(context.resolve("watch/interval"))
                 .map(File::readUtf8)
                 .map(Duration::parse)
@@ -222,14 +219,12 @@ public class AliyunOSSFileProvider implements Provider {
 
         S3Uri uri = new S3Uri(scheme, null, null, bucket.getName(), null, "");
 
-        AliyunOSSFileSystemAttributes fileSystemAttributes = new AliyunOSSFileSystemAttributes(NAME);
+        AliyunOSSFileSystemAttributes fileSystemAttributes = new AliyunOSSFileSystemAttributes();
         fileSystemAttributes.setBucket(bucket);
         fileSystemAttributes.setEndpoint(endpoint);
         fileSystemAttributes.setCdnConfiguration(cdnConfiguration);
 
-        AliyunOSSFileSystem fileSystem = new AliyunOSSFileSystem(uri, fileSystemAttributes, oss);
-        fileSystem.initializeWatchService(watchService);
-        return fileSystem;
+        return new AliyunOSSFileSystem(this, uri, fileSystemAttributes, oss);
     }
 
     /**
@@ -274,6 +269,30 @@ public class AliyunOSSFileProvider implements Provider {
                 uri.getEndpoint(),
                 new DefaultCredentialProvider(new DefaultCredentials(uri.getAccessKeyId(), uri.getSecretAccessKey())),
                 clientConfiguration);
+    }
+
+    public FileWatchService<S3UriPath, AliyunOSSFile> getWatchService() {
+        return watchService;
+    }
+
+    @Override
+    public String getScheme() {
+        return scheme;
+    }
+
+    @Override
+    public FileSystem<S3UriPath, AliyunOSSFile> getFileSystem(URI uri) {
+        return getAliyunOSSFileSystem(new S3Uri(uri));
+    }
+
+    @Override
+    public Collection<? extends FileSystem<S3UriPath, AliyunOSSFile>> getFileSystems() {
+        return Collections.unmodifiableCollection(fileSystems.values());
+    }
+
+    @Override
+    public ExecutorService getExecutor() {
+        return vfs.getExecutor();
     }
 
     @Override

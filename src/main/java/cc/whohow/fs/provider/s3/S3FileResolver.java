@@ -18,11 +18,11 @@ public class S3FileResolver<P extends Path, F extends File<P, F>> extends Defaul
     }
 
     @Override
-    public Optional<F> resolve(URI uri, CharSequence path) {
+    public Optional<F> resolve(URI uri, CharSequence mountPoint, CharSequence path) {
         // 不支持Query及Fragment
         if (uri.getRawQuery() != null || uri.getRawFragment() != null) {
             return Optional.empty();
         }
-        return super.resolve(uri, path);
+        return super.resolve(uri, mountPoint, path);
     }
 }

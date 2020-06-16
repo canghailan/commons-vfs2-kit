@@ -1,7 +1,7 @@
 package cc.whohow.vfs;
 
-import cc.whohow.fs.channel.FileReadableStream;
-import cc.whohow.fs.channel.FileWritableStream;
+import cc.whohow.fs.io.FileReadableStream;
+import cc.whohow.fs.io.FileWritableStream;
 import cc.whohow.fs.io.IO;
 import cc.whohow.fs.io.UncheckedCloseable;
 import org.apache.commons.vfs2.FileContent;

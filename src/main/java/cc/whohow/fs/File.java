@@ -172,7 +172,7 @@ public interface File<P extends Path, F extends File<P, F>> extends ObjectFile {
         getFileSystem().unwatch(getPath(), listener);
     }
 
-    default File<P, F> resolve(CharSequence path) {
+    default F resolve(CharSequence path) {
         return getFileSystem().get(getFileSystem().resolve(getPath(), path));
     }
 }

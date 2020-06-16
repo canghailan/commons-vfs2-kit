@@ -2,6 +2,7 @@ package cc.whohow.fs;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -12,41 +13,29 @@ public interface VirtualFileSystem extends AutoCloseable {
 
     ScheduledExecutorService getScheduledExecutor();
 
-    Map<String, String> getVfsConfiguration();
+    Map<String, String> getMountPoints();
 
-    Collection<Provider> getProviders();
+    Collection<FileSystemProvider<?, ?>> getProviders();
 
-    Collection<FileSystem<?, ?>> getFileSystems();
+    void load(FileSystemProvider<?, ?> provider);
 
-    File<?, ?> get(String uri);
-
-    void load(Provider provider);
-
-    void load(Provider provider, File<?, ?> configuration);
+    void load(FileSystemProvider<?, ?> provider, File<?, ?> configuration);
 
     void mount(String uri, FileResolver<?, ?> fileResolver);
 
     void umount(String uri);
 
-    void registerFileSystem(FileSystem<?, ?> fileSystem);
+    File<?, ?> get(String uri);
 
-    void unregisterFileSystem(FileSystem<?, ?> fileSystem);
+    CompletableFuture<? extends File<?, ?>> copy(File<?, ?> source, File<?, ?> target);
 
-    void installCommand(String name, FileCommandBuilder<? extends FileCommand<?>> commandBuilder);
+    CompletableFuture<? extends File<?, ?>> move(File<?, ?> source, File<?, ?> target);
 
-    void installCopyCommand(FileCommandBuilder<? extends FileCopyCommand> commandBuilder);
+    default CompletableFuture<? extends File<?, ?>> copy(String source, String target) {
+        return copy(get(source), get(target));
+    }
 
-    void installMoveCommand(FileCommandBuilder<? extends FileMoveCommand> commandBuilder);
-
-    FileCommand<?> newCommand(String... arguments);
-
-    /**
-     * copy [source] [destination]
-     */
-    FileCopyCommand newCopyCommand(String source, String destination);
-
-    /**
-     * move [source] [destination]
-     */
-    FileMoveCommand newMoveCommand(String source, String destination);
+    default CompletableFuture<? extends File<?, ?>> move(String source, String target) {
+        return move(get(source), get(target));
+    }
 }

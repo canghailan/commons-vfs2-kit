@@ -1,0 +1,9 @@
+providers:
+  - className: cc.whohow.fs.provider.qcloud.cos.QcloudCOSFileProvider
+    profiles:
+      - accessKeyId:
+        secretAccessKey:
+      - accessKeyId:
+        secretAccessKey:
+    scheme: cos
+    automount: true

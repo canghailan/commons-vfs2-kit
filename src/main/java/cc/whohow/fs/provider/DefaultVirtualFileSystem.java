@@ -1,9 +1,8 @@
 package cc.whohow.fs.provider;
 
 import cc.whohow.fs.*;
-import cc.whohow.fs.command.BestMatchCommandBuilder;
-import cc.whohow.fs.command.DefaultFileCopyCommand;
-import cc.whohow.fs.command.DefaultFileMoveCommand;
+import cc.whohow.fs.io.Copy;
+import cc.whohow.fs.io.Move;
 import cc.whohow.fs.util.FileSystemThreadFactory;
 import cc.whohow.fs.util.Files;
 import com.github.benmanes.caffeine.cache.Cache;
@@ -18,23 +17,17 @@ import java.util.*;
 import java.util.concurrent.*;
 
 public class DefaultVirtualFileSystem implements VirtualFileSystem {
-    private static final Logger log = LogManager.getLogger(DefaultFileManager.class);
+    private static final Logger log = LogManager.getLogger(DefaultVirtualFileSystem.class);
     protected final File<?, ?> context;
-    protected final List<Provider> providers = new CopyOnWriteArrayList<>();
-    protected final Map<String, String> vfsConfiguration = new LinkedHashMap<>();
+    protected final Map<String, FileSystemProvider<?, ?>> providers = new ConcurrentHashMap<>();
+    protected final Map<String, String> mountPoints = new LinkedHashMap<>();
     protected final NavigableMap<String, FileResolver<?, ?>> vfs = new ConcurrentSkipListMap<>(Comparator.reverseOrder());
-    protected final Collection<FileSystem<?, ?>> fileSystems = new CopyOnWriteArraySet<>();
-    protected final Map<String, FileCommandBuilder<? extends FileCommand<?>>> fileCommandBuilders = new ConcurrentHashMap<>();
-    protected FileCommandBuilder<? extends FileCopyCommand> fileCopyCommandBuilder;
-    protected FileCommandBuilder<? extends FileMoveCommand> fileMoveCommandBuilder;
     protected ExecutorService executor;
     protected ScheduledExecutorService scheduledExecutor;
     protected Cache<String, File<?, ?>> cache;
 
     public DefaultVirtualFileSystem(File<?, ?> context) {
         this.context = context;
-        this.fileCopyCommandBuilder = this::newDefaultFileCopyCommand;
-        this.fileMoveCommandBuilder = this::newDefaultFileMoveCommand;
         this.initialize();
     }
 
@@ -46,7 +39,7 @@ public class DefaultVirtualFileSystem implements VirtualFileSystem {
             initializeExecutor();
             initializeScheduledExecutor();
             initializeCache();
-            parseVfsConfiguration();
+            parseMountPoints();
             loadProviders();
         } catch (Exception e) {
             log.error("initialize vfs error", e);
@@ -122,8 +115,8 @@ public class DefaultVirtualFileSystem implements VirtualFileSystem {
                 .build();
     }
 
-    protected synchronized void parseVfsConfiguration() throws Exception {
-        log.debug("parseVfsConfiguration");
+    protected synchronized void parseMountPoints() throws Exception {
+        log.debug("parseMountPoints");
         File<?, ?> vfs = context.resolve("vfs");
         if (vfs.exists()) {
             for (String line : vfs.readUtf8().split("\n")) {
@@ -131,33 +124,25 @@ public class DefaultVirtualFileSystem implements VirtualFileSystem {
                     continue;
                 }
                 String[] keyValue = line.split(":", 2);
-                vfsConfiguration.put(keyValue[0].trim(), keyValue[1].trim());
+                mountPoints.put(keyValue[0].trim(), keyValue[1].trim());
             }
         }
     }
 
     protected synchronized void loadProviders() throws Exception {
         log.debug("loadProviders");
-        File<?, ?> providersConfiguration = context.resolve("providers/");
-        if (providersConfiguration.exists()) {
-            try (DirectoryStream<? extends File<?, ?>> providerConfigurations = providersConfiguration.newDirectoryStream()) {
-                for (File<?, ?> providerConfiguration : providerConfigurations) {
-                    String className = providerConfiguration.resolve("className").readUtf8();
+        File<?, ?> configurations = context.resolve("providers/");
+        if (configurations.exists()) {
+            try (DirectoryStream<? extends File<?, ?>> stream = configurations.newDirectoryStream()) {
+                for (File<?, ?> configuration : stream) {
+                    String className = configuration.resolve("className").readUtf8();
                     log.debug("loadProvider: {}", className);
-                    Provider provider = (Provider) Class.forName(className).newInstance();
-                    provider.initialize(this, providerConfiguration);
-                    providers.add(provider);
+                    FileSystemProvider<?, ?> provider = (FileSystemProvider<?, ?>) Class.forName(className).newInstance();
+                    provider.initialize(this, configuration);
+                    providers.put(provider.getScheme(), provider);
                 }
             }
         }
-    }
-
-    protected Optional<? extends FileCopyCommand> newDefaultFileCopyCommand(String... arguments) {
-        return Optional.of(new DefaultFileCopyCommand(this, arguments));
-    }
-
-    protected Optional<? extends FileMoveCommand> newDefaultFileMoveCommand(String... arguments) {
-        return Optional.of(new DefaultFileMoveCommand(this, arguments));
     }
 
     @Override
@@ -176,71 +161,31 @@ public class DefaultVirtualFileSystem implements VirtualFileSystem {
     }
 
     @Override
-    public Map<String, String> getVfsConfiguration() {
-        return vfsConfiguration;
+    public Map<String, String> getMountPoints() {
+        return mountPoints;
     }
 
     @Override
-    public Collection<Provider> getProviders() {
-        return Collections.unmodifiableList(providers);
+    public Collection<FileSystemProvider<?, ?>> getProviders() {
+        return Collections.unmodifiableCollection(providers.values());
     }
 
     @Override
-    public Collection<FileSystem<?, ?>> getFileSystems() {
-        return Collections.unmodifiableCollection(fileSystems);
+    public synchronized void load(FileSystemProvider<?, ?> provider) {
+        load(provider, null);
     }
 
     @Override
-    public File<?, ?> get(String uri) {
-        return cache.get(uri, this::doGet);
-    }
-
-    protected File<?, ?> doGet(String uri) {
-        URI normalizedUri = URI.create(uri).normalize();
-        String normalized = normalizedUri.toString();
-        for (Map.Entry<String, FileResolver<?, ?>> e : vfs.entrySet()) {
-            if (normalized.startsWith(e.getKey())) {
-                Optional<? extends File<?, ?>> file = e.getValue().resolve(
-                        normalizedUri, normalized.substring(e.getKey().length()));
-                if (file.isPresent()) {
-                    log.trace("{} -> {}", uri, file.get());
-                    return file.get();
-                }
-            }
-        }
-        throw new UncheckedException("get error: " + uri);
-    }
-
-    @Override
-    public synchronized void load(Provider provider) {
-        log.debug("loadProvider: {}", provider);
-        try {
-            File<?, ?> context = this.context.resolve("providers/" + UUID.randomUUID() + "/");
-            context.resolve("className").writeUtf8(provider.getClass().getName());
-            provider.initialize(this, context);
-            providers.add(provider);
-        } catch (Exception e) {
-            throw UncheckedException.unchecked(e);
-        }
-    }
-
-    @Override
-    public synchronized void load(Provider provider, File<?, ?> configuration) {
+    public synchronized void load(FileSystemProvider<?, ?> provider, File<?, ?> configuration) {
         log.debug("loadProvider: {} {}", provider, configuration);
         try {
             File<?, ?> context = this.context.resolve("providers/" + UUID.randomUUID() + "/");
             context.resolve("className").writeUtf8(provider.getClass().getName());
-            try (FileStream<? extends File<?, ?>> files = configuration.tree()) {
-                for (File<?, ?> file : files) {
-                    File<?, ?> copy = context.resolve(configuration.getPath().relativize(file.getPath()));
-                    try (FileReadableChannel readableChannel = file.newReadableChannel();
-                         FileWritableChannel writableChannel = copy.newWritableChannel()) {
-                        writableChannel.transferFrom(readableChannel);
-                    }
-                }
+            if (configuration != null && configuration.exists()) {
+                copy(configuration, context);
             }
             provider.initialize(this, context);
-            providers.add(provider);
+            providers.put(provider.getScheme(), provider);
         } catch (Exception e) {
             throw UncheckedException.unchecked(e);
         }
@@ -259,86 +204,50 @@ public class DefaultVirtualFileSystem implements VirtualFileSystem {
     }
 
     @Override
-    public void registerFileSystem(FileSystem<?, ?> fileSystem) {
-        log.debug("registerFileSystem({})", fileSystem);
-        fileSystems.add(fileSystem);
+    public File<?, ?> get(String uri) {
+        return cache.get(uri, this::doGet);
     }
 
     @Override
-    public void unregisterFileSystem(FileSystem<?, ?> fileSystem) {
-        log.debug("unregisterFileSystem({})", fileSystem);
-        fileSystems.remove(fileSystem);
-    }
-
-    @Override
-    public synchronized void installCommand(String name, FileCommandBuilder<? extends FileCommand<?>> commandBuilder) {
-        log.debug("installCommand: {}", name);
-        if ("copy".equals(name) || "move".equals(name)) {
-            throw new IllegalArgumentException("copy/move -> installCopyCommand/installMoveCommand");
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    public CompletableFuture<? extends File<?, ?>> copy(File<?, ?> source, File<?, ?> target) {
+        if (source.getFileSystem().getScheme().equals(target.getFileSystem().getScheme())) {
+            FileSystemProvider fileSystemProvider = providers.get(source.getFileSystem().getScheme());
+            return fileSystemProvider.copy(source, target);
         }
-        FileCommandBuilder<? extends FileCommand<?>> fileCommandBuilder = fileCommandBuilders.get(name);
-        if (fileCommandBuilder == null) {
-            fileCommandBuilders.put(name, commandBuilder);
-        } else {
-            fileCommandBuilders.put(name, new BestMatchCommandBuilder<>(fileCommandBuilder, commandBuilder));
+        return CompletableFuture.supplyAsync(new Copy.Parallel(source, target).withExecutor(executor), executor);
+    }
+
+    @Override
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    public CompletableFuture<? extends File<?, ?>> move(File<?, ?> source, File<?, ?> target) {
+        if (source.getFileSystem().getScheme().equals(target.getFileSystem().getScheme())) {
+            FileSystemProvider fileSystemProvider = providers.get(source.getFileSystem().getScheme());
+            return fileSystemProvider.move(source, target);
         }
+        return CompletableFuture.supplyAsync(new Move(new Copy.Parallel(source, target).withExecutor(executor)), executor);
     }
 
-    @Override
-    public synchronized void installCopyCommand(FileCommandBuilder<? extends FileCopyCommand> commandBuilder) {
-        log.debug("installCopy");
-        fileCopyCommandBuilder = new BestMatchCommandBuilder<>(commandBuilder, fileCopyCommandBuilder);
-    }
-
-    @Override
-    public synchronized void installMoveCommand(FileCommandBuilder<? extends FileMoveCommand> commandBuilder) {
-        log.debug("installMove");
-        fileMoveCommandBuilder = new BestMatchCommandBuilder<>(commandBuilder, fileMoveCommandBuilder);
-    }
-
-    @Override
-    public FileCommand<?> newCommand(String... args) {
-        if (args.length == 0 || args[0] == null || args[0].isEmpty()) {
-            throw new IllegalArgumentException(String.join(" ", args));
-        }
-        String commandName = args[0];
-        log.trace("newCommand: {}", commandName);
-        switch (commandName) {
-            case "copy":
-                return fileCopyCommandBuilder.newCommand(args)
-                        .orElseThrow(AssertionError::new);
-            case "move":
-                return fileMoveCommandBuilder.newCommand(args)
-                        .orElseThrow(AssertionError::new);
-            default: {
-                FileCommandBuilder<? extends FileCommand<?>> commandBuilder = fileCommandBuilders.get(commandName);
-                if (commandBuilder != null) {
-                    Optional<? extends FileCommand<?>> command = commandBuilder.newCommand(args);
-                    if (command.isPresent()) {
-                        return command.get();
-                    }
+    protected File<?, ?> doGet(String uri) {
+        URI normalizedUri = URI.create(uri).normalize();
+        String normalized = normalizedUri.toString();
+        for (Map.Entry<String, FileResolver<?, ?>> e : vfs.entrySet()) {
+            if (normalized.startsWith(e.getKey())) {
+                Optional<? extends File<?, ?>> file = e.getValue().resolve(
+                        normalizedUri, e.getKey(), normalized.substring(e.getKey().length()));
+                if (file.isPresent()) {
+                    log.trace("{} -> {}", uri, file.get());
+                    return file.get();
                 }
-                throw new IllegalArgumentException("command not supported: " + String.join(" ", args));
             }
         }
-    }
-
-    @Override
-    public FileCopyCommand newCopyCommand(String source, String destination) {
-        return fileCopyCommandBuilder.newCommand("copy", source, destination)
-                .orElseThrow(AssertionError::new);
-    }
-
-    @Override
-    public FileMoveCommand newMoveCommand(String source, String destination) {
-        return fileMoveCommandBuilder.newCommand("move", source, destination)
-                .orElseThrow(AssertionError::new);
+        throw new UncheckedException("get error: " + uri);
     }
 
     @Override
     public void close() throws Exception {
         log.debug("close DefaultFileManager");
-        for (Provider provider : providers) {
+        for (FileSystemProvider<?, ?> provider : providers.values()) {
             try {
                 provider.close();
             } catch (Exception e) {

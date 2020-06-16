@@ -16,7 +16,7 @@ public class HttpFileResolver implements FileResolver<UriPath, HttpFile> {
     }
 
     @Override
-    public Optional<HttpFile> resolve(URI uri, CharSequence path) {
+    public Optional<HttpFile> resolve(URI uri, CharSequence mountPoint, CharSequence path) {
         if ("http".equals(uri.getScheme()) || "https".equals(uri.getScheme())) {
             return Optional.of(httpFileSystem.get(httpFileSystem.resolve(uri)));
         } else {

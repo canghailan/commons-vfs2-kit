@@ -34,7 +34,7 @@ public class DefaultFileResolver<P extends Path, F extends File<P, F>> implement
     }
 
     @Override
-    public Optional<F> resolve(URI uri, CharSequence path) {
+    public Optional<F> resolve(URI uri, CharSequence mountPoint, CharSequence path) {
         try {
             if (base.isEmpty()) {
                 return Optional.of(fileSystem.get(path));

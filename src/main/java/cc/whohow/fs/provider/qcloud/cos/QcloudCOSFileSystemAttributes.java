@@ -16,20 +16,10 @@ public class QcloudCOSFileSystemAttributes implements FileSystemAttributes {
     public static final String BUCKET_NAME = "bucketName";
     public static final String LOCATION = "location";
 
-    private final String provider;
     private Bucket bucket;
-
-    public QcloudCOSFileSystemAttributes(String provider) {
-        this.provider = provider;
-    }
 
     public void setBucket(Bucket bucket) {
         this.bucket = bucket;
-    }
-
-    @Override
-    public String provider() {
-        return provider;
     }
 
     public String getOwnerId() {
@@ -48,8 +38,6 @@ public class QcloudCOSFileSystemAttributes implements FileSystemAttributes {
     public Optional<? extends Attribute<?>> get(String name) {
         Objects.requireNonNull(name);
         switch (name) {
-            case PROVIDER:
-                return Optional.of(new StringAttribute(PROVIDER, provider()));
             case OWNER_ID:
                 return Optional.of(new StringAttribute(OWNER_ID, getOwnerId()));
             case BUCKET_NAME:
@@ -64,7 +52,6 @@ public class QcloudCOSFileSystemAttributes implements FileSystemAttributes {
     @Override
     public Iterator<Attribute<?>> iterator() {
         return Arrays.<Attribute<?>>asList(
-                new StringAttribute(PROVIDER, provider()),
                 new StringAttribute(OWNER_ID, getOwnerId()),
                 new StringAttribute(BUCKET_NAME, getBucketName()),
                 new StringAttribute(LOCATION, getLocation())

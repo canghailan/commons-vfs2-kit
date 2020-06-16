@@ -1,8 +1,6 @@
 package cc.whohow.fs.io;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.lang.reflect.UndeclaredThrowableException;
+import cc.whohow.fs.UncheckedException;
 
 public class UncheckedCloseable implements Runnable {
     private final AutoCloseable closeable;
@@ -15,10 +13,8 @@ public class UncheckedCloseable implements Runnable {
     public void run() {
         try {
             closeable.close();
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
         } catch (Exception e) {
-            throw new UndeclaredThrowableException(e);
+            throw UncheckedException.unchecked(e);
         }
     }
 }

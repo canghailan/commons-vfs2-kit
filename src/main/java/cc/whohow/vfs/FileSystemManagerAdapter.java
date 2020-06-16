@@ -1,6 +1,7 @@
 package cc.whohow.vfs;
 
 import cc.whohow.fs.FileStream;
+import cc.whohow.fs.FileSystemProvider;
 import org.apache.commons.logging.Log;
 import org.apache.commons.vfs2.*;
 import org.apache.commons.vfs2.cache.NullFilesCache;
@@ -156,7 +157,9 @@ public class FileSystemManagerAdapter implements FileSystemManager, FileSystem, 
 
     @Override
     public String[] getSchemes() {
-        return vfs.getFileSystems().stream()
+        return vfs.getProviders().stream()
+                .map(FileSystemProvider::getFileSystems)
+                .flatMap(Collection::stream)
                 .map(cc.whohow.fs.FileSystem::getUri)
                 .map(URI::getScheme)
                 .distinct()
@@ -170,7 +173,9 @@ public class FileSystemManagerAdapter implements FileSystemManager, FileSystem, 
 
     @Override
     public boolean hasProvider(String scheme) {
-        return vfs.getFileSystems().stream()
+        return vfs.getProviders().stream()
+                .map(FileSystemProvider::getFileSystems)
+                .flatMap(Collection::stream)
                 .map(cc.whohow.fs.FileSystem::getUri)
                 .map(URI::getScheme)
                 .anyMatch(scheme::equals);

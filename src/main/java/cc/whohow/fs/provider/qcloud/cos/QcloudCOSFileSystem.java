@@ -1,7 +1,7 @@
 package cc.whohow.fs.provider.qcloud.cos;
 
 import cc.whohow.fs.*;
-import cc.whohow.fs.channel.FileReadableStream;
+import cc.whohow.fs.io.FileReadableStream;
 import cc.whohow.fs.provider.s3.S3Uri;
 import cc.whohow.fs.provider.s3.S3UriPath;
 import cc.whohow.fs.util.FileTree;
@@ -29,7 +29,7 @@ public class QcloudCOSFileSystem implements FileSystem<S3UriPath, QcloudCOSFile>
     protected final COS cos;
     protected volatile FileWatchService<S3UriPath, QcloudCOSFile> watchService;
 
-    public QcloudCOSFileSystem(S3Uri uri, QcloudCOSFileSystemAttributes attributes, COS cos) {
+    public QcloudCOSFileSystem(QcloudCOSFileProvider provider, S3Uri uri, QcloudCOSFileSystemAttributes attributes, COS cos) {
         if (uri.getScheme() == null ||
                 uri.getAccessKeyId() != null ||
                 uri.getSecretAccessKey() != null ||
@@ -41,10 +41,7 @@ public class QcloudCOSFileSystem implements FileSystem<S3UriPath, QcloudCOSFile>
         this.uri = uri;
         this.attributes = attributes;
         this.cos = cos;
-    }
-
-    public void initializeWatchService(FileWatchService<S3UriPath, QcloudCOSFile> watchService) {
-        this.watchService = watchService;
+        this.watchService = provider.getWatchService();
     }
 
     public COS getCOS() {

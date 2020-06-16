@@ -16,6 +16,10 @@ import java.util.function.Consumer;
  * @param <F> 文件对象
  */
 public interface FileSystem<P extends Path, F extends File<P, F>> extends ObjectFileManager {
+    default String getScheme() {
+        return getUri().getScheme();
+    }
+
     /**
      * 文件系统ID
      */
@@ -118,12 +122,26 @@ public interface FileSystem<P extends Path, F extends File<P, F>> extends Object
      */
     void delete(P path);
 
+    default FileWatchService<P, F> getWatchService() {
+        return null;
+    }
+
     default void watch(P path, Consumer<FileWatchEvent<P, F>> listener) {
-        throw new UnsupportedOperationException();
+        FileWatchService<P, F> watchService = getWatchService();
+        if (watchService != null) {
+            watchService.watch(get(path), listener);
+        } else {
+            throw new UnsupportedOperationException();
+        }
     }
 
     default void unwatch(P path, Consumer<FileWatchEvent<P, F>> listener) {
-        throw new UnsupportedOperationException();
+        FileWatchService<P, F> watchService = getWatchService();
+        if (watchService != null) {
+            watchService.watch(get(path), listener);
+        } else {
+            throw new UnsupportedOperationException();
+        }
     }
 
     /**

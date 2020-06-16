@@ -17,7 +17,7 @@ public class TestCommand {
         vfs.load(new LocalFileProvider());
 
 //        vfs.newCopyCommand("file:///D:/a.txt", "file:///D:/b.txt").call();
-        vfs.newCopyCommand("file:///D:/app/Fira_Code/", "file:///D:/temp-copy/").call();
+        vfs.copy("file:///D:/app/Fira_Code/", "file:///D:/temp-copy/");
 
         vfs.close();
     }
@@ -29,7 +29,7 @@ public class TestCommand {
         VirtualFileSystem vfs = new DefaultVirtualFileSystem(configurationBuilder.build());
         vfs.load(new LocalFileProvider());
 
-        vfs.newMoveCommand("file:///D:/temp-copy/", "file:///D:/temp-copy-2/").call();
+        vfs.move("file:///D:/temp-copy/", "file:///D:/temp-copy-2/");
 
         vfs.close();
     }

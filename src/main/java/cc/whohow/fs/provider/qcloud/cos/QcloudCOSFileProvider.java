@@ -1,12 +1,10 @@
 package cc.whohow.fs.provider.qcloud.cos;
 
-import cc.whohow.fs.File;
-import cc.whohow.fs.Provider;
-import cc.whohow.fs.UncheckedException;
-import cc.whohow.fs.VirtualFileSystem;
+import cc.whohow.fs.*;
 import cc.whohow.fs.provider.s3.S3FileResolver;
 import cc.whohow.fs.provider.s3.S3Uri;
 import cc.whohow.fs.provider.s3.S3UriPath;
+import cc.whohow.fs.util.Files;
 import cc.whohow.fs.watch.PollingWatchService;
 import com.qcloud.cos.COS;
 import com.qcloud.cos.COSClient;
@@ -25,9 +23,9 @@ import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.ExecutorService;
 
-public class QcloudCOSFileProvider implements Provider {
-    public static final String NAME = "qcloud-cos";
+public class QcloudCOSFileProvider implements FileSystemProvider<S3UriPath, QcloudCOSFile> {
     private static final Logger log = LogManager.getLogger(QcloudCOSFileProvider.class);
     private final Map<String, Bucket> buckets = new ConcurrentSkipListMap<>();
     private final Map<String, COSCredentials> bucketCredentials = new ConcurrentHashMap<>();
@@ -35,6 +33,7 @@ public class QcloudCOSFileProvider implements Provider {
     private final Map<String, QcloudCOSFileSystem> fileSystems = new ConcurrentHashMap<>();
     private volatile PollingWatchService<S3UriPath, QcloudCOSFile, String> watchService;
     private volatile String scheme;
+    private volatile boolean automount;
     private volatile ClientConfig clientConfig;
     private volatile List<COSCredentials> credentialsConfiguration;
     private volatile VirtualFileSystem vfs;
@@ -43,14 +42,13 @@ public class QcloudCOSFileProvider implements Provider {
 
     @Override
     public void initialize(VirtualFileSystem vfs, File<?, ?> context) throws Exception {
-        log.debug("initialize QcloudCOSFileProvider: {}", context);
-
         this.vfs = vfs;
         this.context = context;
+        log.debug("initialize QcloudCOSFileProvider: {}", context);
 
-        this.scheme = parseScheme();
-        this.clientConfig = parseClientConfig();
-        this.credentialsConfiguration = parseProfilesConfiguration();
+        parseConfiguration();
+        parseClientConfig();
+        parseProfilesConfiguration();
 
         if (vfs.getScheduledExecutor() != null) {
             watchService = new PollingWatchService<>(vfs.getScheduledExecutor(), watchInterval, QcloudCOSFile::getETag);
@@ -73,7 +71,7 @@ public class QcloudCOSFileProvider implements Provider {
 
         log.debug("collect mount points");
         Map<String, S3FileResolver<?, ?>> mount = new TreeMap<>();
-        if (isScanEnabled()) {
+        if (automount) {
             log.debug("scan enabled, mount all buckets");
             for (Bucket bucket : buckets.values()) {
                 S3Uri s3Uri = new S3Uri(scheme, null, null, bucket.getName(), null, null);
@@ -87,7 +85,7 @@ public class QcloudCOSFileProvider implements Provider {
         }
 
         log.debug("mount vfs");
-        for (Map.Entry<String, String> e : vfs.getVfsConfiguration().entrySet()) {
+        for (Map.Entry<String, String> e : vfs.getMountPoints().entrySet()) {
             URI uri = URI.create(e.getValue());
             if (uri.getScheme().equals(scheme)) {
                 log.debug("mount vfs: {} -> {}", e.getKey(), e.getValue());
@@ -107,37 +105,41 @@ public class QcloudCOSFileProvider implements Provider {
         }
     }
 
-    protected boolean isScanEnabled() {
-        return false;
-    }
-
-    protected String parseScheme() {
-        log.debug("parseScheme");
-        return "cos";
+    protected void parseConfiguration() {
+        scheme = Files.optional(context.resolve("scheme"))
+                .map(File::readUtf8)
+                .orElse("cos");
+        automount = Files.optional(context.resolve("automount"))
+                .map(File::readUtf8)
+                .map(Boolean::parseBoolean)
+                .orElse(Boolean.FALSE);
+        watchInterval = Files.optional(context.resolve("watch/interval"))
+                .map(File::readUtf8)
+                .map(Duration::parse)
+                .orElse(Duration.ofSeconds(1));
     }
 
     /**
      * 解析客户端配置
      */
-    public ClientConfig parseClientConfig() {
+    public void parseClientConfig() {
         log.debug("parseClientConfig");
-        return new ClientConfig();
+        clientConfig = new ClientConfig();
     }
 
     /**
      * 解析账号配置
      */
-    protected List<COSCredentials> parseProfilesConfiguration() throws IOException {
+    protected void parseProfilesConfiguration() throws IOException {
         log.debug("parseProfilesConfiguration");
-        File<?, ?> profilesConfiguration = context.resolve("profiles/");
-        try (DirectoryStream<? extends File<?, ?>> profileConfigurations = profilesConfiguration.newDirectoryStream()) {
-            List<COSCredentials> result = new ArrayList<>();
-            for (File<?, ?> profileConfiguration : profileConfigurations) {
-                String accessKeyId = profileConfiguration.resolve("accessKeyId").readUtf8();
-                String secretAccessKey = profileConfiguration.resolve("secretAccessKey").readUtf8();
-                result.add(new BasicCOSCredentials(accessKeyId, secretAccessKey));
+        File<?, ?> configurations = context.resolve("profiles/");
+        try (DirectoryStream<? extends File<?, ?>> stream = configurations.newDirectoryStream()) {
+            credentialsConfiguration = new ArrayList<>();
+            for (File<?, ?> configuration : stream) {
+                String accessKeyId = configuration.resolve("accessKeyId").readUtf8();
+                String secretAccessKey = configuration.resolve("secretAccessKey").readUtf8();
+                credentialsConfiguration.add(new BasicCOSCredentials(accessKeyId, secretAccessKey));
             }
-            return result;
         }
     }
 
@@ -164,12 +166,10 @@ public class QcloudCOSFileProvider implements Provider {
 
         S3Uri uri = new S3Uri(scheme, null, null, bucket.getName(), null, "");
 
-        QcloudCOSFileSystemAttributes fileSystemAttributes = new QcloudCOSFileSystemAttributes(NAME);
+        QcloudCOSFileSystemAttributes fileSystemAttributes = new QcloudCOSFileSystemAttributes();
         fileSystemAttributes.setBucket(bucket);
 
-        QcloudCOSFileSystem fileSystem = new QcloudCOSFileSystem(uri, fileSystemAttributes, cos);
-        fileSystem.initializeWatchService(watchService);
-        return fileSystem;
+        return new QcloudCOSFileSystem(this, uri, fileSystemAttributes, cos);
     }
 
     /**
@@ -219,5 +219,29 @@ public class QcloudCOSFileProvider implements Provider {
                 log.warn("shutdown COS error", e);
             }
         }
+    }
+
+    public FileWatchService<S3UriPath, QcloudCOSFile> getWatchService() {
+        return watchService;
+    }
+
+    @Override
+    public String getScheme() {
+        return scheme;
+    }
+
+    @Override
+    public FileSystem<S3UriPath, QcloudCOSFile> getFileSystem(URI uri) {
+        return getQcloudCOSFileSystem(new S3Uri(uri));
+    }
+
+    @Override
+    public Collection<? extends FileSystem<S3UriPath, QcloudCOSFile>> getFileSystems() {
+        return Collections.unmodifiableCollection(fileSystems.values());
+    }
+
+    @Override
+    public ExecutorService getExecutor() {
+        return vfs.getExecutor();
     }
 }
