@@ -6,12 +6,29 @@ import cc.whohow.fs.VirtualFileSystem;
 import cc.whohow.fs.configuration.ConfigurationBuilder;
 import cc.whohow.fs.provider.DefaultVirtualFileSystem;
 import cc.whohow.fs.provider.file.LocalFileProvider;
+import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.nio.file.Paths;
 
 public class TestCommand {
+    private static String base;
+    private static VirtualFileSystem vfs;
+
+    @BeforeClass
+    public static void beforeClass() {
+        base = Paths.get(".").toUri().normalize().toString();
+        vfs = new DefaultVirtualFileSystem(new ConfigurationBuilder().build());
+        vfs.load(new LocalFileProvider());
+    }
+
+    @AfterClass
+    public static void afterClass() throws Exception {
+        vfs.close();
+    }
+
     private String tree(File<?, ? extends File<?, ?>> file) throws Exception {
         StringBuilder buffer = new StringBuilder();
         try (FileStream<? extends File<?, ?>> stream = file.tree()) {
@@ -23,24 +40,42 @@ public class TestCommand {
     }
 
     @Test
+    public void testCopyFile() throws Exception {
+        File<?, ?> source = vfs.get(base + "test.txt");
+        File<?, ?> target = vfs.get(base + "temp/test.txt");
+
+        source.writeUtf8(RandomContent.randomString(30));
+        System.out.println(source.readUtf8());
+
+        Assert.assertTrue(source.exists());
+        Assert.assertTrue(source.isRegularFile());
+        Assert.assertTrue(target.isRegularFile());
+
+        System.out.println("target.exists: " + target.exists());
+        target.delete();
+        Assert.assertFalse(target.exists());
+        System.out.println("target.exists: " + target.exists());
+
+        vfs.copyAsync(source, target).join();
+
+        Assert.assertTrue(target.exists());
+        Assert.assertEquals(source.readUtf8(), target.readUtf8());
+
+        System.out.println(target.readUtf8());
+    }
+
+    @Test
     public void testCopyDir() throws Exception {
-        String dir = Paths.get(".").toUri().normalize().toString();
-
-        ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
-
-        VirtualFileSystem vfs = new DefaultVirtualFileSystem(configurationBuilder.build());
-        vfs.load(new LocalFileProvider());
-
-        File<?, ?> source = vfs.get(dir + "src/");
-        File<?, ?> target = vfs.get(dir + "temp/");
+        File<?, ?> source = vfs.get(base + "src/");
+        File<?, ?> target = vfs.get(base + "temp/");
 
         Assert.assertTrue(source.isDirectory());
         Assert.assertTrue(target.isDirectory());
 
         System.out.println("target.exists: " + target.exists());
         target.delete();
-        System.out.println("target.exists: " + target.exists());
         Assert.assertFalse(target.exists());
+        System.out.println("target.exists: " + target.exists());
 
         vfs.copyAsync(source, target).join();
 
@@ -48,56 +83,63 @@ public class TestCommand {
         Assert.assertEquals(tree(source), tree(target));
 
         System.out.println(tree(source));
-
-        vfs.close();
     }
 
     @Test
-    public void testMoveFileToDir() throws Exception {
-        String dir = Paths.get(".").toUri().normalize().toString();
+    public void testCopyFileToDir() throws Exception {
+        File<?, ?> source = vfs.get(base + "test.txt");
+        File<?, ?> target = vfs.get(base + "temp/");
 
-        ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
-
-        VirtualFileSystem vfs = new DefaultVirtualFileSystem(configurationBuilder.build());
-        vfs.load(new LocalFileProvider());
-
-
-        File<?, ?> source = vfs.get(dir + "test.txt");
-        File<?, ?> target = vfs.get(dir + "temp-move/");
-
-        String random = RandomContent.randomString(10);
-        System.out.println(random);
-
-        source.writeUtf8(random);
+        source.writeUtf8(RandomContent.randomString(30));
+        System.out.println(source.readUtf8());
 
         Assert.assertTrue(source.exists());
         Assert.assertTrue(source.isRegularFile());
-        Assert.assertEquals(random, source.readUtf8());
 
-        Assert.assertTrue(target.isDirectory());
+        target.delete();
+        Assert.assertFalse(target.exists());
+        System.out.println("target.exists: " + target.exists());
+
+        vfs.copyAsync(source, target).join();
+
+        Assert.assertTrue(source.exists());
+        Assert.assertTrue(target.resolve(source.getName()).exists());
+        Assert.assertEquals(source.readUtf8(), target.resolve(source.getName()).readUtf8());
+
+        System.out.println(target.resolve(source.getName()).readUtf8());
+    }
+
+    @Test
+    public void testMoveFile() throws Exception {
+        File<?, ?> source = vfs.get(base + "test.txt");
+        File<?, ?> target = vfs.get(base + "temp/test.txt");
+
+        source.writeUtf8(RandomContent.randomString(30));
+        String content = source.readUtf8();
+        System.out.println(source.readUtf8());
+
+        Assert.assertTrue(source.exists());
+        Assert.assertTrue(source.isRegularFile());
+        Assert.assertTrue(target.isRegularFile());
+
+        System.out.println("target.exists: " + target.exists());
+        target.delete();
+        Assert.assertFalse(target.exists());
         System.out.println("target.exists: " + target.exists());
 
         vfs.moveAsync(source, target).join();
 
         Assert.assertFalse(source.exists());
-        Assert.assertTrue(target.resolve(source.getName()).exists());
-        Assert.assertEquals(random, target.resolve(source.getName()).readUtf8());
+        Assert.assertTrue(target.exists());
+        Assert.assertEquals(content, target.readUtf8());
 
-        vfs.close();
+        System.out.println(target.readUtf8());
     }
 
     @Test
     public void testMoveDir() throws Exception {
-        String dir = Paths.get(".").toUri().normalize().toString();
-
-        ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
-
-        VirtualFileSystem vfs = new DefaultVirtualFileSystem(configurationBuilder.build());
-        vfs.load(new LocalFileProvider());
-
-
-        File<?, ?> source = vfs.get(dir + "temp/");
-        File<?, ?> target = vfs.get(dir + "temp-move/");
+        File<?, ?> source = vfs.get(base + "temp/");
+        File<?, ?> target = vfs.get(base + "temp-move/");
 
         Assert.assertTrue(source.exists());
         Assert.assertTrue(source.isDirectory());
@@ -109,7 +151,31 @@ public class TestCommand {
         Assert.assertFalse(target.exists());
 
         vfs.moveAsync(source, target).join();
+    }
 
-        vfs.close();
+    @Test
+    public void testMoveFileToDir() throws Exception {
+        File<?, ?> source = vfs.get(base + "test.txt");
+        File<?, ?> target = vfs.get(base + "temp/");
+
+        source.writeUtf8(RandomContent.randomString(30));
+        String content = source.readUtf8();
+        System.out.println(source.readUtf8());
+
+        Assert.assertTrue(source.exists());
+        Assert.assertTrue(source.isRegularFile());
+
+        target.delete();
+        Assert.assertFalse(target.exists());
+        Assert.assertTrue(target.isDirectory());
+        System.out.println("target.exists: " + target.exists());
+
+        vfs.moveAsync(source, target).join();
+
+        Assert.assertFalse(source.exists());
+        Assert.assertTrue(target.resolve(source.getName()).exists());
+        Assert.assertEquals(content, target.resolve(source.getName()).readUtf8());
+
+        System.out.println(target.resolve(source.getName()).readUtf8());
     }
 }
