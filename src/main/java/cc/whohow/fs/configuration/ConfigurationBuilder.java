@@ -11,7 +11,7 @@ public class ConfigurationBuilder {
     protected StringBuilder vfs;
 
     public ConfigurationBuilder() {
-        this(URI.create("etc:///"));
+        this(URI.create("etc:/"));
     }
 
     public ConfigurationBuilder(URI uri) {

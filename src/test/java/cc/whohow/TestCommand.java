@@ -13,10 +13,10 @@ import java.nio.file.Paths;
 
 public class TestCommand {
     @Test
-    public void testCopy() throws Exception {
+    public void testCopyDir() throws Exception {
         String dir = Paths.get(".").toUri().normalize().toString();
 
-        ConfigurationBuilder configurationBuilder = new ConfigurationBuilder(URI.create("conf:///"));
+        ConfigurationBuilder configurationBuilder = new ConfigurationBuilder(URI.create("conf:/"));
 
         VirtualFileSystem vfs = new DefaultVirtualFileSystem(configurationBuilder.build());
         vfs.load(new LocalFileProvider());
@@ -38,13 +38,51 @@ public class TestCommand {
     }
 
     @Test
-    public void testMove() throws Exception {
-        ConfigurationBuilder configurationBuilder = new ConfigurationBuilder(URI.create("conf:///"));
+    public void testMoveFileToDir() throws Exception {
+        String dir = Paths.get(".").toUri().normalize().toString();
+
+        ConfigurationBuilder configurationBuilder = new ConfigurationBuilder(URI.create("conf:/"));
 
         VirtualFileSystem vfs = new DefaultVirtualFileSystem(configurationBuilder.build());
         vfs.load(new LocalFileProvider());
 
-        vfs.moveAsync(vfs.get("file:///D:/temp-copy/"), vfs.get("file:///D:/temp-copy-2/")).join();
+
+        File<?, ?> source = vfs.get(dir + "test.txt");
+        File<?, ?> target = vfs.get(dir + "temp-move/");
+
+        Assert.assertTrue(source.exists());
+        Assert.assertTrue(source.isRegularFile());
+        Assert.assertTrue(target.isDirectory());
+        System.out.println(target.exists());
+
+        vfs.moveAsync(source, target).join();
+
+        vfs.close();
+    }
+
+    @Test
+    public void testMoveDir() throws Exception {
+        String dir = Paths.get(".").toUri().normalize().toString();
+
+        ConfigurationBuilder configurationBuilder = new ConfigurationBuilder(URI.create("conf:/"));
+
+        VirtualFileSystem vfs = new DefaultVirtualFileSystem(configurationBuilder.build());
+        vfs.load(new LocalFileProvider());
+
+
+        File<?, ?> source = vfs.get(dir + "temp/");
+        File<?, ?> target = vfs.get(dir + "temp-move/");
+
+        Assert.assertTrue(source.exists());
+        Assert.assertTrue(source.isDirectory());
+        Assert.assertTrue(target.isDirectory());
+
+        System.out.println(target.exists());
+        target.delete();
+        System.out.println(target.exists());
+        Assert.assertFalse(target.exists());
+
+        vfs.moveAsync(source, target).join();
 
         vfs.close();
     }

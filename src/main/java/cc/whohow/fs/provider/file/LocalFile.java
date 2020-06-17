@@ -1,7 +1,6 @@
 package cc.whohow.fs.provider.file;
 
 import cc.whohow.fs.File;
-import cc.whohow.fs.FileSystem;
 
 public class LocalFile implements File<LocalPath, LocalFile> {
     private final LocalFileSystem fileSystem;
@@ -13,7 +12,7 @@ public class LocalFile implements File<LocalPath, LocalFile> {
     }
 
     @Override
-    public FileSystem<LocalPath, LocalFile> getFileSystem() {
+    public LocalFileSystem getFileSystem() {
         return fileSystem;
     }
 
@@ -25,5 +24,9 @@ public class LocalFile implements File<LocalPath, LocalFile> {
     @Override
     public String toString() {
         return getPath().toString();
+    }
+
+    public void createDirectories() {
+        getFileSystem().createDirectories(getPath());
     }
 }

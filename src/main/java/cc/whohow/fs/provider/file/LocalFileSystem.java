@@ -68,7 +68,7 @@ public class LocalFileSystem implements FileSystem<LocalPath, LocalFile> {
     @Override
     public boolean exists(LocalPath path) {
         log.trace("exists: {}", path);
-        return java.nio.file.Files.exists(path.getPath());
+        return java.nio.file.Files.exists(path.getFilePath());
     }
 
     public LocalFile get(java.nio.file.Path path) {
@@ -85,7 +85,7 @@ public class LocalFileSystem implements FileSystem<LocalPath, LocalFile> {
         try {
             log.trace("readAttributes: {}", path);
             return new LocalFileAttributes(java.nio.file.Files.getFileAttributeView(
-                    path.getPath(), BasicFileAttributeView.class).readAttributes());
+                    path.getFilePath(), BasicFileAttributeView.class).readAttributes());
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -97,7 +97,7 @@ public class LocalFileSystem implements FileSystem<LocalPath, LocalFile> {
             try {
                 // TODO FileChannel
                 log.trace("newInputStream: {}", path);
-                return new FileReadableStream(java.nio.file.Files.newInputStream(path.getPath()));
+                return new FileReadableStream(java.nio.file.Files.newInputStream(path.getFilePath()));
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
             }
@@ -109,15 +109,10 @@ public class LocalFileSystem implements FileSystem<LocalPath, LocalFile> {
     public FileWritableChannel newWritableChannel(LocalPath path) {
         if (path.isRegularFile()) {
             try {
-                java.nio.file.Path parent = path.getPath().getParent();
-                log.trace("notExists: {}", parent);
-                if (java.nio.file.Files.notExists(parent)) {
-                    log.trace("createDirectories: {}", parent);
-                    java.nio.file.Files.createDirectories(parent);
-                }
+                createDirectories(path);
                 // TODO FileChannel
                 log.trace("newOutputStream: {}", path);
-                return new FileWritableStream(java.nio.file.Files.newOutputStream(path.getPath()));
+                return new FileWritableStream(java.nio.file.Files.newOutputStream(path.getFilePath()));
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
             }
@@ -125,11 +120,26 @@ public class LocalFileSystem implements FileSystem<LocalPath, LocalFile> {
         throw new UnsupportedOperationException(path + " is not file");
     }
 
+    public void createDirectories(LocalPath path) {
+        try {
+            if (path.isDirectory()) {
+                java.nio.file.Files.createDirectories(path.getFilePath());
+            } else {
+                java.nio.file.Path parent = path.getFilePath().getParent();
+                if (parent != null) {
+                    java.nio.file.Files.createDirectories(parent);
+                }
+            }
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
     @Override
     public DirectoryStream<LocalFile> newDirectoryStream(LocalPath path) {
         try {
             log.trace("newDirectoryStream: {}", path);
-            DirectoryStream<java.nio.file.Path> directoryStream = java.nio.file.Files.newDirectoryStream(path.getPath());
+            DirectoryStream<java.nio.file.Path> directoryStream = java.nio.file.Files.newDirectoryStream(path.getFilePath());
             return Files.newDirectoryStream(new MappingIterable<>(directoryStream, this::get), directoryStream);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
@@ -144,7 +154,7 @@ public class LocalFileSystem implements FileSystem<LocalPath, LocalFile> {
             }
             if (path.isDirectory()) {
                 log.trace("walkFileTree: {}", path);
-                java.nio.file.Files.walkFileTree(path.getPath(), new SimpleFileVisitor<java.nio.file.Path>() {
+                java.nio.file.Files.walkFileTree(path.getFilePath(), new SimpleFileVisitor<java.nio.file.Path>() {
                     @Override
                     public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                         log.trace("delete: {}", file);
@@ -161,7 +171,7 @@ public class LocalFileSystem implements FileSystem<LocalPath, LocalFile> {
                 });
             } else {
                 log.trace("delete: {}", path);
-                java.nio.file.Files.delete(path.getPath());
+                java.nio.file.Files.delete(path.getFilePath());
             }
         } catch (IOException e) {
             throw new UncheckedIOException(e);

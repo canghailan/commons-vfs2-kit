@@ -11,6 +11,7 @@ import org.apache.logging.log4j.Logger;
 import java.net.URI;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 
 public class LocalFileProvider implements FileSystemProvider<LocalPath, LocalFile> {
@@ -52,5 +53,15 @@ public class LocalFileProvider implements FileSystemProvider<LocalPath, LocalFil
     @Override
     public ExecutorService getExecutor() {
         return vfs.getExecutor();
+    }
+
+    @Override
+    public CompletableFuture<LocalFile> copyAsync(LocalFile source, LocalFile target) {
+        return CompletableFuture.supplyAsync(new LocalFileCopy(source, target), getExecutor());
+    }
+
+    @Override
+    public CompletableFuture<LocalFile> moveAsync(LocalFile source, LocalFile target) {
+        return CompletableFuture.supplyAsync(new LocalFileMove(source, target), getExecutor());
     }
 }
