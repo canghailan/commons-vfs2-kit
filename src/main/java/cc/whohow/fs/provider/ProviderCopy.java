@@ -3,8 +3,11 @@ package cc.whohow.fs.provider;
 import cc.whohow.fs.Copy;
 import cc.whohow.fs.File;
 import cc.whohow.fs.FileSystemProvider;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class ProviderCopy<F extends File<?, F>> implements Copy<F, F> {
+    private static final Logger log = LogManager.getLogger(ProviderCopy.class);
     protected final FileSystemProvider<?, F> provider;
     protected final F source;
     protected final F target;
@@ -27,6 +30,7 @@ public class ProviderCopy<F extends File<?, F>> implements Copy<F, F> {
 
     @Override
     public F call() throws Exception {
+        log.trace("copy {} -> {}", source, target);
         return provider.copyAsync(source, target).join();
     }
 

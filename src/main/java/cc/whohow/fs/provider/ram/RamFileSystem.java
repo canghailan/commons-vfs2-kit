@@ -84,7 +84,7 @@ public class RamFileSystem implements FileSystem<KeyPath, RamFile> {
             if (file != null) {
                 return file;
             }
-            log.debug("create new file: {}", path);
+            log.debug("new file: {}", path);
             return new RamRegularFile(this, path,
                     new BinaryObjectFile(path.toUri(), Files.emptyFileAttributes(), ByteBuffers.empty()));
         }

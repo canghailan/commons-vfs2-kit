@@ -18,6 +18,7 @@ public class LocalFileCopy extends StreamCopy.Parallel<LocalFile, LocalFile> {
 
     @Override
     protected LocalFile copyFile(LocalFile source, LocalFile target) throws IOException {
+        target.createDirectories();
         log.debug("Files.copy: {} -> {}", source, target);
         Files.copy(source.getPath().getFilePath(), target.getPath().getFilePath(),
                 StandardCopyOption.REPLACE_EXISTING);

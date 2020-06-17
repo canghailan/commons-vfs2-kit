@@ -38,6 +38,7 @@ public class StreamCopy<F1 extends File<?, F1>, F2 extends File<?, F2>> implemen
 
     @Override
     public F2 call() throws Exception {
+        log.trace("copy {} -> {}", source, target);
         if (source.isDirectory()) {
             if (target.isDirectory()) {
                 return copyDirectory(source, target);
@@ -54,7 +55,7 @@ public class StreamCopy<F1 extends File<?, F1>, F2 extends File<?, F2>> implemen
     }
 
     protected F2 copyFile(F1 source, F2 target) throws IOException {
-        log.debug("stream copy: {} -> {}", source, target);
+        log.trace("stream copy: {} -> {}", source, target);
         try (FileReadableChannel readableChannel = source.newReadableChannel();
              FileWritableChannel writableChannel = target.newWritableChannel()) {
             writableChannel.transferFrom(readableChannel);

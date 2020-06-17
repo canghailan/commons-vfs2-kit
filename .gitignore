@@ -2,5 +2,5 @@
 *.iml
 target/
 temp/
-test*
+test.txt
 vfs.yml

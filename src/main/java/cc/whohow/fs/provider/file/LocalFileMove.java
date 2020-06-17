@@ -29,8 +29,10 @@ public class LocalFileMove implements Move<LocalFile, LocalFile> {
 
     @Override
     public LocalFile call() throws Exception {
+        log.debug("move: {} -> {}", source, target);
         if (source.isDirectory()) {
             if (target.isDirectory()) {
+                target.createDirectories();
                 log.debug("Files.move: {} -> {}", source, target);
                 Files.move(source.getPath().getFilePath(), target.getPath().getFilePath(),
                         StandardCopyOption.REPLACE_EXISTING);
