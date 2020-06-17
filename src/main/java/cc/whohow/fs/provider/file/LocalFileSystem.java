@@ -1,8 +1,8 @@
 package cc.whohow.fs.provider.file;
 
 import cc.whohow.fs.*;
-import cc.whohow.fs.io.FileReadableStream;
-import cc.whohow.fs.io.FileWritableStream;
+import cc.whohow.fs.util.FileReadableStream;
+import cc.whohow.fs.util.FileWritableStream;
 import cc.whohow.fs.util.Files;
 import cc.whohow.fs.util.MappingIterable;
 import org.apache.logging.log4j.LogManager;

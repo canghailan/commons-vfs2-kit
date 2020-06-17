@@ -1,7 +1,7 @@
 package cc.whohow.configuration.provider;
 
 import cc.whohow.configuration.Configuration;
-import cc.whohow.fs.io.IO;
+import cc.whohow.fs.util.IO;
 import org.apache.commons.vfs2.FileChangeEvent;
 import org.apache.commons.vfs2.FileContent;
 import org.apache.commons.vfs2.FileListener;

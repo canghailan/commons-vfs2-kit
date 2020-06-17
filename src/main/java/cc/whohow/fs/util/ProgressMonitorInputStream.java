@@ -1,4 +1,4 @@
-package cc.whohow.fs.io;
+package cc.whohow.fs.util;
 
 import java.io.FilterInputStream;
 import java.io.IOException;

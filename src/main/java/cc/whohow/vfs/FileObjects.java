@@ -1,9 +1,9 @@
 package cc.whohow.vfs;
 
-import cc.whohow.fs.io.FileReadableStream;
-import cc.whohow.fs.io.FileWritableStream;
-import cc.whohow.fs.io.IO;
-import cc.whohow.fs.io.UncheckedCloseable;
+import cc.whohow.fs.util.FileReadableStream;
+import cc.whohow.fs.util.FileWritableStream;
+import cc.whohow.fs.util.IO;
+import cc.whohow.fs.util.UncheckedCloseable;
 import org.apache.commons.vfs2.FileContent;
 import org.apache.commons.vfs2.FileNotFoundException;
 import org.apache.commons.vfs2.FileObject;

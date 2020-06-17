@@ -1,4 +1,4 @@
-package cc.whohow.fs.io;
+package cc.whohow.fs.util;
 
 import cc.whohow.fs.UncheckedException;
 

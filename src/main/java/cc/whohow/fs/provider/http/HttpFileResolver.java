@@ -1,7 +1,7 @@
 package cc.whohow.fs.provider.http;
 
 import cc.whohow.fs.FileResolver;
-import cc.whohow.fs.path.UriPath;
+import cc.whohow.fs.provider.UriPath;
 
 import java.net.URI;
 import java.util.Optional;

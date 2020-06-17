@@ -1,6 +1,6 @@
 package cc.whohow.fs;
 
-import cc.whohow.fs.io.IO;
+import cc.whohow.fs.util.IO;
 
 import java.io.IOException;
 import java.io.InputStream;

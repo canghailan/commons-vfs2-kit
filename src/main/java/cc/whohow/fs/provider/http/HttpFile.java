@@ -1,7 +1,7 @@
 package cc.whohow.fs.provider.http;
 
 import cc.whohow.fs.File;
-import cc.whohow.fs.path.UriPath;
+import cc.whohow.fs.provider.UriPath;
 
 public class HttpFile implements File<UriPath, HttpFile> {
     private final HttpFileSystem fileSystem;

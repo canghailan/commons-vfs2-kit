@@ -1,7 +1,7 @@
 package cc.whohow.configuration.provider;
 
-import cc.whohow.fs.io.ByteBufferReadableChannel;
-import cc.whohow.fs.io.ByteBufferWritableChannel;
+import cc.whohow.fs.util.ByteBufferReadableChannel;
+import cc.whohow.fs.util.ByteBufferWritableChannel;
 import org.apache.commons.vfs2.FileObject;
 
 import java.io.IOException;

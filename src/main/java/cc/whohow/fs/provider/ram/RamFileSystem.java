@@ -1,8 +1,8 @@
 package cc.whohow.fs.provider.ram;
 
 import cc.whohow.fs.*;
-import cc.whohow.fs.io.ByteBuffers;
-import cc.whohow.fs.path.KeyPath;
+import cc.whohow.fs.provider.KeyPath;
+import cc.whohow.fs.util.ByteBuffers;
 import cc.whohow.fs.util.Files;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

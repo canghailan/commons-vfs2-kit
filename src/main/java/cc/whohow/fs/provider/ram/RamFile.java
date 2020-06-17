@@ -2,7 +2,7 @@ package cc.whohow.fs.provider.ram;
 
 import cc.whohow.fs.File;
 import cc.whohow.fs.FileAttributes;
-import cc.whohow.fs.path.KeyPath;
+import cc.whohow.fs.provider.KeyPath;
 import cc.whohow.fs.util.Files;
 
 public class RamFile implements File<KeyPath, RamFile> {

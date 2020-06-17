@@ -1,7 +1,7 @@
 package cc.whohow.fs.provider.http;
 
 import cc.whohow.fs.*;
-import cc.whohow.fs.path.UriPath;
+import cc.whohow.fs.provider.UriPath;
 import cc.whohow.fs.util.Files;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;

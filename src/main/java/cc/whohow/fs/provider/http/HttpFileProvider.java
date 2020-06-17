@@ -4,7 +4,7 @@ import cc.whohow.fs.File;
 import cc.whohow.fs.FileSystem;
 import cc.whohow.fs.FileSystemProvider;
 import cc.whohow.fs.VirtualFileSystem;
-import cc.whohow.fs.path.UriPath;
+import cc.whohow.fs.provider.UriPath;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

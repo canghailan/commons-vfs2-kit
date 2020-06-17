@@ -1,13 +1,9 @@
 package cc.whohow.fs.provider.qcloud.cos;
 
 import cc.whohow.fs.*;
-import cc.whohow.fs.io.FileReadableStream;
 import cc.whohow.fs.provider.s3.S3Uri;
 import cc.whohow.fs.provider.s3.S3UriPath;
-import cc.whohow.fs.util.FileTree;
-import cc.whohow.fs.util.Files;
-import cc.whohow.fs.util.FilterIterable;
-import cc.whohow.fs.util.MappingPredicate;
+import cc.whohow.fs.util.*;
 import com.qcloud.cos.COS;
 import com.qcloud.cos.model.COSObjectSummary;
 import com.qcloud.cos.model.DeleteObjectsRequest;

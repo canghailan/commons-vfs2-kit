@@ -1,4 +1,4 @@
-package cc.whohow.fs.path;
+package cc.whohow.fs.provider;
 
 import java.net.URI;
 

@@ -4,7 +4,7 @@ import cc.whohow.fs.Attribute;
 import cc.whohow.fs.File;
 import cc.whohow.fs.FileAttributes;
 import cc.whohow.fs.FileReadableChannel;
-import cc.whohow.fs.io.IO;
+import cc.whohow.fs.util.IO;
 import cc.whohow.fs.util.MappingIterator;
 import org.apache.commons.vfs2.*;
 import org.apache.commons.vfs2.impl.DefaultFileContentInfo;

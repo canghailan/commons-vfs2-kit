@@ -1,4 +1,4 @@
-package cc.whohow.fs.net;
+package cc.whohow.fs.util;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

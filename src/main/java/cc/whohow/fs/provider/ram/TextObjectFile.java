@@ -3,8 +3,8 @@ package cc.whohow.fs.provider.ram;
 import cc.whohow.fs.FileAttributes;
 import cc.whohow.fs.FileReadableChannel;
 import cc.whohow.fs.FileWritableChannel;
-import cc.whohow.fs.io.ByteBufferFileReadableChannel;
-import cc.whohow.fs.io.ByteBufferFileWritableChannel;
+import cc.whohow.fs.util.ByteBufferFileReadableChannel;
+import cc.whohow.fs.util.ByteBufferFileWritableChannel;
 
 import java.net.URI;
 import java.nio.ByteBuffer;

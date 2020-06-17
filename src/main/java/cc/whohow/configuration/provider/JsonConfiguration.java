@@ -1,6 +1,6 @@
 package cc.whohow.configuration.provider;
 
-import cc.whohow.fs.io.ByteBufferReadableChannel;
+import cc.whohow.fs.util.ByteBufferReadableChannel;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JavaType;

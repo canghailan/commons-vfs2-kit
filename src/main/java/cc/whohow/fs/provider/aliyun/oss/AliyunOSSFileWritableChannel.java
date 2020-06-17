@@ -2,8 +2,8 @@ package cc.whohow.fs.provider.aliyun.oss;
 
 import cc.whohow.fs.FileReadableChannel;
 import cc.whohow.fs.FileWritableChannel;
-import cc.whohow.fs.io.ByteBufferReadableChannel;
-import cc.whohow.fs.io.ProgressMonitorInputStream;
+import cc.whohow.fs.util.ByteBufferReadableChannel;
+import cc.whohow.fs.util.ProgressMonitorInputStream;
 import com.aliyun.oss.OSS;
 import com.aliyun.oss.model.AppendObjectRequest;
 import org.apache.logging.log4j.LogManager;

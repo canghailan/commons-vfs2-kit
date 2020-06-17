@@ -1,13 +1,9 @@
 package cc.whohow.fs.provider.aliyun.oss;
 
 import cc.whohow.fs.*;
-import cc.whohow.fs.io.FileReadableStream;
 import cc.whohow.fs.provider.s3.S3Uri;
 import cc.whohow.fs.provider.s3.S3UriPath;
-import cc.whohow.fs.util.FileTree;
-import cc.whohow.fs.util.Files;
-import cc.whohow.fs.util.FilterIterable;
-import cc.whohow.fs.util.MappingPredicate;
+import cc.whohow.fs.util.*;
 import com.aliyun.oss.OSS;
 import com.aliyun.oss.model.DeleteObjectsRequest;
 import com.aliyun.oss.model.OSSObjectSummary;
