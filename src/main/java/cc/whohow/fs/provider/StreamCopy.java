@@ -1,7 +1,7 @@
 package cc.whohow.fs.provider;
 
 import cc.whohow.fs.*;
-import cc.whohow.fs.util.CompletionCounter;
+import cc.whohow.fs.util.MapReduce;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -109,21 +109,19 @@ public class StreamCopy<F1 extends File<?, F1>, F2 extends File<?, F2>> implemen
         }
 
         protected F2 copyDirectory(F1 source, F2 target, ExecutorService executor) throws IOException {
-            CompletionCounter completionCounter = new CompletionCounter();
-            completionCounter.register();
+            MapReduce<F2, F2> mapReduce = new MapReduce<>(target);
+            mapReduce.map();
             try (FileStream<F1> files = source.tree()) {
                 for (F1 file : files) {
                     if (file.isRegularFile()) {
-                        completionCounter.register();
-                        CompletableFuture.supplyAsync(newFileCopy(
-                                file, target.resolve(source.getPath().relativize(file.getPath()))), executor)
-                                .whenComplete(completionCounter::complete);
+                        mapReduce.map(CompletableFuture.supplyAsync(newFileCopy(
+                                file, target.resolve(source.getPath().relativize(file.getPath()))), executor));
                     }
                 }
             }
-            completionCounter.complete();
-            completionCounter.join();
-            log.trace("copy files completed: {}", completionCounter.getCompleted() - 1);
+            mapReduce.reduce();
+            mapReduce.join();
+            log.trace("copy files completed: {}", mapReduce.getCompleted() - 1);
             return target;
         }
 
