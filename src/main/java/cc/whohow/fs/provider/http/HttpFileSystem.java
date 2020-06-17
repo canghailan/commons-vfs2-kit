@@ -125,4 +125,9 @@ public class HttpFileSystem implements FileSystem<UriPath, HttpFile> {
         log.debug("close httpClient");
         httpClient.close();
     }
+
+    @Override
+    public String toString() {
+        return uri.toString();
+    }
 }

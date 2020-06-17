@@ -8,6 +8,7 @@ import org.apache.commons.vfs2.provider.VfsComponentContext;
 
 import java.io.File;
 import java.net.URI;
+import java.util.Objects;
 
 public class FileSystemAdapter implements FileSystem, VfsComponent {
     protected final cc.whohow.fs.FileSystem<?, ?> fileSystem;
@@ -15,6 +16,7 @@ public class FileSystemAdapter implements FileSystem, VfsComponent {
     protected volatile Log logger;
 
     public FileSystemAdapter(cc.whohow.fs.FileSystem<?, ?> fileSystem) {
+        Objects.requireNonNull(fileSystem);
         this.fileSystem = fileSystem;
     }
 
@@ -126,6 +128,7 @@ public class FileSystemAdapter implements FileSystem, VfsComponent {
 
     @Override
     public double getLastModTimeAccuracy() {
+        // default
         return 0;
     }
 
@@ -160,7 +163,7 @@ public class FileSystemAdapter implements FileSystem, VfsComponent {
         }
         if (o instanceof FileSystemAdapter) {
             FileSystemAdapter that = (FileSystemAdapter) o;
-            return that.fileSystem.equals(this.fileSystem);
+            return fileSystem.equals(that.fileSystem);
         }
         return false;
     }

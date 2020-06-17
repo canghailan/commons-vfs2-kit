@@ -21,6 +21,7 @@ public class HttpAttribute extends AbstractStringAttribute {
     }
 
     public HttpAttribute(HttpMessage httpMessage, String name) {
+        Objects.requireNonNull(name);
         this.name = name;
         this.header = httpMessage.getFirstHeader(name);
     }
@@ -51,6 +52,24 @@ public class HttpAttribute extends AbstractStringAttribute {
             return null;
         }
         return FileTime.from(date.toInstant());
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o instanceof HttpAttribute) {
+            HttpAttribute that = (HttpAttribute) o;
+            return name.equals(that.name) &&
+                    Objects.equals(header, that.header);
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, header);
     }
 
     @Override

@@ -123,25 +123,15 @@ public interface FileSystem<P extends Path, F extends File<P, F>> extends Object
     void delete(P path);
 
     default FileWatchService<P, F> getWatchService() {
-        return null;
+        throw new UnsupportedOperationException("WatchService");
     }
 
     default void watch(P path, Consumer<FileWatchEvent<P, F>> listener) {
-        FileWatchService<P, F> watchService = getWatchService();
-        if (watchService != null) {
-            watchService.watch(get(path), listener);
-        } else {
-            throw new UnsupportedOperationException();
-        }
+        getWatchService().watch(get(path), listener);
     }
 
     default void unwatch(P path, Consumer<FileWatchEvent<P, F>> listener) {
-        FileWatchService<P, F> watchService = getWatchService();
-        if (watchService != null) {
-            watchService.watch(get(path), listener);
-        } else {
-            throw new UnsupportedOperationException();
-        }
+        getWatchService().unwatch(get(path), listener);
     }
 
     /**

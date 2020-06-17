@@ -1,6 +1,7 @@
 package cc.whohow.fs.provider.qcloud.cos;
 
 import cc.whohow.fs.Attribute;
+import cc.whohow.fs.Attributes;
 import cc.whohow.fs.FileAttributes;
 import cc.whohow.fs.attribute.DateAttribute;
 import cc.whohow.fs.attribute.LongAttribute;
@@ -76,5 +77,27 @@ public class QcloudCOSObjectSummaryFileAttributes implements FileAttributes {
                 new StringAttribute(QcloudCOSFileAttributes.ETAG, getETag()),
                 new StringAttribute(QcloudCOSFileAttributes.STORAGE_CLASS, getStorageClass())
         ).iterator();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o instanceof QcloudCOSObjectSummaryFileAttributes) {
+            QcloudCOSObjectSummaryFileAttributes that = (QcloudCOSObjectSummaryFileAttributes) o;
+            return objectSummary.equals(that.objectSummary);
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return objectSummary.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return Attributes.toString(this);
     }
 }

@@ -34,6 +34,23 @@ public class LocalFileAttributes implements FileAttributes {
     }
 
     @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o instanceof LocalFileAttributes) {
+            LocalFileAttributes that = (LocalFileAttributes) o;
+            return fileAttributes.equals(that.fileAttributes);
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return fileAttributes.hashCode();
+    }
+
+    @Override
     public String toString() {
         return Attributes.toString(this);
     }

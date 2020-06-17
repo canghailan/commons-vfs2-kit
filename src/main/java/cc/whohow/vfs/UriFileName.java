@@ -7,11 +7,13 @@ import org.apache.commons.vfs2.FileType;
 import org.apache.commons.vfs2.NameScope;
 
 import java.net.URI;
+import java.util.Objects;
 
 public class UriFileName implements FileName {
     protected final URI uri;
 
     public UriFileName(URI uri) {
+        Objects.requireNonNull(uri);
         this.uri = uri;
     }
 
@@ -52,22 +54,25 @@ public class UriFileName implements FileName {
 
     @Override
     public String getRootURI() {
+        // TODO
         return null;
     }
 
     @Override
     public FileName getRoot() {
+        // TODO
         return null;
     }
 
     @Override
     public FileName getParent() {
+        // TODO
         return null;
     }
 
     @Override
     public String getRelativeName(FileName name) throws FileSystemException {
-        return uri.relativize(URI.create(name.getURI())).toString();
+        return Paths.relativize(uri, URI.create(name.getURI()));
     }
 
     @Override
@@ -111,10 +116,12 @@ public class UriFileName implements FileName {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
+        if (this == o) {
+            return true;
+        }
         if (o instanceof UriFileName) {
             UriFileName that = (UriFileName) o;
-            return that.uri.equals(this.uri);
+            return uri.equals(that.uri);
         }
         return false;
     }

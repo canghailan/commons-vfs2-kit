@@ -27,4 +27,9 @@ public class CopyAndDelete<F1 extends File<?, F1>, F2 extends File<?, F2>> imple
     public F2 getTarget() {
         return copy.getTarget();
     }
+
+    @Override
+    public String toString() {
+        return "move " + getSource() + " " + getTarget();
+    }
 }

@@ -177,6 +177,8 @@ public class QcloudCOSFileSystem implements FileSystem<S3UriPath, QcloudCOSFile>
     public FileStream<QcloudCOSFile> tree(S3UriPath path, int maxDepth) {
         if (path.isDirectory()) {
             switch (maxDepth) {
+                case 0:
+                    return Files.newFileStream(Collections.singleton(get(path)));
                 case 1:
                     return new QcloudCOSFileTree(this, path, false);
                 case Integer.MAX_VALUE:
@@ -192,5 +194,10 @@ public class QcloudCOSFileSystem implements FileSystem<S3UriPath, QcloudCOSFile>
     @Override
     public void close() throws Exception {
         log.debug("close QcloudCOSFileSystem: {}", uri);
+    }
+
+    @Override
+    public String toString() {
+        return uri.toString();
     }
 }

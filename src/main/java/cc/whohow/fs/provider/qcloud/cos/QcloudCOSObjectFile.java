@@ -55,4 +55,26 @@ public class QcloudCOSObjectFile implements ObjectFile {
         log.trace("deleteObject: cos://{}/{}", uri.getBucketName(), uri.getKey());
         cos.deleteObject(uri.getBucketName(), uri.getKey());
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o instanceof QcloudCOSObjectFile) {
+            QcloudCOSObjectFile that = (QcloudCOSObjectFile) o;
+            return uri.equals(that.uri);
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return uri.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return uri.toString();
+    }
 }

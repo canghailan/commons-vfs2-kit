@@ -54,4 +54,9 @@ public class LocalFileMove implements Move<LocalFile, LocalFile> {
             }
         }
     }
+
+    @Override
+    public String toString() {
+        return "mv " + source + " " + target;
+    }
 }

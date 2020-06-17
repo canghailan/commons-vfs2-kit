@@ -95,6 +95,17 @@ public class QcloudCOSFileAttributes implements FileAttributes {
         }
     }
 
+    @Override
+    @SuppressWarnings("unchecked")
+    public <T> Optional<T> getValue(String name) {
+        if (name.startsWith(Headers.COS_USER_METADATA_PREFIX)) {
+            String key = name.substring(Headers.COS_USER_METADATA_PREFIX.length());
+            return Optional.ofNullable((T) objectMetadata.getUserMetadata().get(key));
+        } else {
+            return Optional.ofNullable((T) objectMetadata.getRawMetadata().get(name));
+        }
+    }
+
     private Attribute<?> toAttribute(String name, Object value) {
         if (value instanceof String) {
             return new StringAttribute(name, (String) value);
@@ -117,6 +128,23 @@ public class QcloudCOSFileAttributes implements FileAttributes {
                 objectMetadata.getUserMetadata().entrySet().stream()
                         .map(e -> new StringAttribute(Headers.COS_USER_METADATA_PREFIX + e.getKey(), e.getValue()))
                         .iterator()));
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o instanceof QcloudCOSFileAttributes) {
+            QcloudCOSFileAttributes that = (QcloudCOSFileAttributes) o;
+            return objectMetadata.equals(that.objectMetadata);
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return objectMetadata.hashCode();
     }
 
     @Override

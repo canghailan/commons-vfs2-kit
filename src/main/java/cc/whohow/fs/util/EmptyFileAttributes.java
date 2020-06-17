@@ -35,7 +35,7 @@ class EmptyFileAttributes implements FileAttributes {
 
     @Override
     public long size() {
-        return -1;
+        return 0;
     }
 
     @Override

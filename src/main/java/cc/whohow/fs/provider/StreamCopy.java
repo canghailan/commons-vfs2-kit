@@ -81,6 +81,11 @@ public class StreamCopy<F1 extends File<?, F1>, F2 extends File<?, F2>> implemen
         return target;
     }
 
+    @Override
+    public String toString() {
+        return "copy " + getSource() + " " + getTarget();
+    }
+
     public static class Parallel<F1 extends File<?, F1>, F2 extends File<?, F2>> extends StreamCopy<F1, F2> {
         protected ExecutorService executor;
 

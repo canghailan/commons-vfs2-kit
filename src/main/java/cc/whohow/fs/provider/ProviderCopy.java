@@ -29,4 +29,9 @@ public class ProviderCopy<F extends File<?, F>> implements Copy<F, F> {
     public F call() throws Exception {
         return provider.copyAsync(source, target).join();
     }
+
+    @Override
+    public String toString() {
+        return "copy " + getSource() + " " + getTarget();
+    }
 }

@@ -18,12 +18,17 @@ public class QcloudCOSFileTree implements FileStream<QcloudCOSFile> {
     }
 
     @Override
+    public Iterator<QcloudCOSFile> iterator() {
+        return new QcloudCOSFileIterator(fileSystem, path, recursively);
+    }
+
+    @Override
     public void close() throws IOException {
 
     }
 
     @Override
-    public Iterator<QcloudCOSFile> iterator() {
-        return new QcloudCOSFileIterator(fileSystem, path, recursively);
+    public String toString() {
+        return "tree " + path;
     }
 }

@@ -23,4 +23,9 @@ public class HttpFileResolver implements FileResolver<UriPath, HttpFile> {
             return Optional.of(httpFileSystem.get(httpFileSystem.resolve(base + path)));
         }
     }
+
+    @Override
+    public String toString() {
+        return base;
+    }
 }

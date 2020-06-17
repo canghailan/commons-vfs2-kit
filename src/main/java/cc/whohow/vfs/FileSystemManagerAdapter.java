@@ -59,7 +59,9 @@ public class FileSystemManagerAdapter implements FileSystemManager, FileSystem, 
 
     @Override
     public void close() {
-        defaultFileReplicator.close();
+        if (defaultFileReplicator != null) {
+            defaultFileReplicator.close();
+        }
     }
 
     @Override
@@ -158,10 +160,8 @@ public class FileSystemManagerAdapter implements FileSystemManager, FileSystem, 
     @Override
     public String[] getSchemes() {
         return vfs.getProviders().stream()
-                .map(FileSystemProvider::getFileSystems)
-                .flatMap(Collection::stream)
-                .map(cc.whohow.fs.FileSystem::getUri)
-                .map(URI::getScheme)
+                .map(FileSystemProvider::getScheme)
+                .filter(Objects::nonNull)
                 .distinct()
                 .toArray(String[]::new);
     }
@@ -174,10 +174,7 @@ public class FileSystemManagerAdapter implements FileSystemManager, FileSystem, 
     @Override
     public boolean hasProvider(String scheme) {
         return vfs.getProviders().stream()
-                .map(FileSystemProvider::getFileSystems)
-                .flatMap(Collection::stream)
-                .map(cc.whohow.fs.FileSystem::getUri)
-                .map(URI::getScheme)
+                .map(FileSystemProvider::getScheme)
                 .anyMatch(scheme::equals);
     }
 
@@ -261,12 +258,12 @@ public class FileSystemManagerAdapter implements FileSystemManager, FileSystem, 
 
     @Override
     public void copyFrom(FileObject srcFile, FileSelector selector) throws FileSystemException {
-        throw new FileSystemException("vfs.provider/copy-file.error", srcFile, getRootName());
+        throw new FileSystemException("vfs.provider/copy-file.error", srcFile, this);
     }
 
     @Override
     public void createFile() throws FileSystemException {
-        throw new FileSystemException("vfs.provider/create-file.error", getRootName());
+        throw new FileSystemException("vfs.provider/create-file.error", this);
     }
 
     @Override
@@ -296,27 +293,27 @@ public class FileSystemManagerAdapter implements FileSystemManager, FileSystem, 
 
     @Override
     public FileObject[] findFiles(FileSelector selector) throws FileSystemException {
-        throw new FileSystemException("vfs.provider/find-files.error", getName());
+        throw new FileSystemException("vfs.provider/find-files.error", this);
     }
 
     @Override
     public void findFiles(FileSelector selector, boolean depthwise, List<FileObject> selected) throws FileSystemException {
-        throw new FileSystemException("vfs.provider/find-files.error", getName());
+        throw new FileSystemException("vfs.provider/find-files.error", this);
     }
 
     @Override
     public FileObject getChild(String name) throws FileSystemException {
-        throw new FileSystemException("vfs.provider/list-children.error", getName());
+        throw new FileSystemException("vfs.provider/list-children.error", this);
     }
 
     @Override
     public FileObject[] getChildren() throws FileSystemException {
-        throw new FileSystemException("vfs.provider/list-children.error", getName());
+        throw new FileSystemException("vfs.provider/list-children.error", this);
     }
 
     @Override
     public FileContent getContent() throws FileSystemException {
-        throw new FileSystemException("vfs.provider/read-not-file.error", getName());
+        throw new FileSystemException("vfs.provider/read-not-file.error", this);
     }
 
     @Override
@@ -353,7 +350,7 @@ public class FileSystemManagerAdapter implements FileSystemManager, FileSystem, 
 
     @Override
     public URL getURL() throws FileSystemException {
-        throw new FileSystemException("vfs.provider/get-url.error", getName());
+        throw new FileSystemException("vfs.provider/get-url.error", this);
     }
 
     @Override
@@ -405,7 +402,7 @@ public class FileSystemManagerAdapter implements FileSystemManager, FileSystem, 
 
     @Override
     public void refresh() throws FileSystemException {
-        // do nothing
+        // stateless, do nothing
     }
 
     @Override
@@ -590,11 +587,6 @@ public class FileSystemManagerAdapter implements FileSystemManager, FileSystem, 
     }
 
     @Override
-    public String toString() {
-        return vfs.toString();
-    }
-
-    @Override
     public int compareTo(FileObject o) {
         return getName().compareTo(o.getName());
     }
@@ -602,5 +594,10 @@ public class FileSystemManagerAdapter implements FileSystemManager, FileSystem, 
     @Override
     public Iterator<FileObject> iterator() {
         return Collections.<FileObject>singleton(this).iterator();
+    }
+
+    @Override
+    public String toString() {
+        return ROOT.toString();
     }
 }

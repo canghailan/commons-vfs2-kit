@@ -61,4 +61,9 @@ public class AliyunOSSObjectListingIterator implements Iterator<ObjectListing> {
     public ObjectListing next() {
         return objectListing;
     }
+
+    @Override
+    public String toString() {
+        return "list oss://" + getBucketName() + "/" + getPrefix();
+    }
 }

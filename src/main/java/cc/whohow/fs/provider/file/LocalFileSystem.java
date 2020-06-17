@@ -67,7 +67,7 @@ public class LocalFileSystem implements FileSystem<LocalPath, LocalFile> {
 
     @Override
     public boolean exists(LocalPath path) {
-        log.trace("exists: {}", path);
+        log.trace("Files.exists: {}", path);
         return java.nio.file.Files.exists(path.getFilePath());
     }
 
@@ -83,7 +83,7 @@ public class LocalFileSystem implements FileSystem<LocalPath, LocalFile> {
     @Override
     public FileAttributes readAttributes(LocalPath path) {
         try {
-            log.trace("readAttributes: {}", path);
+            log.trace("Files.readAttributes: {}", path);
             return new LocalFileAttributes(java.nio.file.Files.getFileAttributeView(
                     path.getFilePath(), BasicFileAttributeView.class).readAttributes());
         } catch (IOException e) {
@@ -96,7 +96,7 @@ public class LocalFileSystem implements FileSystem<LocalPath, LocalFile> {
         if (path.isRegularFile()) {
             try {
                 // TODO FileChannel
-                log.trace("newInputStream: {}", path);
+                log.trace("Files.newInputStream: {}", path);
                 return new FileReadableStream(java.nio.file.Files.newInputStream(path.getFilePath()));
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
@@ -111,7 +111,7 @@ public class LocalFileSystem implements FileSystem<LocalPath, LocalFile> {
             try {
                 createDirectories(path);
                 // TODO FileChannel
-                log.trace("newOutputStream: {}", path);
+                log.trace("Files.newOutputStream: {}", path);
                 return new FileWritableStream(java.nio.file.Files.newOutputStream(path.getFilePath()));
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
@@ -138,7 +138,7 @@ public class LocalFileSystem implements FileSystem<LocalPath, LocalFile> {
     @Override
     public DirectoryStream<LocalFile> newDirectoryStream(LocalPath path) {
         try {
-            log.trace("newDirectoryStream: {}", path);
+            log.trace("Files.newDirectoryStream: {}", path);
             DirectoryStream<java.nio.file.Path> directoryStream = java.nio.file.Files.newDirectoryStream(path.getFilePath());
             return Files.newDirectoryStream(new MappingIterable<>(directoryStream, this::get), directoryStream);
         } catch (IOException e) {
@@ -153,24 +153,24 @@ public class LocalFileSystem implements FileSystem<LocalPath, LocalFile> {
                 return;
             }
             if (path.isDirectory()) {
-                log.trace("walkFileTree: {}", path);
+                log.trace("Files.walkFileTree: {}", path);
                 java.nio.file.Files.walkFileTree(path.getFilePath(), new SimpleFileVisitor<java.nio.file.Path>() {
                     @Override
                     public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                        log.trace("delete: {}", file);
+                        log.trace("Files.delete: {}", file);
                         java.nio.file.Files.delete(file);
                         return super.visitFile(file, attrs);
                     }
 
                     @Override
                     public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-                        log.trace("delete: {}", dir);
+                        log.trace("Files.delete: {}", dir);
                         java.nio.file.Files.delete(dir);
                         return super.postVisitDirectory(dir, exc);
                     }
                 });
             } else {
-                log.trace("delete: {}", path);
+                log.trace("Files.delete: {}", path);
                 java.nio.file.Files.delete(path.getFilePath());
             }
         } catch (IOException e) {
@@ -182,5 +182,10 @@ public class LocalFileSystem implements FileSystem<LocalPath, LocalFile> {
     @Override
     public void close() throws Exception {
         log.debug("close LocalFileSystem: {}", uri);
+    }
+
+    @Override
+    public String toString() {
+        return uri.toString();
     }
 }

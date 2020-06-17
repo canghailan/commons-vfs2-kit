@@ -11,12 +11,14 @@ public class ImmutableFileSelectInfo implements FileSelectInfo {
     private final int depth;
 
     public ImmutableFileSelectInfo(FileObject baseFolder, FileObject file, int depth) {
+        Objects.requireNonNull(file);
         this.baseFolder = baseFolder;
         this.file = file;
         this.depth = depth;
     }
 
     public ImmutableFileSelectInfo(FileSelectInfo parent, FileObject file) {
+        Objects.requireNonNull(file);
         this.baseFolder = parent.getBaseFolder();
         this.file = file;
         this.depth = parent.getDepth() + 1;

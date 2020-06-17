@@ -1,6 +1,5 @@
 package cc.whohow.fs.util;
 
-import java.net.URI;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -51,20 +50,6 @@ public class PathBuilder implements Iterable<CharSequence> {
             }
         }
         return true;
-    }
-
-    /**
-     * 计算两个URI的相对路径
-     */
-    public static String relativize(URI ancestor, URI descendant) {
-        return ancestor.relativize(descendant).normalize().getPath();
-    }
-
-    /**
-     * 计算两个URI的相对路径
-     */
-    public static String relativize(String ancestor, String descendant) {
-        return relativize(URI.create(ancestor), URI.create(descendant));
     }
 
     public char separatorChar() {

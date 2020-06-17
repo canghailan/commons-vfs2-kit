@@ -28,4 +28,9 @@ public class LocalFileCopy extends StreamCopy.Parallel<LocalFile, LocalFile> {
     protected Copy<LocalFile, LocalFile> newFileCopy(LocalFile source, LocalFile target) {
         return new LocalFileCopy(source, target);
     }
+
+    @Override
+    public String toString() {
+        return "cp " + source + " " + target;
+    }
 }

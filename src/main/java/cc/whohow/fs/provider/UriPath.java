@@ -36,9 +36,9 @@ public class UriPath implements Path {
         if (o == this) {
             return true;
         }
-        if (o instanceof UriPath) {
+        if (o != null && getClass() == o.getClass()) {
             UriPath that = (UriPath) o;
-            return that.uri.equals(this.uri);
+            return uri.equals(that.uri);
         }
         return false;
     }

@@ -23,6 +23,7 @@ import java.net.URI;
 import java.nio.file.DirectoryStream;
 import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ExecutorService;
@@ -293,6 +294,11 @@ public class AliyunOSSFileProvider implements FileSystemProvider<S3UriPath, Aliy
     @Override
     public ExecutorService getExecutor() {
         return vfs.getExecutor();
+    }
+
+    @Override
+    public CompletableFuture<AliyunOSSFile> copyAsync(AliyunOSSFile source, AliyunOSSFile target) {
+        return CompletableFuture.supplyAsync(new AliyunOSSCopy(source, target).withExecutor(getExecutor()), getExecutor());
     }
 
     @Override

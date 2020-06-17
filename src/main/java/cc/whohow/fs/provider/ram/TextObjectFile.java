@@ -86,6 +86,23 @@ class TextObjectFile implements RamObjectFile {
     }
 
     @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o instanceof TextObjectFile) {
+            TextObjectFile that = (TextObjectFile) o;
+            return uri.equals(that.uri);
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return uri.hashCode();
+    }
+
+    @Override
     public String toString() {
         return uri.toString();
     }

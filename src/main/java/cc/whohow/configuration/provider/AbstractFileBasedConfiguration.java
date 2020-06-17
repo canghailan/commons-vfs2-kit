@@ -122,4 +122,9 @@ public abstract class AbstractFileBasedConfiguration<T> implements Configuration
     protected abstract ByteBuffer serialize(T value) throws IOException;
 
     protected abstract T deserialize(ByteBuffer bytes) throws IOException;
+
+    @Override
+    public String toString() {
+        return fileObject.toString();
+    }
 }

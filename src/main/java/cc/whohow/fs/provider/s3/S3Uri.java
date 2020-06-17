@@ -56,36 +56,6 @@ public class S3Uri {
         this.key = key;
     }
 
-    public static S3Uri toPublicS3Uri(S3Uri uri) {
-        if (uri.getAccessKeyId() == null || uri.getSecretAccessKey() == null) {
-            return uri;
-        } else {
-            return toPublicS3Uri(uri.getScheme(), uri.getBucketName(), uri.getEndpoint(), uri.getKey());
-        }
-    }
-
-    /**
-     * scheme://bucketName.endpoint/key
-     */
-    public static S3Uri toPublicS3Uri(String scheme, String bucketName, String endpoint, String key) {
-        return new S3Uri(scheme, null, null, bucketName, endpoint, key);
-    }
-
-    public static S3Uri toSimpleS3Uri(S3Uri uri) {
-        if (uri.getAccessKeyId() == null || uri.getSecretAccessKey() == null || uri.getEndpoint() == null) {
-            return uri;
-        } else {
-            return toSimpleS3Uri(uri.getScheme(), uri.getBucketName(), uri.getKey());
-        }
-    }
-
-    /**
-     * scheme://bucketName/key
-     */
-    public static S3Uri toSimpleS3Uri(String scheme, String bucketName, String key) {
-        return new S3Uri(scheme, null, null, bucketName, null, key);
-    }
-
     public String getScheme() {
         return scheme;
     }
@@ -146,22 +116,25 @@ public class S3Uri {
     }
 
     @Override
-    public int hashCode() {
-        return Objects.hash(scheme, accessKeyId, secretAccessKey, bucketName, endpoint, key);
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o instanceof S3Uri) {
+            S3Uri that = (S3Uri) o;
+            return Objects.equals(scheme, that.scheme) &&
+                    Objects.equals(accessKeyId, that.accessKeyId) &&
+                    Objects.equals(secretAccessKey, that.secretAccessKey) &&
+                    Objects.equals(bucketName, that.bucketName) &&
+                    Objects.equals(endpoint, that.endpoint) &&
+                    Objects.equals(key, that.key);
+        }
+        return false;
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (o instanceof S3Uri) {
-            S3Uri that = (S3Uri) o;
-            return Objects.equals(this.scheme, that.scheme) &&
-                    Objects.equals(this.accessKeyId, that.accessKeyId) &&
-                    Objects.equals(this.secretAccessKey, that.secretAccessKey) &&
-                    Objects.equals(this.bucketName, that.bucketName) &&
-                    Objects.equals(this.endpoint, that.endpoint) &&
-                    Objects.equals(this.key, that.key);
-        }
-        return false;
+    public int hashCode() {
+        return Objects.hash(scheme, accessKeyId, secretAccessKey, bucketName, endpoint, key);
     }
 
     @Override

@@ -61,6 +61,23 @@ public class HttpFileAttributes implements FileAttributes {
     }
 
     @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o instanceof HttpFileAttributes) {
+            HttpFileAttributes that = (HttpFileAttributes) o;
+            return Arrays.equals(httpMessage.getAllHeaders(), that.httpMessage.getAllHeaders());
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return Arrays.hashCode(httpMessage.getAllHeaders());
+    }
+
+    @Override
     public String toString() {
         return Attributes.toString(this);
     }

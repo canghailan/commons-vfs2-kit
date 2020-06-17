@@ -27,6 +27,7 @@ public class FileObjectAdapter implements FileObject, FileContent {
     protected FilePath path;
 
     public FileObjectAdapter(FilePath path) {
+        Objects.requireNonNull(path);
         this.path = path;
     }
 
@@ -104,8 +105,7 @@ public class FileObjectAdapter implements FileObject, FileContent {
 
     @Override
     public void setLastModifiedTime(long modTime) throws FileSystemException {
-        log.trace("setLastModifiedTime({}): {}", modTime, this);
-        throw new FileSystemException("");
+        throw new FileSystemException("vfs.provider/set-attribute-not-supported.error");
     }
 
     @Override
@@ -205,15 +205,17 @@ public class FileObjectAdapter implements FileObject, FileContent {
                             if (fileObject.isFolder()) {
                                 try (FileObject newFileObject = baseFolder.resolveFile(
                                         fileSelectInfo.getBaseFolder().getName()
-                                                .getRelativeName(fileSelectInfo.getFile().getName()))) {
+                                                .getRelativeName(fileObject.getName()))) {
                                     newFileObject.createFolder();
                                 }
                             } else {
                                 try (FileObject newFileObject = baseFolder.resolveFile(
                                         fileSelectInfo.getBaseFolder().getName()
-                                                .getRelativeName(fileSelectInfo.getFile().getName()))) {
+                                                .getRelativeName(fileObject.getName()))) {
                                     newFileObject.createFile();
-                                    newFileObject.copyFrom(fileObject, Selectors.SELECT_SELF);
+                                    try (FileContent content = newFileObject.getContent()) {
+                                        content.write(fileObject);
+                                    }
                                 }
                             }
                         }
@@ -240,16 +242,14 @@ public class FileObjectAdapter implements FileObject, FileContent {
                         log.trace("copyFrom[file->folder]({}): -> {}", srcFile, this);
                         try (FileObject newFileObject = resolveFile(srcFile.getName().getBaseName())) {
                             newFileObject.createFile();
-                            try (FileContent content = srcFile.getContent()) {
-                                content.write(newFileObject);
+                            try (FileContent content = newFileObject.getContent()) {
+                                content.write(srcFile);
                             }
                         }
                     } else {
                         log.trace("copyFrom[file->file]({}): -> {}", srcFile, this);
                         createFile();
-                        try (FileContent content = srcFile.getContent()) {
-                            content.write((FileContent) this);
-                        }
+                        write(srcFile);
                     }
                 }
             } catch (Exception e) {
@@ -450,6 +450,7 @@ public class FileObjectAdapter implements FileObject, FileContent {
     @Override
     public FileOperations getFileOperations() throws FileSystemException {
         log.trace("getFileOperations: {}", this);
+        // TODO
         return null;
     }
 
@@ -494,12 +495,14 @@ public class FileObjectAdapter implements FileObject, FileContent {
     @Override
     public boolean isAttached() {
         log.trace("isAttached: {}", this);
+        // stateless
         return false;
     }
 
     @Override
     public boolean isContentOpen() {
         log.trace("isContentOpen: {}", this);
+        // stateless
         return false;
     }
 
@@ -547,11 +550,11 @@ public class FileObjectAdapter implements FileObject, FileContent {
     @Override
     public void refresh() throws FileSystemException {
         log.trace("refresh: {}", this);
+        // stateless, do nothing
     }
 
     @Override
     public FileObject resolveFile(String path) throws FileSystemException {
-        log.trace("resolveFile({}): {}", path, this);
         return resolveFile(path, NameScope.FILE_SYSTEM);
     }
 
@@ -626,7 +629,7 @@ public class FileObjectAdapter implements FileObject, FileContent {
         }
         if (o instanceof FileObjectAdapter) {
             FileObjectAdapter that = (FileObjectAdapter) o;
-            return that.path.equals(this.path);
+            return path.equals(that.path);
         }
         return false;
     }

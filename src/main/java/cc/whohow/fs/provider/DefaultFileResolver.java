@@ -45,4 +45,9 @@ public class DefaultFileResolver<P extends Path, F extends File<P, F>> implement
             return Optional.empty();
         }
     }
+
+    @Override
+    public String toString() {
+        return base;
+    }
 }

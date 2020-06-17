@@ -4,6 +4,8 @@ import cc.whohow.fs.File;
 import cc.whohow.fs.FileWatchEvent;
 import cc.whohow.fs.Path;
 
+import java.util.Objects;
+
 public class ImmutableFileWatchEvent<P extends Path, F extends File<P, F>> implements FileWatchEvent<P, F> {
     protected final Kind kind;
     protected final File<P, F> watchable;
@@ -28,6 +30,25 @@ public class ImmutableFileWatchEvent<P extends Path, F extends File<P, F>> imple
     @Override
     public File<P, F> file() {
         return file;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o instanceof ImmutableFileWatchEvent) {
+            ImmutableFileWatchEvent<?, ?> that = (ImmutableFileWatchEvent<?, ?>) o;
+            return kind == that.kind &&
+                    watchable.equals(that.watchable) &&
+                    file.equals(that.file);
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(kind, watchable, file);
     }
 
     @Override

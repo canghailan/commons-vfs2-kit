@@ -61,4 +61,9 @@ public class QcloudCOSObjectListingIterator implements Iterator<ObjectListing> {
     public ObjectListing next() {
         return objectListing;
     }
+
+    @Override
+    public String toString() {
+        return "list cos://" + getBucketName() + "/" + getPrefix();
+    }
 }

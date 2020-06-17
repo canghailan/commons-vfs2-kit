@@ -49,6 +49,23 @@ public class LocalPath implements Path {
     }
 
     @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o instanceof LocalPath) {
+            LocalPath that = (LocalPath) o;
+            return uri.equals(that.uri);
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return uri.hashCode();
+    }
+
+    @Override
     public String toString() {
         return toUri().toString();
     }

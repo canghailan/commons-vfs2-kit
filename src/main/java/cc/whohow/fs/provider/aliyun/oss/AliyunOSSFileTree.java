@@ -18,12 +18,17 @@ public class AliyunOSSFileTree implements FileStream<AliyunOSSFile> {
     }
 
     @Override
+    public Iterator<AliyunOSSFile> iterator() {
+        return new AliyunOSSFileIterator(fileSystem, path, recursively);
+    }
+
+    @Override
     public void close() throws IOException {
 
     }
 
     @Override
-    public Iterator<AliyunOSSFile> iterator() {
-        return new AliyunOSSFileIterator(fileSystem, path, recursively);
+    public String toString() {
+        return "tree " + path;
     }
 }

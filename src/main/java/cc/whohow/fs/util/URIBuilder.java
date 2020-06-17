@@ -1,7 +1,5 @@
 package cc.whohow.fs.util;
 
-import org.apache.commons.vfs2.FileName;
-
 import java.net.URI;
 import java.net.URISyntaxException;
 
@@ -48,7 +46,7 @@ public class URIBuilder {
         return uri.getScheme() == null &&
                 uri.getHost() == null &&
                 uri.getPath() != null &&
-                !uri.getPath().startsWith(FileName.SEPARATOR);
+                !uri.getPath().startsWith("/");
     }
 
     public URIBuilder setURI(String uri) {

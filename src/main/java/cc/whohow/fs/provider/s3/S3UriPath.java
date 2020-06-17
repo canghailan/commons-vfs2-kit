@@ -32,4 +32,26 @@ public class S3UriPath extends S3Uri implements Path {
     public S3UriPath resolve(String relative) {
         return new S3UriPath(uri.resolve(relative));
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o instanceof S3UriPath) {
+            S3UriPath that = (S3UriPath) o;
+            return Objects.equals(scheme, that.scheme) &&
+                    Objects.equals(accessKeyId, that.accessKeyId) &&
+                    Objects.equals(secretAccessKey, that.secretAccessKey) &&
+                    Objects.equals(bucketName, that.bucketName) &&
+                    Objects.equals(endpoint, that.endpoint) &&
+                    Objects.equals(key, that.key);
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(scheme, accessKeyId, secretAccessKey, bucketName, endpoint, key);
+    }
 }

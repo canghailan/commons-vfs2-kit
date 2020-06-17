@@ -36,4 +36,9 @@ public class FileTree<P extends Path, F extends File<P, F>> implements FileStrea
             iterator.close();
         }
     }
+
+    @Override
+    public String toString() {
+        return "tree " + path;
+    }
 }

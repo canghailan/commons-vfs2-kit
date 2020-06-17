@@ -169,4 +169,9 @@ public class RamFileSystem implements FileSystem<KeyPath, RamFile> {
     public void close() throws Exception {
 
     }
+
+    @Override
+    public String toString() {
+        return uri.toString();
+    }
 }

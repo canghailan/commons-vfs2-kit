@@ -194,4 +194,9 @@ public class AliyunOSSFileSystem implements FileSystem<S3UriPath, AliyunOSSFile>
     public void close() throws Exception {
         log.debug("close AliyunOSSFileSystem: {}", uri);
     }
+
+    @Override
+    public String toString() {
+        return uri.toString();
+    }
 }

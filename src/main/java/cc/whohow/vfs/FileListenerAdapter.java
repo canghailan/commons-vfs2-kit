@@ -48,8 +48,8 @@ public class FileListenerAdapter<E extends FileWatchEvent<?, ?>> implements Cons
         }
         if (o instanceof FileListenerAdapter) {
             FileListenerAdapter<?> that = (FileListenerAdapter<?>) o;
-            return that.fileSystem.equals(this.fileSystem) &&
-                    that.fileListener.equals(this.fileListener);
+            return fileSystem.equals(that.fileSystem) &&
+                    fileListener.equals(that.fileListener);
         }
         return false;
     }

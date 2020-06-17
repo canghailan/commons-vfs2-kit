@@ -9,12 +9,15 @@ import org.apache.commons.vfs2.NameScope;
 
 import java.net.URI;
 import java.nio.file.Path;
+import java.util.Objects;
 
 public class FilePath implements FileName {
     protected final FileSystemAdapter fileSystem;
     protected final File<?, ?> file;
 
     public FilePath(FileSystemAdapter fileSystem, File<?, ?> file) {
+        Objects.requireNonNull(fileSystem);
+        Objects.requireNonNull(file);
         this.fileSystem = fileSystem;
         this.file = file;
     }
@@ -55,6 +58,7 @@ public class FilePath implements FileName {
 
     @Override
     public int getDepth() {
+        // TODO
         return 0;
     }
 
@@ -89,7 +93,7 @@ public class FilePath implements FileName {
 
     @Override
     public String getRelativeName(FileName name) throws FileSystemException {
-        return file.getUri().relativize(URI.create(name.getURI())).toString();
+        return Paths.relativize(file.getUri(), URI.create(name.getURI()));
     }
 
     @Override
@@ -138,7 +142,7 @@ public class FilePath implements FileName {
         }
         if (o instanceof FilePath) {
             FilePath that = (FilePath) o;
-            return that.file.equals(this.file);
+            return file.equals(that.file);
         }
         return false;
     }

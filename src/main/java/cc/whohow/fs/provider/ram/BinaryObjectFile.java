@@ -80,4 +80,26 @@ class BinaryObjectFile implements RamObjectFile {
         Objects.requireNonNull(content);
         this.content = charset.encode(CharBuffer.wrap(content));
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o instanceof BinaryObjectFile) {
+            BinaryObjectFile that = (BinaryObjectFile) o;
+            return uri.equals(that.uri);
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return uri.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return uri.toString();
+    }
 }

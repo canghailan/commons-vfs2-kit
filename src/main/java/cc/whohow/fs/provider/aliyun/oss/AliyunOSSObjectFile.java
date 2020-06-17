@@ -11,6 +11,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.net.URI;
+import java.util.Objects;
 
 public class AliyunOSSObjectFile implements ObjectFile {
     private static final Logger log = LogManager.getLogger(AliyunOSSObjectFile.class);
@@ -18,6 +19,8 @@ public class AliyunOSSObjectFile implements ObjectFile {
     private final S3Uri uri;
 
     public AliyunOSSObjectFile(OSS oss, S3Uri uri) {
+        Objects.requireNonNull(oss);
+        Objects.requireNonNull(uri);
         this.oss = oss;
         this.uri = uri;
     }
@@ -54,5 +57,27 @@ public class AliyunOSSObjectFile implements ObjectFile {
     public void delete() {
         log.trace("deleteObject: oss://{}/{}", uri.getBucketName(), uri.getKey());
         oss.deleteObject(uri.getBucketName(), uri.getKey());
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o instanceof AliyunOSSObjectFile) {
+            AliyunOSSObjectFile that = (AliyunOSSObjectFile) o;
+            return uri.equals(that.uri);
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return uri.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return uri.toString();
     }
 }
