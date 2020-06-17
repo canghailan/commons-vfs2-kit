@@ -27,15 +27,7 @@ public interface VirtualFileSystem extends AutoCloseable {
 
     File<?, ?> get(String uri);
 
-    CompletableFuture<? extends File<?, ?>> copy(File<?, ?> source, File<?, ?> target);
+    CompletableFuture<? extends File<?, ?>> copyAsync(File<?, ?> source, File<?, ?> target);
 
-    CompletableFuture<? extends File<?, ?>> move(File<?, ?> source, File<?, ?> target);
-
-    default CompletableFuture<? extends File<?, ?>> copy(String source, String target) {
-        return copy(get(source), get(target));
-    }
-
-    default CompletableFuture<? extends File<?, ?>> move(String source, String target) {
-        return move(get(source), get(target));
-    }
+    CompletableFuture<? extends File<?, ?>> moveAsync(File<?, ?> source, File<?, ?> target);
 }

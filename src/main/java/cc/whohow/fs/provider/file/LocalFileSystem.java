@@ -1,6 +1,5 @@
 package cc.whohow.fs.provider.file;
 
-import cc.whohow.fs.FileSystem;
 import cc.whohow.fs.*;
 import cc.whohow.fs.io.FileReadableStream;
 import cc.whohow.fs.io.FileWritableStream;
@@ -12,8 +11,10 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.URI;
+import java.nio.file.DirectoryStream;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Path;
-import java.nio.file.*;
+import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributeView;
 import java.nio.file.attribute.BasicFileAttributes;
 
@@ -44,24 +45,19 @@ public class LocalFileSystem implements FileSystem<LocalPath, LocalFile> {
     @Override
     public LocalPath resolve(URI uri) {
         if ("file".equals(uri.getScheme())) {
-            java.nio.file.Path path = Paths.get(uri);
-            if (uri.getPath().endsWith("/")) {
-                try {
-                    if (java.nio.file.Files.notExists(path)) {
-                        java.nio.file.Files.createDirectories(path);
-                    }
-                } catch (IOException e) {
-                    throw new UncheckedIOException(e);
-                }
-            }
-            return new LocalPath(path);
+//            java.nio.file.Path path = Paths.get(uri);
+//            if (uri.getPath().endsWith("/")) {
+//                try {
+//                    if (java.nio.file.Files.notExists(path)) {
+//                        java.nio.file.Files.createDirectories(path);
+//                    }
+//                } catch (IOException e) {
+//                    throw new UncheckedIOException(e);
+//                }
+//            }
+            return new LocalPath(uri);
         }
         throw new IllegalArgumentException(uri.toString());
-    }
-
-    @Override
-    public LocalPath resolve(LocalPath base, CharSequence path) {
-        return new LocalPath(base.getPath().resolve(path.toString()));
     }
 
     @Override
@@ -143,6 +139,9 @@ public class LocalFileSystem implements FileSystem<LocalPath, LocalFile> {
     @Override
     public void delete(LocalPath path) {
         try {
+            if (!exists(path)) {
+                return;
+            }
             if (path.isDirectory()) {
                 log.trace("walkFileTree: {}", path);
                 java.nio.file.Files.walkFileTree(path.getPath(), new SimpleFileVisitor<java.nio.file.Path>() {

@@ -1,8 +1,6 @@
 package cc.whohow.fs.provider;
 
 import cc.whohow.fs.*;
-import cc.whohow.fs.io.Copy;
-import cc.whohow.fs.io.Move;
 import cc.whohow.fs.util.FileSystemThreadFactory;
 import cc.whohow.fs.util.Files;
 import com.github.benmanes.caffeine.cache.Cache;
@@ -21,6 +19,7 @@ public class DefaultVirtualFileSystem implements VirtualFileSystem {
     protected final File<?, ?> context;
     protected final Map<String, FileSystemProvider<?, ?>> providers = new ConcurrentHashMap<>();
     protected final Map<String, String> mountPoints = new LinkedHashMap<>();
+    // 可使用字典树Trie优化
     protected final NavigableMap<String, FileResolver<?, ?>> vfs = new ConcurrentSkipListMap<>(Comparator.reverseOrder());
     protected ExecutorService executor;
     protected ScheduledExecutorService scheduledExecutor;
@@ -182,7 +181,7 @@ public class DefaultVirtualFileSystem implements VirtualFileSystem {
             File<?, ?> context = this.context.resolve("providers/" + UUID.randomUUID() + "/");
             context.resolve("className").writeUtf8(provider.getClass().getName());
             if (configuration != null && configuration.exists()) {
-                copy(configuration, context);
+                copyAsync(configuration, context).join();
             }
             provider.initialize(this, context);
             providers.put(provider.getScheme(), provider);
@@ -208,26 +207,6 @@ public class DefaultVirtualFileSystem implements VirtualFileSystem {
         return cache.get(uri, this::doGet);
     }
 
-    @Override
-    @SuppressWarnings({"rawtypes", "unchecked"})
-    public CompletableFuture<? extends File<?, ?>> copy(File<?, ?> source, File<?, ?> target) {
-        if (source.getFileSystem().getScheme().equals(target.getFileSystem().getScheme())) {
-            FileSystemProvider fileSystemProvider = providers.get(source.getFileSystem().getScheme());
-            return fileSystemProvider.copy(source, target);
-        }
-        return CompletableFuture.supplyAsync(new Copy.Parallel(source, target).withExecutor(executor), executor);
-    }
-
-    @Override
-    @SuppressWarnings({"rawtypes", "unchecked"})
-    public CompletableFuture<? extends File<?, ?>> move(File<?, ?> source, File<?, ?> target) {
-        if (source.getFileSystem().getScheme().equals(target.getFileSystem().getScheme())) {
-            FileSystemProvider fileSystemProvider = providers.get(source.getFileSystem().getScheme());
-            return fileSystemProvider.move(source, target);
-        }
-        return CompletableFuture.supplyAsync(new Move(new Copy.Parallel(source, target).withExecutor(executor)), executor);
-    }
-
     protected File<?, ?> doGet(String uri) {
         URI normalizedUri = URI.create(uri).normalize();
         String normalized = normalizedUri.toString();
@@ -242,6 +221,26 @@ public class DefaultVirtualFileSystem implements VirtualFileSystem {
             }
         }
         throw new UncheckedException("get error: " + uri);
+    }
+
+    @Override
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    public CompletableFuture<? extends File<?, ?>> copyAsync(File<?, ?> source, File<?, ?> target) {
+        if (source.getFileSystem().getScheme().equals(target.getFileSystem().getScheme())) {
+            FileSystemProvider fileSystemProvider = providers.get(source.getFileSystem().getScheme());
+            return fileSystemProvider.copyAsync(source, target);
+        }
+        return CompletableFuture.supplyAsync(new StreamCopy.Parallel(source, target).withExecutor(executor), executor);
+    }
+
+    @Override
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    public CompletableFuture<? extends File<?, ?>> moveAsync(File<?, ?> source, File<?, ?> target) {
+        if (source.getFileSystem().getScheme().equals(target.getFileSystem().getScheme())) {
+            FileSystemProvider fileSystemProvider = providers.get(source.getFileSystem().getScheme());
+            return fileSystemProvider.moveAsync(source, target);
+        }
+        return CompletableFuture.supplyAsync(new CopyAndDelete(new StreamCopy.Parallel(source, target).withExecutor(executor)), executor);
     }
 
     @Override

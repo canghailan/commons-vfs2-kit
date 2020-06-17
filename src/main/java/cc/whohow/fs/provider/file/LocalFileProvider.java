@@ -1,6 +1,9 @@
 package cc.whohow.fs.provider.file;
 
-import cc.whohow.fs.*;
+import cc.whohow.fs.File;
+import cc.whohow.fs.FileSystem;
+import cc.whohow.fs.FileSystemProvider;
+import cc.whohow.fs.VirtualFileSystem;
 import cc.whohow.fs.provider.DefaultFileResolver;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -20,10 +23,9 @@ public class LocalFileProvider implements FileSystemProvider<LocalPath, LocalFil
         this.vfs = vfs;
         log.debug("initialize LocalFileProvider: {}", context);
 
-        localFileSystem = new LocalFileSystem(URI.create("file:///"));
+        localFileSystem = new LocalFileSystem(URI.create("file:/"));
 
-        FileResolver<LocalPath, LocalFile> localFileResolver = new DefaultFileResolver<>(localFileSystem, "file:///");
-        vfs.mount("file:///", localFileResolver);
+        vfs.mount("file:/", new DefaultFileResolver<>(localFileSystem, "file:/"));
     }
 
     @Override

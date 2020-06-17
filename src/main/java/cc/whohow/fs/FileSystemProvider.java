@@ -1,7 +1,8 @@
 package cc.whohow.fs;
 
-import cc.whohow.fs.io.Copy;
-import cc.whohow.fs.io.Move;
+import cc.whohow.fs.provider.CopyAndDelete;
+import cc.whohow.fs.provider.ProviderCopy;
+import cc.whohow.fs.provider.StreamCopy;
 
 import java.net.URI;
 import java.util.Collection;
@@ -23,13 +24,13 @@ public interface FileSystemProvider<P extends Path, F extends File<P, F>> extend
 
     ExecutorService getExecutor();
 
-    default CompletableFuture<F> copy(F source, F target) {
-        ExecutorService executor = getExecutor();
-        return CompletableFuture.supplyAsync(new Copy.Parallel<>(source, target).withExecutor(executor), executor);
+    default CompletableFuture<F> copyAsync(F source, F target) {
+        return CompletableFuture.supplyAsync(
+                new StreamCopy.Parallel<>(source, target).withExecutor(getExecutor()), getExecutor());
     }
 
-    default CompletableFuture<F> move(F source, F target) {
-        ExecutorService executor = getExecutor();
-        return CompletableFuture.supplyAsync(new Move<>(new Copy.Parallel<>(source, target).withExecutor(executor)), executor);
+    default CompletableFuture<F> moveAsync(F source, F target) {
+        return CompletableFuture.supplyAsync(
+                new CopyAndDelete<>(new ProviderCopy<>(this, source, target)), getExecutor());
     }
 }

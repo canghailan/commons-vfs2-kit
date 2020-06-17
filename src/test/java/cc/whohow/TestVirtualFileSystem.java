@@ -174,7 +174,7 @@ public class TestVirtualFileSystem {
         VirtualFileSystem vfs = new DefaultVirtualFileSystem(configuration);
         vfs.load(new LocalFileProvider());
 
-        vfs.copy("file:///D:/temp/", "/temp-cos/");
+        vfs.copyAsync(vfs.get("file:///D:/temp/"), vfs.get("/temp-cos/")).join();
 
         vfs.close();
     }

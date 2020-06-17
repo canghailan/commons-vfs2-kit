@@ -6,24 +6,37 @@ import java.net.URI;
 import java.nio.file.Paths;
 
 public class LocalPath implements Path {
-    private final java.nio.file.Path path;
+    private final URI uri;
+    private volatile java.nio.file.Path path;
+
+    public LocalPath(URI uri) {
+        this.uri = uri;
+    }
 
     public LocalPath(java.nio.file.Path path) {
+        this.uri = path.toUri();
         this.path = path;
     }
 
     public java.nio.file.Path getPath() {
+        if (path == null) {
+            synchronized (this) {
+                if (path == null) {
+                    path = Paths.get(uri);
+                }
+            }
+        }
         return path;
     }
 
     @Override
     public URI toUri() {
-        return path.toUri();
+        return uri;
     }
 
     @Override
     public LocalPath getParent() {
-        java.nio.file.Path parent = path.getParent();
+        java.nio.file.Path parent = getPath().getParent();
         if (parent == null) {
             return null;
         }
@@ -32,7 +45,7 @@ public class LocalPath implements Path {
 
     @Override
     public LocalPath resolve(String relative) {
-        return new LocalPath(Paths.get(path.toUri().resolve(relative)));
+        return new LocalPath(uri.resolve(relative));
     }
 
     @Override

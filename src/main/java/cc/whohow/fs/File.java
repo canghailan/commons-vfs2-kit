@@ -159,6 +159,7 @@ public interface File<P extends Path, F extends File<P, F>> extends ObjectFile {
 
     /**
      * @see Files#delete(java.nio.file.Path)
+     * 当文件不存在时，不执行任何操作
      */
     default void delete() {
         getFileSystem().delete(getPath());

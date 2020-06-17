@@ -1,7 +1,7 @@
-package cc.whohow.fs.io;
+package cc.whohow.fs.provider;
 
 import cc.whohow.fs.*;
-import cc.whohow.fs.util.CompletableCounter;
+import cc.whohow.fs.util.CompletionCounter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -9,12 +9,12 @@ import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 
-public class Copy<F1 extends File<?, F1>, F2 extends File<?, F2>> implements Command<F2> {
-    private static final Logger log = LogManager.getLogger(Copy.class);
+public class StreamCopy<F1 extends File<?, F1>, F2 extends File<?, F2>> implements Copy<F1, F2> {
+    private static final Logger log = LogManager.getLogger(StreamCopy.class);
     protected final F1 source;
     protected final F2 target;
 
-    public Copy(F1 source, F2 target) {
+    public StreamCopy(F1 source, F2 target) {
         this.source = source;
         this.target = target;
     }
@@ -81,7 +81,7 @@ public class Copy<F1 extends File<?, F1>, F2 extends File<?, F2>> implements Com
         return target;
     }
 
-    public static class Parallel<F1 extends File<?, F1>, F2 extends File<?, F2>> extends Copy<F1, F2> {
+    public static class Parallel<F1 extends File<?, F1>, F2 extends File<?, F2>> extends StreamCopy<F1, F2> {
         protected ExecutorService executor;
 
         public Parallel(F1 source, F2 target) {
@@ -103,24 +103,26 @@ public class Copy<F1 extends File<?, F1>, F2 extends File<?, F2>> implements Com
         }
 
         protected F2 copyDirectory(F1 source, F2 target, ExecutorService executor) throws IOException {
-            CompletableCounter completableCounter = new CompletableCounter();
+            CompletionCounter completionCounter = new CompletionCounter();
+            completionCounter.register();
             try (FileStream<F1> files = source.tree()) {
                 for (F1 file : files) {
                     if (file.isRegularFile()) {
-                        completableCounter.increment();
-                        CompletableFuture.supplyAsync(newFileCopyCommand(
+                        completionCounter.register();
+                        CompletableFuture.supplyAsync(newFileCopy(
                                 file, target.resolve(source.getPath().relativize(file.getPath()))), executor)
-                                .whenComplete(completableCounter::decrement);
+                                .whenComplete(completionCounter::complete);
                     }
                 }
             }
-            Long count = completableCounter.join();
-            log.trace("copy completed: {}", count);
+            completionCounter.complete();
+            completionCounter.join();
+            log.trace("copy files completed: {}", completionCounter.getCompleted() - 1);
             return target;
         }
 
-        protected Command<F2> newFileCopyCommand(F1 source, F2 target) {
-            return new Copy<>(source, target);
+        protected Copy<F1, F2> newFileCopy(F1 source, F2 target) {
+            return new StreamCopy<>(source, target);
         }
     }
 }
