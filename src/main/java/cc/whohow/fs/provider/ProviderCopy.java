@@ -6,6 +6,8 @@ import cc.whohow.fs.FileSystemProvider;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.concurrent.CompletableFuture;
+
 public class ProviderCopy<F extends File<?, F>> implements Copy<F, F> {
     private static final Logger log = LogManager.getLogger(ProviderCopy.class);
     protected final FileSystemProvider<?, F> provider;
@@ -29,9 +31,9 @@ public class ProviderCopy<F extends File<?, F>> implements Copy<F, F> {
     }
 
     @Override
-    public F call() throws Exception {
+    public CompletableFuture<F> get() {
         log.trace("copy {} -> {}", source, target);
-        return provider.copyAsync(source, target).join();
+        return provider.copyAsync(source, target);
     }
 
     @Override

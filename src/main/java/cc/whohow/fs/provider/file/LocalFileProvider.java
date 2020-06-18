@@ -57,11 +57,11 @@ public class LocalFileProvider implements FileSystemProvider<LocalPath, LocalFil
 
     @Override
     public CompletableFuture<LocalFile> copyAsync(LocalFile source, LocalFile target) {
-        return CompletableFuture.supplyAsync(new LocalFileCopy(source, target).withExecutor(getExecutor()), getExecutor());
+        return CompletableFuture.supplyAsync(new LocalFileCopy(source, target, getExecutor()), getExecutor()).join();
     }
 
     @Override
     public CompletableFuture<LocalFile> moveAsync(LocalFile source, LocalFile target) {
-        return CompletableFuture.supplyAsync(new LocalFileMove(source, target), getExecutor());
+        return CompletableFuture.supplyAsync(new LocalFileMove(source, target), getExecutor()).join();
     }
 }

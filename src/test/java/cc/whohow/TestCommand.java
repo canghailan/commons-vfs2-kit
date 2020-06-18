@@ -12,6 +12,9 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 public class TestCommand {
     private static String base;
@@ -177,5 +180,27 @@ public class TestCommand {
         Assert.assertEquals(content, target.resolve(source.getName()).readUtf8());
 
         System.out.println(target.resolve(source.getName()).readUtf8());
+    }
+
+    @Test
+    public void testDeadlock() throws Exception {
+        File<?, ?> source = vfs.get(base + "src/");
+        File<?, ?> target = vfs.get(base + "temp/");
+
+        target.delete();
+
+        List<CompletableFuture<? extends File<?, ?>>> list = new ArrayList<>();
+        for (int i = 0; i < 1000; i++) {
+            list.add(vfs.copyAsync(source, target.resolve(i + "/")));
+        }
+
+        list.forEach(CompletableFuture::join);
+        target.delete();
+    }
+
+    @Test
+    public void clean() {
+        File<?, ?> target = vfs.get(base + "temp/");
+        target.delete();
     }
 }

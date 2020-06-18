@@ -6,6 +6,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
+import java.util.concurrent.CompletableFuture;
 
 public class LocalFileMove implements Move<LocalFile, LocalFile> {
     private static final Logger log = LogManager.getLogger(LocalFileMove.class);
@@ -28,33 +29,39 @@ public class LocalFileMove implements Move<LocalFile, LocalFile> {
     }
 
     @Override
-    public LocalFile call() throws Exception {
+    public CompletableFuture<LocalFile> get() {
         log.debug("move: {} -> {}", source, target);
-        if (source.isDirectory()) {
-            if (target.isDirectory()) {
+        CompletableFuture<LocalFile> future = new CompletableFuture<>();
+        try {
+            if (source.isDirectory()) {
+                if (target.isDirectory()) {
+                    target.createDirectories();
+                    log.debug("Files.move: {} -> {}", source, target);
+                    Files.move(source.getPath().getFilePath(), target.getPath().getFilePath(),
+                            StandardCopyOption.REPLACE_EXISTING);
+                    future.complete(target);
+                } else {
+                    future.completeExceptionally(new UnsupportedOperationException("move directory to file: " + source + " -> " + target));
+                }
+            } else {
                 target.createDirectories();
-                log.debug("Files.move: {} -> {}", source, target);
-                Files.move(source.getPath().getFilePath(), target.getPath().getFilePath(),
-                        StandardCopyOption.REPLACE_EXISTING);
-                return target;
-            } else {
-                throw new UnsupportedOperationException("move directory to file: " + source + " -> " + target);
+                if (target.isDirectory()) {
+                    LocalFile file = target.resolve(source.getName());
+                    log.debug("Files.move: {} -> {}", source, file);
+                    Files.move(source.getPath().getFilePath(), file.getPath().getFilePath(),
+                            StandardCopyOption.REPLACE_EXISTING);
+                    future.complete(file);
+                } else {
+                    log.debug("Files.move: {} -> {}", source, target);
+                    Files.move(source.getPath().getFilePath(), target.getPath().getFilePath(),
+                            StandardCopyOption.REPLACE_EXISTING);
+                    future.complete(target);
+                }
             }
-        } else {
-            target.createDirectories();
-            if (target.isDirectory()) {
-                LocalFile file = target.resolve(source.getName());
-                log.debug("Files.move: {} -> {}", source, file);
-                Files.move(source.getPath().getFilePath(), file.getPath().getFilePath(),
-                        StandardCopyOption.REPLACE_EXISTING);
-                return file;
-            } else {
-                log.debug("Files.move: {} -> {}", source, target);
-                Files.move(source.getPath().getFilePath(), target.getPath().getFilePath(),
-                        StandardCopyOption.REPLACE_EXISTING);
-                return target;
-            }
+        } catch (Exception e) {
+            future.completeExceptionally(e);
         }
+        return future;
     }
 
     @Override

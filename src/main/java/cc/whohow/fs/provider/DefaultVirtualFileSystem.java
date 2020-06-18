@@ -56,11 +56,11 @@ public class DefaultVirtualFileSystem implements VirtualFileSystem {
         int corePoolSize = Files.optional(context.resolve("executor/corePoolSize"))
                 .map(File::readUtf8)
                 .map(Integer::parseInt)
-                .orElse(8);
+                .orElse(Runtime.getRuntime().availableProcessors());
         int maximumPoolSize = Files.optional(context.resolve("executor/maximumPoolSize"))
                 .map(File::readUtf8)
                 .map(Integer::parseInt)
-                .orElse(corePoolSize * 4);
+                .orElse(corePoolSize * 8);
         Duration keepAliveTime = Files.optional(context.resolve("executor/keepAliveTime"))
                 .map(File::readUtf8)
                 .map(Duration::parse)
@@ -230,7 +230,9 @@ public class DefaultVirtualFileSystem implements VirtualFileSystem {
             FileSystemProvider fileSystemProvider = providers.get(source.getFileSystem().getScheme());
             return fileSystemProvider.copyAsync(source, target);
         }
-        return CompletableFuture.supplyAsync(new StreamCopy.Parallel(source, target).withExecutor(executor), executor);
+        return (CompletableFuture<? extends File<?, ?>>) CompletableFuture.supplyAsync(
+                new AsyncCopy(source, target, executor), executor)
+                .join();
     }
 
     @Override
@@ -240,7 +242,9 @@ public class DefaultVirtualFileSystem implements VirtualFileSystem {
             FileSystemProvider fileSystemProvider = providers.get(source.getFileSystem().getScheme());
             return fileSystemProvider.moveAsync(source, target);
         }
-        return CompletableFuture.supplyAsync(new CopyAndDelete(new StreamCopy.Parallel(source, target).withExecutor(executor)), executor);
+        return (CompletableFuture<? extends File<?, ?>>) CompletableFuture.supplyAsync(
+                new CopyAndDelete(new AsyncCopy(source, target, executor)), executor)
+                .join();
     }
 
     @Override

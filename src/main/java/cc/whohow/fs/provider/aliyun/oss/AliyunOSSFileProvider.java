@@ -298,7 +298,9 @@ public class AliyunOSSFileProvider implements FileSystemProvider<S3UriPath, Aliy
 
     @Override
     public CompletableFuture<AliyunOSSFile> copyAsync(AliyunOSSFile source, AliyunOSSFile target) {
-        return CompletableFuture.supplyAsync(new AliyunOSSCopy(source, target).withExecutor(getExecutor()), getExecutor());
+        return CompletableFuture.supplyAsync(
+                new AliyunOSSCopy(source, target, getExecutor()), getExecutor())
+                .join();
     }
 
     @Override
