@@ -81,10 +81,10 @@ public class AsyncCopy<F1 extends File<?, F1>, F2 extends File<?, F2>> implement
                                     .thenApply(CompletableFuture::join));
                 }
             }
+            mapReduce.reduce();
         } catch (Exception e) {
             mapReduce.completeExceptionally(e);
         }
-        mapReduce.reduce();
         return mapReduce;
     }
 
