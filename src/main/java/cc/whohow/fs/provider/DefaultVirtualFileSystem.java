@@ -68,7 +68,7 @@ public class DefaultVirtualFileSystem implements VirtualFileSystem {
         int maximumQueueSize = Files.optional(context.resolve("executor/maximumQueueSize"))
                 .map(File::readUtf8)
                 .map(Integer::parseInt)
-                .orElse(corePoolSize * 32);
+                .orElse(maximumPoolSize * 8);
 
         this.executor = new ThreadPoolExecutor(
                 corePoolSize,
@@ -107,7 +107,7 @@ public class DefaultVirtualFileSystem implements VirtualFileSystem {
         int maximumSize = Files.optional(context.resolve("cache/maximumSize"))
                 .map(File::readUtf8)
                 .map(Integer::parseInt)
-                .orElse(1024);
+                .orElse(4096);
         this.cache = Caffeine.newBuilder()
                 .expireAfterWrite(ttl)
                 .maximumSize(maximumSize)
