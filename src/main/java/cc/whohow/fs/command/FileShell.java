@@ -2,9 +2,13 @@ package cc.whohow.fs.command;
 
 import cc.whohow.fs.UncheckedException;
 import cc.whohow.fs.VirtualFileSystem;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
@@ -12,6 +16,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 public class FileShell {
+    private static final Logger log = LogManager.getLogger(FileShell.class);
     protected final VirtualFileSystem vfs;
     protected final Map<String, BiFunction<VirtualFileSystem, String[], ? extends Callable<?>>> commands = new ConcurrentHashMap<>();
 
@@ -39,7 +44,12 @@ public class FileShell {
     }
 
     public void install(String command, BiFunction<VirtualFileSystem, String[], ? extends Callable<?>> commandBuilder) {
+        log.info("install {}", command);
         commands.put(command, commandBuilder);
+    }
+
+    public Collection<String> getCommands() {
+        return Collections.unmodifiableCollection(commands.keySet());
     }
 
     @SuppressWarnings("unchecked")
