@@ -1,8 +1,8 @@
 package cc.whohow;
 
 import cc.whohow.fs.VirtualFileSystem;
-import cc.whohow.fs.command.provider.Checksum;
 import cc.whohow.fs.command.FileShell;
+import cc.whohow.fs.command.provider.Checksum;
 import cc.whohow.fs.configuration.ConfigurationBuilder;
 import cc.whohow.fs.provider.DefaultVirtualFileSystem;
 import cc.whohow.fs.provider.file.LocalFileProvider;
@@ -32,13 +32,14 @@ public class TestFileShell {
 
     @Test
     public void testChecksum() throws Exception {
-        fish.install("checksum", Checksum::new);
+        fish.install(Checksum.class);
 
-        String file = base + "target/commons-vfs2-kit-2.0.7.jar";
+        String file = base + "/src/main/java/cc/whohow/fs/command/FileShell.java";
         String[] algorithms = {"MD5", "SHA-1", "SHA-224", "SHA-256", "SHA-384", "SHA-512"};
 
+        // Windows: certutil -hashfile [file] md5
         for (String algorithm : algorithms) {
-            String checksum = fish.exec("checksum", algorithm, file);
+            String checksum = fish.exec("Checksum", algorithm, file);
             System.out.println(algorithm + ": " + checksum);
         }
     }

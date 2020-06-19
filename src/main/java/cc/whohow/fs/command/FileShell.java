@@ -3,6 +3,8 @@ package cc.whohow.fs.command;
 import cc.whohow.fs.UncheckedException;
 import cc.whohow.fs.VirtualFileSystem;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
@@ -14,6 +16,23 @@ public class FileShell {
 
     public FileShell(VirtualFileSystem vfs) {
         this.vfs = vfs;
+    }
+
+    @SuppressWarnings("unchecked")
+    public void install(String className) {
+        try {
+            install((Class<? extends Callable<?>>) Class.forName(className));
+        } catch (ClassNotFoundException e) {
+            throw UncheckedException.unchecked(e);
+        }
+    }
+
+    public void install(Class<? extends Callable<?>> command) {
+        try {
+            install(command.getSimpleName(), new CommandBuilder(command));
+        } catch (Exception e) {
+            throw UncheckedException.unchecked(e);
+        }
     }
 
     public void install(String command, BiFunction<VirtualFileSystem, String[], ? extends Callable<?>> commandBuilder) {
@@ -33,6 +52,23 @@ public class FileShell {
             return (R) builder.apply(vfs, commandLine).call();
         } catch (Exception e) {
             throw UncheckedException.unchecked(e);
+        }
+    }
+
+    public static class CommandBuilder implements BiFunction<VirtualFileSystem, String[], Callable<?>> {
+        protected final Constructor<? extends Callable<?>> builder;
+
+        public CommandBuilder(Class<? extends Callable<?>> type) throws Exception {
+            this.builder = type.getConstructor(VirtualFileSystem.class, String[].class);
+        }
+
+        @Override
+        public Callable<?> apply(VirtualFileSystem fileSystem, String[] args) {
+            try {
+                return builder.newInstance(fileSystem, args);
+            } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
+                throw UncheckedException.unchecked(e);
+            }
         }
     }
 }
