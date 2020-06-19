@@ -11,11 +11,11 @@ public class AliyunOSSProcess implements Callable<String> {
     protected final String process;
 
     public AliyunOSSProcess(VirtualFileSystem vfs, String... args) {
-        if (args.length < 3) {
+        if (args.length < 2) {
             throw new IllegalArgumentException(String.join(" ", args));
         }
-        this.file = vfs.get(args[1]);
-        this.process = args[2];
+        this.file = vfs.get(args[0]);
+        this.process = args[1];
     }
 
     public AliyunOSSProcess(File<?, ?> file, String process) {

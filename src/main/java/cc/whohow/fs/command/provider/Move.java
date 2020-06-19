@@ -11,12 +11,12 @@ public class Move implements Callable<File<?, ?>> {
     protected final File<?, ?> target;
 
     public Move(VirtualFileSystem vfs, String... args) {
-        if (args.length < 3) {
+        if (args.length < 2) {
             throw new IllegalArgumentException(String.join(" ", args));
         }
         this.vfs = vfs;
-        this.source = vfs.get(args[1]);
-        this.target = vfs.get(args[2]);
+        this.source = vfs.get(args[0]);
+        this.target = vfs.get(args[1]);
     }
 
     public Move(VirtualFileSystem vfs, File<?, ?> source, File<?, ?> target) {

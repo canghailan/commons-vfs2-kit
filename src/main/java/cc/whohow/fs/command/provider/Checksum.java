@@ -13,11 +13,11 @@ public class Checksum implements Callable<String> {
     protected final File<?, ?> file;
 
     public Checksum(VirtualFileSystem vfs, String... args) {
-        if (args.length != 3) {
+        if (args.length < 2) {
             throw new IllegalArgumentException(String.join(" ", args));
         }
-        this.algorithm = args[1];
-        this.file = vfs.get(args[2]);
+        this.algorithm = args[0];
+        this.file = vfs.get(args[1]);
     }
 
     public Checksum(String algorithm, File<?, ?> file) {

@@ -43,4 +43,28 @@ public class TestFileShell {
             System.out.println(algorithm + ": " + checksum);
         }
     }
+
+    @Test
+    public void testNewCommandProxy() throws Exception {
+        fish.install(Checksum.class);
+
+        String file = base + "/src/main/java/cc/whohow/fs/command/FileShell.java";
+        String[] algorithms = {"MD5", "SHA-1", "SHA-224", "SHA-256", "SHA-384", "SHA-512"};
+
+        for (String algorithm : algorithms) {
+            String checksum = fish.<String>newCommand("Checksum").apply(new String[]{algorithm, file});
+            System.out.println(algorithm + ": " + checksum);
+        }
+    }
+
+    @Test
+    public void testNewCommand() throws Exception {
+        String file = base + "/src/main/java/cc/whohow/fs/command/FileShell.java";
+        String[] algorithms = {"MD5", "SHA-1", "SHA-224", "SHA-256", "SHA-384", "SHA-512"};
+
+        for (String algorithm : algorithms) {
+            String checksum = fish.newCommand(Checksum.class, algorithm, file).call();
+            System.out.println(algorithm + ": " + checksum);
+        }
+    }
 }
