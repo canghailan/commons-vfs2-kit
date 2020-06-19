@@ -1,16 +1,17 @@
 package cc.whohow.fs.command.script;
 
 import cc.whohow.fs.UncheckedException;
-import cc.whohow.fs.VirtualFileSystem;
 import cc.whohow.fs.command.FileShell;
 
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
-import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.Callable;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 
 public class Fish {
     protected final ScriptEngine scriptEngine = new ScriptEngineManager().getEngineByName("groovy");
@@ -18,7 +19,6 @@ public class Fish {
 
     public Fish(FileShell fish) {
         this.fish = fish;
-        this.fish.install("install", this::newInstaller);
         this.scriptEngine.setBindings(new FishContext(fish), ScriptContext.GLOBAL_SCOPE);
     }
 
@@ -38,23 +38,19 @@ public class Fish {
         }
     }
 
-    protected Callable<?> newInstaller(VirtualFileSystem vfs, String... args) {
-        return new Installer(fish, Arrays.asList(args));
+    public Object eval(URL script) {
+        try (Reader reader = new InputStreamReader(script.openStream(), StandardCharsets.UTF_8)) {
+            return scriptEngine.eval(reader);
+        } catch (IOException | ScriptException e) {
+            throw UncheckedException.unchecked(e);
+        }
     }
 
-    private static class Installer implements Callable<List<String>> {
-        protected final FileShell fish;
-        protected final List<String> commands;
-
-        public Installer(FileShell fish, List<String> commands) {
-            this.fish = fish;
-            this.commands = commands;
-        }
-
-        @Override
-        public List<String> call() {
-            commands.forEach(fish::install);
-            return commands;
+    public Object eval(Reader script) {
+        try {
+            return scriptEngine.eval(script);
+        } catch (ScriptException e) {
+            throw UncheckedException.unchecked(e);
         }
     }
 }

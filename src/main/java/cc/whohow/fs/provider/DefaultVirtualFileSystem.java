@@ -8,6 +8,8 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.FileNotFoundException;
+import java.io.UncheckedIOException;
 import java.net.URI;
 import java.nio.file.DirectoryStream;
 import java.time.Duration;
@@ -203,8 +205,9 @@ public class DefaultVirtualFileSystem implements VirtualFileSystem {
     }
 
     @Override
-    public File<?, ?> get(String uri) {
-        return cache.get(uri, this::doGet);
+    @SuppressWarnings("unchecked")
+    public <F extends File<?, F>> File<?, F> get(String uri) {
+        return (File<?, F>) cache.get(uri, this::doGet);
     }
 
     protected File<?, ?> doGet(String uri) {
@@ -220,7 +223,7 @@ public class DefaultVirtualFileSystem implements VirtualFileSystem {
                 }
             }
         }
-        throw new UncheckedException("get error: " + uri);
+        throw new UncheckedIOException(new FileNotFoundException(uri));
     }
 
     @Override

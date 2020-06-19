@@ -1,24 +1,26 @@
 package cc.whohow.fs.command.script;
 
+import cc.whohow.fs.command.FileShell;
 import groovy.lang.Closure;
 
 import java.util.Objects;
-import java.util.function.Function;
 
 public class FishCommand extends Closure<Object> {
-    protected final Function<String[], ?> command;
+    protected final FileShell fish;
+    protected final String name;
 
-    public FishCommand(Function<String[], ?> command) {
-        super(command, command);
-        this.command = command;
+    public FishCommand(FileShell fish, String name) {
+        super(fish, fish);
+        this.fish = fish;
+        this.name = name;
     }
 
     @Override
     public Object call(Object... args) {
-        String[] stringArgs = new String[args.length];
+        String[] commandArgs = new String[args.length];
         for (int i = 0; i < args.length; i++) {
-            stringArgs[i] = Objects.toString(args[i], null);
+            commandArgs[i] = Objects.toString(args[i], null);
         }
-        return command.apply(stringArgs);
+        return fish.exec(name, commandArgs);
     }
 }

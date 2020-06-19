@@ -25,7 +25,7 @@ public interface VirtualFileSystem extends AutoCloseable {
 
     void umount(String uri);
 
-    File<?, ? extends File<?, ?>> get(String uri);
+    <F extends File<?, F>> File<?, F> get(String uri);
 
     CompletableFuture<? extends File<?, ?>> copyAsync(File<?, ?> source, File<?, ?> target);
 
