@@ -70,12 +70,15 @@ public class AliyunOSSFileIterator implements Iterator<AliyunOSSFile> {
     }
 
     private AliyunOSSFile newDirectory(String key) {
-        return fileSystem.get(fileSystem.resolve(key));
+        return new AliyunOSSFile(
+                fileSystem,
+                new S3UriPath(path.getScheme(), path.getBucketName(), key));
     }
 
     private AliyunOSSFile newFile(OSSObjectSummary objectSummary) {
         return new AliyunOSSStatFile(
-                fileSystem, fileSystem.resolve(objectSummary.getKey()),
+                fileSystem,
+                new S3UriPath(path.getScheme(), path.getBucketName(), objectSummary.getKey()),
                 new AliyunOSSObjectSummaryFileAttributes(objectSummary));
     }
 }

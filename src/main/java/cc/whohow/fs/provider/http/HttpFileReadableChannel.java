@@ -39,7 +39,7 @@ public class HttpFileReadableChannel extends FileReadableStream {
         if (httpEntity.getContentLength() > Integer.MAX_VALUE) {
             throw new UnsupportedOperationException("file too large");
         }
-        if (httpEntity.getContentLength() < 0) {
+        if (httpEntity.getContentLength() <= 0) {
             return IO.read(stream);
         } else {
             return IO.read(stream, (int) httpEntity.getContentLength());

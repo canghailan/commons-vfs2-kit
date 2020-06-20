@@ -3,8 +3,8 @@
 ## 完整配置文件示例
 ```markdown
 vfs: # 虚拟目录挂载点，Key值为虚拟路径，Value值为实际文件系统路径，默认只有在此挂载的文件路径才可访问
-  /temp-oss/: oss://temp/path/
-  /temp-cos/: cos://temp/path/
+  /temp-oss/: oss://bucket/key/
+  /temp-cos/: cos://bucket/key/
 
 providers:
   file: # 本地文件系统，自动挂载
@@ -14,17 +14,23 @@ providers:
   aliyun-oss: # 阿里云OSS对象存储
     className: cc.whohow.fs.provider.aliyun.oss.AliyunOSSFileProvider
     profiles: # 鉴权配置，目前仅支持AK/SK，可配置多个，可在不同账号
-    - accessKeyId: ******
-      secretAccessKey: ******
+    - accessKeyId: *****
+      secretAccessKey: *****
     scheme: oss # URI协议，默认oss
     automount: false # 是否自动挂载所有Bucket，默认不挂载
     watch: # 文件监听
       interval: PT1S # 扫描间隔，默认1S，格式为ISO 8601
+    cdn: # CDN配置
+    - origin: oss://bucket/key/ # 源站地址
+      cdn: https://cdn/path/ # CDN地址
+      type: A # CDN鉴权方式
+      key: ***** # CDN鉴权Key
+      ttl: PT2H # 鉴权地址有效期，默认2小时
   qcloud-cos: # 腾讯云COS对象存储
     className: cc.whohow.fs.provider.qcloud.cos.QcloudCOSFileProvider
     profiles: # 鉴权配置，目前仅支持AK/SK，可配置多个，可在不同账号
-    - accessKeyId: ******
-      secretAccessKey: ******
+    - accessKeyId: *****
+      secretAccessKey: *****
     scheme: cos # URI协议，默认cos
     automount: false # 是否自动挂载所有Bucket，默认不挂载
     watch: # 文件监听

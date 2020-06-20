@@ -70,12 +70,15 @@ public class QcloudCOSFileIterator implements Iterator<QcloudCOSFile> {
     }
 
     private QcloudCOSFile newDirectory(String key) {
-        return fileSystem.get(fileSystem.resolve(key));
+        return new QcloudCOSFile(
+                fileSystem,
+                new S3UriPath(path.getScheme(), path.getBucketName(), key));
     }
 
     private QcloudCOSFile newFile(COSObjectSummary objectSummary) {
         return new QcloudCOSStatFile(
-                fileSystem, fileSystem.resolve(objectSummary.getKey()),
+                fileSystem,
+                new S3UriPath(path.getScheme(), path.getBucketName(), objectSummary.getKey()),
                 new QcloudCOSObjectSummaryFileAttributes(objectSummary));
     }
 }
