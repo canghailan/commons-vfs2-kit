@@ -10,8 +10,26 @@ import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 import java.nio.file.Files;
+import java.util.Optional;
 
 public interface FileReadableChannel extends ReadableByteChannel {
+    /**
+     * 返回值小于、等于0时表示大小未知
+     *
+     * @see java.nio.channels.FileChannel#size()
+     */
+    long size();
+
+    /**
+     * 返回相关文件对象属性，可选操作
+     */
+    default Optional<FileAttributes> readFileAttributes() {
+        return Optional.empty();
+    }
+
+    /**
+     * 请勿同时操作Channel、Stream
+     */
     default InputStream stream() {
         return Channels.newInputStream(this);
     }

@@ -21,7 +21,7 @@ public interface Path extends Comparable<Path> {
 
     default boolean isDirectory() {
         String path = toUri().getPath();
-        return path != null && path.endsWith("/");
+        return path == null || path.endsWith("/");
     }
 
     Path getParent();

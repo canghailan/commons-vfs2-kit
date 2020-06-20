@@ -15,6 +15,11 @@ public class ByteBufferFileReadableChannel extends ByteBufferReadableChannel imp
     }
 
     @Override
+    public long size() {
+        return buffer.limit();
+    }
+
+    @Override
     public InputStream stream() {
         return this;
     }

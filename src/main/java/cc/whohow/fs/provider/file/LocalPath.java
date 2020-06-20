@@ -1,20 +1,19 @@
 package cc.whohow.fs.provider.file;
 
-import cc.whohow.fs.Path;
+import cc.whohow.fs.provider.UriPath;
 
 import java.net.URI;
 import java.nio.file.Paths;
 
-public class LocalPath implements Path {
-    private final URI uri;
+public class LocalPath extends UriPath {
     private volatile java.nio.file.Path filePath;
 
     public LocalPath(URI uri) {
-        this.uri = uri;
+        super(uri);
     }
 
     public LocalPath(java.nio.file.Path filePath) {
-        this.uri = filePath.toUri();
+        super(filePath.toUri());
         this.filePath = filePath;
     }
 
@@ -30,43 +29,7 @@ public class LocalPath implements Path {
     }
 
     @Override
-    public URI toUri() {
-        return uri;
-    }
-
-    @Override
-    public LocalPath getParent() {
-        java.nio.file.Path parent = getFilePath().getParent();
-        if (parent == null) {
-            return null;
-        }
-        return new LocalPath(parent);
-    }
-
-    @Override
     public LocalPath resolve(String relative) {
         return new LocalPath(uri.resolve(relative));
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o instanceof LocalPath) {
-            LocalPath that = (LocalPath) o;
-            return uri.equals(that.uri);
-        }
-        return false;
-    }
-
-    @Override
-    public int hashCode() {
-        return uri.hashCode();
-    }
-
-    @Override
-    public String toString() {
-        return toUri().toString();
     }
 }

@@ -58,8 +58,7 @@ public class FilePath implements FileName {
 
     @Override
     public int getDepth() {
-        // TODO
-        return 0;
+        return Paths.getNameCount(file.getUri().getPath());
     }
 
     @Override

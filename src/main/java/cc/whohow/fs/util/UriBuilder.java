@@ -3,7 +3,7 @@ package cc.whohow.fs.util;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-public class URIBuilder {
+public class UriBuilder {
     // Components of all URIs: [<scheme>:]<scheme-specific-part>[#<fragment>]
     private String scheme;            // null ==> relative URI
     private String fragment;
@@ -17,43 +17,22 @@ public class URIBuilder {
     private String path;              // null ==> opaque
     private String query;
 
-    public URIBuilder() {
+    public UriBuilder() {
     }
 
-    public URIBuilder(String uri) {
+    public UriBuilder(String uri) {
         setURI(uri);
     }
 
-    public URIBuilder(URI uri) {
+    public UriBuilder(URI uri) {
         setURI(uri);
     }
 
-    public static String resolve(String baseUri, String uri) {
-        return isRelative(uri) ? new URIBuilder(baseUri).resolve(uri).toString() : uri;
-    }
-
-    /**
-     * 是否是相对路径
-     */
-    public static boolean isRelative(String uri) {
-        return isRelative(URI.create(uri));
-    }
-
-    /**
-     * 是否是相对路径
-     */
-    public static boolean isRelative(URI uri) {
-        return uri.getScheme() == null &&
-                uri.getHost() == null &&
-                uri.getPath() != null &&
-                !uri.getPath().startsWith("/");
-    }
-
-    public URIBuilder setURI(String uri) {
+    public UriBuilder setURI(String uri) {
         return setURI(URI.create(uri));
     }
 
-    public URIBuilder setURI(URI uri) {
+    public UriBuilder setURI(URI uri) {
         this.scheme = uri.getScheme();
         this.fragment = uri.getFragment();
         this.userInfo = uri.getUserInfo();
@@ -68,7 +47,7 @@ public class URIBuilder {
         return scheme;
     }
 
-    public URIBuilder setScheme(String scheme) {
+    public UriBuilder setScheme(String scheme) {
         this.scheme = scheme;
         return this;
     }
@@ -77,7 +56,7 @@ public class URIBuilder {
         return fragment;
     }
 
-    public URIBuilder setFragment(String fragment) {
+    public UriBuilder setFragment(String fragment) {
         this.fragment = fragment;
         return this;
     }
@@ -86,7 +65,7 @@ public class URIBuilder {
         return userInfo;
     }
 
-    public URIBuilder setUserInfo(String userInfo) {
+    public UriBuilder setUserInfo(String userInfo) {
         this.userInfo = userInfo;
         return this;
     }
@@ -95,7 +74,7 @@ public class URIBuilder {
         return host;
     }
 
-    public URIBuilder setHost(String host) {
+    public UriBuilder setHost(String host) {
         this.host = host;
         return this;
     }
@@ -104,7 +83,7 @@ public class URIBuilder {
         return port;
     }
 
-    public URIBuilder setPort(int port) {
+    public UriBuilder setPort(int port) {
         this.port = port;
         return this;
     }
@@ -113,7 +92,7 @@ public class URIBuilder {
         return path;
     }
 
-    public URIBuilder setPath(String path) {
+    public UriBuilder setPath(String path) {
         this.path = path;
         return this;
     }
@@ -122,12 +101,12 @@ public class URIBuilder {
         return query;
     }
 
-    public URIBuilder setQuery(String query) {
+    public UriBuilder setQuery(String query) {
         this.query = query;
         return this;
     }
 
-    public URIBuilder resolve(String path) {
+    public UriBuilder resolve(String path) {
         this.path = new PathBuilder(this.path).resolve(path).toString();
         return this;
     }

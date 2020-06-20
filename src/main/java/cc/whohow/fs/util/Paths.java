@@ -5,53 +5,69 @@ import java.util.Objects;
 
 public class Paths {
     public static String getName(String path) {
-        if (path == null || path.isEmpty()) {
-            return null;
-        }
         return new PathParser(path).getLastName();
     }
 
     public static int getNameCount(String path) {
-        return 0;
+        return new PathParser(path).getNameCount();
     }
 
     public static String getParent(String path) {
-        int index = path.lastIndexOf('/');
-        if (index == path.length() - 1) {
-            index = path.lastIndexOf('/', index);
-        }
-        if (index < 0) {
-            return null;
-        } else {
-            return path.substring(0, index + 1);
-        }
+        return new PathParser(path).getParent();
     }
 
     public static String getExtension(String name) {
-        if (name == null || name.isEmpty()) {
+        return PathParser.getExtension(name);
+    }
+
+    public static String getName(URI uri) {
+        return getName(uri.getPath());
+    }
+
+    public static URI getParent(URI uri) {
+        String parent = getParent(uri.getPath());
+        if (parent == null) {
             return null;
         }
-        int index = name.lastIndexOf('.');
-        // index == 0 不是扩展名
-        if (0 < index && index < name.length() - 1) {
-            return name.substring(index + 1);
+        return new UriBuilder(uri)
+                .setPath(parent)
+                .setQuery(null)
+                .setFragment(null)
+                .build();
+    }
+
+    public static String getExtension(URI uri) {
+        return getExtension(getName(uri));
+    }
+
+    public static boolean startsWith(String thisPath, String thatPath) {
+        if (thatPath == null) {
+            return true;
         }
-        return "";
+        if (thisPath == null) {
+            return false;
+        }
+        return thisPath.startsWith(thatPath);
     }
 
     public static boolean startsWith(URI thisUri, URI thatUri) {
-        return Objects.equals(thatUri.getScheme(), thisUri.getScheme()) &&
+        return startsWith(thisUri.getPath(), thatUri.getPath()) &&
+                Objects.equals(thatUri.getScheme(), thisUri.getScheme()) &&
                 Objects.equals(thatUri.getHost(), thisUri.getHost()) &&
-                thatUri.getPort() == thisUri.getPort() &&
-                (thisUri.getPath() == null ||
-                        (thatUri.getPath() != null && thisUri.getPath().startsWith(thatUri.getPath())));
+                thatUri.getPort() == thisUri.getPort();
     }
 
     public static String relativize(URI thisUri, URI thatUri) {
         URI relative = thisUri.relativize(thatUri);
-        if (relative.isAbsolute() || relative.toString().startsWith("/")) {
+        if (relative.getScheme() != null ||
+                relative.getUserInfo() != null ||
+                relative.getHost() != null ||
+                relative.getQuery() != null ||
+                relative.getFragment() != null ||
+                relative.getPath() == null ||
+                relative.getPath().startsWith("/")) {
             throw new IllegalArgumentException(thatUri.toString());
         }
-        return relative.toString();
+        return relative.getPath();
     }
 }

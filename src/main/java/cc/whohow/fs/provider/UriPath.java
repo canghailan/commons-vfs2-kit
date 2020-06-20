@@ -1,11 +1,12 @@
 package cc.whohow.fs.provider;
 
 import cc.whohow.fs.Path;
+import cc.whohow.fs.util.Paths;
 
 import java.net.URI;
 
 public class UriPath implements Path {
-    private final URI uri;
+    protected final URI uri;
 
     public UriPath(String uri) {
         this(URI.create(uri));
@@ -22,8 +23,11 @@ public class UriPath implements Path {
 
     @Override
     public UriPath getParent() {
-        // TODO
-        return null;
+        URI parent = Paths.getParent(uri);
+        if (parent == null) {
+            return null;
+        }
+        return new UriPath(parent);
     }
 
     @Override

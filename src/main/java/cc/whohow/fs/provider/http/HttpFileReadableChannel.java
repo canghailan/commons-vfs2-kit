@@ -1,5 +1,6 @@
 package cc.whohow.fs.provider.http;
 
+import cc.whohow.fs.FileAttributes;
 import cc.whohow.fs.FileWritableChannel;
 import cc.whohow.fs.util.FileReadableStream;
 import cc.whohow.fs.util.IO;
@@ -11,6 +12,7 @@ import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.WritableByteChannel;
+import java.util.Optional;
 
 public class HttpFileReadableChannel extends FileReadableStream {
     private final CloseableHttpResponse httpResponse;
@@ -20,6 +22,16 @@ public class HttpFileReadableChannel extends FileReadableStream {
         super(httpResponse.getEntity().getContent());
         this.httpResponse = httpResponse;
         this.httpEntity = httpResponse.getEntity();
+    }
+
+    @Override
+    public long size() {
+        return httpEntity.getContentLength();
+    }
+
+    @Override
+    public Optional<FileAttributes> readFileAttributes() {
+        return Optional.of(new HttpFileAttributes(httpResponse));
     }
 
     @Override

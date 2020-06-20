@@ -8,6 +8,7 @@ import cc.whohow.fs.util.IO;
 import cc.whohow.fs.util.MappingIterator;
 import org.apache.commons.vfs2.*;
 import org.apache.commons.vfs2.impl.DefaultFileContentInfo;
+import org.apache.commons.vfs2.operations.DefaultFileOperations;
 import org.apache.commons.vfs2.operations.FileOperations;
 import org.apache.commons.vfs2.util.RandomAccessMode;
 import org.apache.logging.log4j.LogManager;
@@ -450,8 +451,7 @@ public class FileObjectAdapter implements FileObject, FileContent {
     @Override
     public FileOperations getFileOperations() throws FileSystemException {
         log.trace("getFileOperations: {}", this);
-        // TODO
-        return null;
+        return new DefaultFileOperations(this);
     }
 
     @Override

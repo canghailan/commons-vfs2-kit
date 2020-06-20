@@ -1,13 +1,13 @@
 package cc.whohow.fs.provider.file;
 
 import cc.whohow.fs.*;
-import cc.whohow.fs.util.FileReadableStream;
-import cc.whohow.fs.util.FileWritableStream;
 import cc.whohow.fs.util.Files;
 import cc.whohow.fs.util.MappingIterable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.URI;
@@ -45,16 +45,6 @@ public class LocalFileSystem implements FileSystem<LocalPath, LocalFile> {
     @Override
     public LocalPath resolve(URI uri) {
         if ("file".equals(uri.getScheme())) {
-//            java.nio.file.Path path = Paths.get(uri);
-//            if (uri.getPath().endsWith("/")) {
-//                try {
-//                    if (java.nio.file.Files.notExists(path)) {
-//                        java.nio.file.Files.createDirectories(path);
-//                    }
-//                } catch (IOException e) {
-//                    throw new UncheckedIOException(e);
-//                }
-//            }
             return new LocalPath(uri);
         }
         throw new IllegalArgumentException(uri.toString());
@@ -95,9 +85,8 @@ public class LocalFileSystem implements FileSystem<LocalPath, LocalFile> {
     public FileReadableChannel newReadableChannel(LocalPath path) {
         if (path.isRegularFile()) {
             try {
-                // TODO FileChannel
-                log.trace("Files.newInputStream: {}", path);
-                return new FileReadableStream(java.nio.file.Files.newInputStream(path.getFilePath()));
+                log.trace("new FileInputStream: {}", path);
+                return new LocalFileReadableChannel(new FileInputStream(path.getFilePath().toFile()));
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
             }
@@ -110,9 +99,8 @@ public class LocalFileSystem implements FileSystem<LocalPath, LocalFile> {
         if (path.isRegularFile()) {
             try {
                 createDirectories(path);
-                // TODO FileChannel
-                log.trace("Files.newOutputStream: {}", path);
-                return new FileWritableStream(java.nio.file.Files.newOutputStream(path.getFilePath()));
+                log.trace("new FileOutputStream: {}", path);
+                return new LocalFileWritableChannel(new FileOutputStream(path.getFilePath().toFile()));
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
             }
@@ -123,11 +111,15 @@ public class LocalFileSystem implements FileSystem<LocalPath, LocalFile> {
     public void createDirectories(LocalPath path) {
         try {
             if (path.isDirectory()) {
-                java.nio.file.Files.createDirectories(path.getFilePath());
+                if (java.nio.file.Files.notExists(path.getFilePath())) {
+                    java.nio.file.Files.createDirectories(path.getFilePath());
+                }
             } else {
                 java.nio.file.Path parent = path.getFilePath().getParent();
                 if (parent != null) {
-                    java.nio.file.Files.createDirectories(parent);
+                    if (java.nio.file.Files.notExists(parent)) {
+                        java.nio.file.Files.createDirectories(parent);
+                    }
                 }
             }
         } catch (IOException e) {

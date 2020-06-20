@@ -1,41 +1,89 @@
 package cc.whohow;
 
-import cc.whohow.fs.ObjectFile;
-import cc.whohow.fs.provider.aliyun.oss.AliyunOSSObjectManager;
-import com.aliyun.oss.ClientConfiguration;
-import com.aliyun.oss.OSS;
-import com.aliyun.oss.OSSClient;
-import com.aliyun.oss.common.auth.Credentials;
-import com.aliyun.oss.common.auth.DefaultCredentialProvider;
-import com.aliyun.oss.common.auth.DefaultCredentials;
-import com.aliyun.oss.model.Bucket;
+import cc.whohow.fs.File;
+import cc.whohow.fs.FileWritableChannel;
+import cc.whohow.fs.VirtualFileSystem;
+import cc.whohow.fs.command.provider.Checksum;
+import cc.whohow.fs.configuration.ConfigurationBuilder;
+import cc.whohow.fs.configuration.JsonConfigurationParser;
+import cc.whohow.fs.provider.DefaultVirtualFileSystem;
+import cc.whohow.fs.provider.file.LocalFileProvider;
+import cc.whohow.fs.util.IO;
+import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.util.List;
+import java.io.FileOutputStream;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.file.Paths;
 
 public class TestAliyunOSS {
-    private static final String accessKeyId = "";
-    private static final String secretAccessKey = "";
+    private static String base;
+    private static VirtualFileSystem vfs;
 
-    @Test
-    public void testListBucket() {
-        Credentials credentials = new DefaultCredentials(accessKeyId, secretAccessKey);
-        OSS oss = new OSSClient("https://oss.aliyuncs.com", new DefaultCredentialProvider(credentials), new ClientConfiguration());
-        List<Bucket> bucketList = oss.listBuckets();
-        for (Bucket bucket : bucketList) {
-            System.out.println(bucket.getName());
-            System.out.println(bucket.getExtranetEndpoint());
-            System.out.println(bucket.getIntranetEndpoint());
-            System.out.println();
-        }
-        oss.shutdown();
+    @BeforeClass
+    public static void beforeClass() throws Exception {
+        base = Paths.get(".").toUri().normalize().toString();
+        vfs = new DefaultVirtualFileSystem(new JsonConfigurationParser(new ConfigurationBuilder())
+                .parse(new YAMLMapper().readTree(new java.io.File("vfs.yml"))).build());
+        vfs.load(new LocalFileProvider());
+    }
+
+    @AfterClass
+    public static void afterClass() throws Exception {
+        vfs.close();
     }
 
     @Test
-    public void testObjectFactory() throws Exception {
-        try (AliyunOSSObjectManager objectFactory = new AliyunOSSObjectManager()) {
-            ObjectFile objectFile = objectFactory.get(String.format("oss://%s:%s@yt-conf.oss-cn-hangzhou.aliyuncs.com/dev/api-yitong-com-base-v1/vfs.yml", accessKeyId, secretAccessKey));
-            System.out.println(objectFile.readUtf8());
+    public void testAliyunOSSFileWritableChannel() throws Exception {
+        File<?, ?> source = vfs.get(base + "test.txt");
+        File<?, ?> target = vfs.get("/temp-oss/test.txt");
+
+        source.delete();
+        Assert.assertFalse(source.exists());
+
+        System.out.println("file.exists: " + target.exists());
+        target.delete();
+        Assert.assertFalse(target.exists());
+        System.out.println("file.exists: " + target.exists());
+
+        int maxSize = 64 * 1024 * 1024;
+        int maxBufferSize = 4 * 1024 * 1024;
+
+        long size = 0;
+        try (FileChannel local = new FileOutputStream("test.txt").getChannel();
+             FileWritableChannel object = target.newWritableChannel()) {
+            System.out.println(object.getClass());
+            for (int i = 0; size < maxSize; i++) {
+                System.out.println("loop" + i + ":");
+                ByteBuffer buffer1 = RandomContent.randomByteBuffer(1, 1024);
+
+                System.out.println(size + " + " + buffer1.remaining());
+                size += buffer1.remaining();
+
+                IO.write(local, buffer1.duplicate());
+                IO.write(object, buffer1.duplicate());
+
+                ByteBuffer buffer2 = RandomContent.randomByteBuffer(1, maxBufferSize);
+
+                System.out.println(size + " + " + buffer2.remaining());
+                size += buffer2.remaining();
+
+                IO.write(local, buffer2.duplicate());
+                IO.write(object, buffer2.duplicate());
+            }
         }
+
+        Assert.assertTrue(target.exists());
+
+        Assert.assertEquals(size, target.size());
+        System.out.println("size: " + target.size());
+
+        String md5 = new Checksum("MD5", target).call();
+        Assert.assertEquals(new Checksum("MD5", source).call(), md5);
+        System.out.println("md5: " + md5);
     }
 }

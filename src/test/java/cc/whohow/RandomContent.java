@@ -27,4 +27,16 @@ public class RandomContent {
         }
         return new String(buffer);
     }
+
+    public static byte[] randomBytes(int minLength, int maxLength) {
+        return randomBytes(ThreadLocalRandom.current().nextInt(minLength, maxLength));
+    }
+
+    public static ByteBuffer randomByteBuffer(int minLength, int maxLength) {
+        return randomByteBuffer(ThreadLocalRandom.current().nextInt(minLength, maxLength));
+    }
+
+    public static String randomString(int minLength, int maxLength) {
+        return randomString(ThreadLocalRandom.current().nextInt(minLength, maxLength));
+    }
 }

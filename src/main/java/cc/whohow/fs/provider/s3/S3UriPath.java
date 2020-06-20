@@ -1,6 +1,7 @@
 package cc.whohow.fs.provider.s3;
 
 import cc.whohow.fs.Path;
+import cc.whohow.fs.util.Paths;
 
 import java.net.URI;
 import java.util.Objects;
@@ -19,13 +20,17 @@ public class S3UriPath extends S3Uri implements Path {
     }
 
     public boolean isSame(S3UriPath path) {
-        return Objects.equals(getKey(), path.getKey()) && Objects.equals(getBucketName(), path.getBucketName());
+        return Objects.equals(getKey(), path.getKey()) &&
+                Objects.equals(getBucketName(), path.getBucketName());
     }
 
     @Override
     public S3UriPath getParent() {
-        // TODO
-        return null;
+        String parent = Paths.getParent(key);
+        if (parent == null) {
+            return null;
+        }
+        return new S3UriPath(scheme, bucketName, parent);
     }
 
     @Override

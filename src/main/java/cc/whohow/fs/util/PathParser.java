@@ -1,9 +1,5 @@
 package cc.whohow.fs.util;
 
-import org.apache.commons.vfs2.FileName;
-
-import java.net.URI;
-
 public class PathParser {
     private NameIterator iterator;
 
@@ -17,29 +13,16 @@ public class PathParser {
         }
     }
 
-    /**
-     * 是否是相对路径
-     */
-    public static boolean isRelative(String uri) {
-        return isRelative(URI.create(uri));
-    }
-
-    /**
-     * 是否是相对路径
-     */
-    public static boolean isRelative(URI uri) {
-        return uri.getScheme() == null &&
-                uri.getHost() == null &&
-                uri.getPath() != null &&
-                !uri.getPath().startsWith(FileName.SEPARATOR);
-    }
-
-    public static String getLastName(String uri) {
-        return new PathParser(uri).getLastName();
-    }
-
-    public static String getExtension(String uri) {
-        return new PathParser(uri).getExtension();
+    public static String getExtension(String name) {
+        if (name == null || name.isEmpty()) {
+            return null;
+        }
+        int index = name.lastIndexOf('.');
+        // index == 0 不是扩展名
+        if (0 < index && index < name.length() - 1) {
+            return name.substring(index + 1);
+        }
+        return "";
     }
 
     public String getName(int index) {
@@ -92,12 +75,7 @@ public class PathParser {
     }
 
     public String getExtension() {
-        String name = getLastName();
-        int index = name.lastIndexOf('.');
-        if (index < 1) {
-            return "";
-        }
-        return name.substring(index + 1);
+        return getExtension(getLastName());
     }
 
     public int getNameCount() {

@@ -4,7 +4,6 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.ListIterator;
-import java.util.stream.Stream;
 
 /**
  * 路径构建器
@@ -334,10 +333,6 @@ public class PathBuilder implements Iterable<CharSequence> {
 
     public ListIterator<CharSequence> listIterator() {
         return names.listIterator();
-    }
-
-    public Stream<CharSequence> stream() {
-        return names.stream();
     }
 
     @Override

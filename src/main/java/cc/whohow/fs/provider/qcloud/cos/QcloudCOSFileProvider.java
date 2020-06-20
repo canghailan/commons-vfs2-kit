@@ -21,6 +21,7 @@ import java.net.URI;
 import java.nio.file.DirectoryStream;
 import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ExecutorService;
@@ -243,5 +244,12 @@ public class QcloudCOSFileProvider implements FileSystemProvider<S3UriPath, Qclo
     @Override
     public ExecutorService getExecutor() {
         return vfs.getExecutor();
+    }
+
+    @Override
+    public CompletableFuture<QcloudCOSFile> copyAsync(QcloudCOSFile source, QcloudCOSFile target) {
+        return CompletableFuture.supplyAsync(
+                new QcloudCOSCopy(source, target, getExecutor()), getExecutor())
+                .join();
     }
 }

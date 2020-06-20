@@ -4,14 +4,14 @@
         <Console name="Console" target="SYSTEM_OUT">
             <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
         </Console>
-        <File name="File" filename="app.log">
+        <File name="File" filename="vfs.log">
             <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
         </File>
     </Appenders>
     <Loggers>
         <Logger name="cc.whohow" level="trace"/>
         <Root level="error">
-            <AppenderRef ref="Console" level="debug" />
+            <AppenderRef ref="Console" level="trace" />
             <AppenderRef ref="File" />
         </Root>
     </Loggers>

@@ -3,7 +3,10 @@ package cc.whohow.fs.provider.aliyun.oss;
 import cc.whohow.fs.*;
 import cc.whohow.fs.provider.s3.S3Uri;
 import cc.whohow.fs.provider.s3.S3UriPath;
-import cc.whohow.fs.util.*;
+import cc.whohow.fs.util.FileTree;
+import cc.whohow.fs.util.Files;
+import cc.whohow.fs.util.FilterIterable;
+import cc.whohow.fs.util.MappingPredicate;
 import com.aliyun.oss.OSS;
 import com.aliyun.oss.model.DeleteObjectsRequest;
 import com.aliyun.oss.model.OSSObjectSummary;
@@ -72,7 +75,7 @@ public class AliyunOSSFileSystem implements FileSystem<S3UriPath, AliyunOSSFile>
 
     @Override
     public S3UriPath getParent(S3UriPath path) {
-        return null;
+        return path.getParent();
     }
 
     @Override
@@ -100,7 +103,7 @@ public class AliyunOSSFileSystem implements FileSystem<S3UriPath, AliyunOSSFile>
     public FileReadableChannel newReadableChannel(S3UriPath path) {
         if (path.isRegularFile()) {
             log.trace("getObject: oss://{}/{}", path.getBucketName(), path.getKey());
-            return new FileReadableStream(oss.getObject(path.getBucketName(), path.getKey()).getObjectContent());
+            return new AliyunOSSFileReadableChannel(oss.getObject(path.getBucketName(), path.getKey()));
         }
         throw new UnsupportedOperationException(path + " is not file");
     }

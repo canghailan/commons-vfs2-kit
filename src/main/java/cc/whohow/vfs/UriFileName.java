@@ -1,6 +1,7 @@
 package cc.whohow.vfs;
 
 import cc.whohow.fs.util.Paths;
+import cc.whohow.fs.util.UriBuilder;
 import org.apache.commons.vfs2.FileName;
 import org.apache.commons.vfs2.FileSystemException;
 import org.apache.commons.vfs2.FileType;
@@ -54,20 +55,25 @@ public class UriFileName implements FileName {
 
     @Override
     public String getRootURI() {
-        // TODO
-        return null;
+        return getRoot().getURI();
     }
 
     @Override
     public FileName getRoot() {
-        // TODO
-        return null;
+        return new UriFileName(new UriBuilder(uri)
+                .setPath("/")
+                .setQuery(null)
+                .setFragment(null)
+                .build());
     }
 
     @Override
     public FileName getParent() {
-        // TODO
-        return null;
+        URI parent = Paths.getParent(uri);
+        if (parent == null) {
+            return null;
+        }
+        return new UriFileName(parent);
     }
 
     @Override
@@ -101,7 +107,7 @@ public class UriFileName implements FileName {
 
     @Override
     public FileType getType() {
-        return (uri.getPath() != null && uri.getPath().endsWith("/")) ? FileType.FOLDER : FileType.FILE;
+        return (uri.getPath() == null || uri.getPath().endsWith("/")) ? FileType.FOLDER : FileType.FILE;
     }
 
     @Override

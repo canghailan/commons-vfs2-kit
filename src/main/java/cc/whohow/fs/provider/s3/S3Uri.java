@@ -23,28 +23,39 @@ public class S3Uri {
             throw new IllegalArgumentException(uri.toString());
         }
         scheme = uri.getScheme();
-        if (uri.getUserInfo() != null) {
-            String[] userInfo = uri.getUserInfo().split(":", 2);
-            accessKeyId = userInfo[0];
-            secretAccessKey = userInfo[1];
-        } else {
+        if (uri.getUserInfo() == null) {
             accessKeyId = null;
             secretAccessKey = null;
-        }
-        if (uri.getHost() != null) {
-            String[] host = uri.getHost().split("\\.", 2);
-            if (host.length == 1) {
-                bucketName = host[0];
-                endpoint = null;
-            } else {
-                bucketName = host[0];
-                endpoint = host[1];
-            }
         } else {
+            int index = uri.getUserInfo().indexOf(':');
+            if (index < 0) {
+                throw new IllegalArgumentException(uri.toString());
+            }
+            accessKeyId = uri.getUserInfo().substring(0, index);
+            secretAccessKey = uri.getUserInfo().substring(index + 1);
+        }
+        if (uri.getHost() == null) {
             bucketName = null;
             endpoint = null;
+        } else {
+            int index = uri.getHost().indexOf('.');
+            if (index < 0) {
+                bucketName = uri.getHost();
+                endpoint = null;
+            } else {
+                bucketName = uri.getHost().substring(0, index);
+                endpoint = uri.getHost().substring(index + 1);
+            }
         }
-        key = uri.getPath().isEmpty() ? "" : uri.getPath().substring(1);
+        if (uri.getPath() == null) {
+            key = null;
+        } else {
+            if (uri.getPath().length() <= 1) {
+                key = "";
+            } else {
+                key = uri.getPath().substring(1);
+            }
+        }
     }
 
     public S3Uri(String scheme, String accessKeyId, String secretAccessKey, String bucketName, String endpoint, String key) {

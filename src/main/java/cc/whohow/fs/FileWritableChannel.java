@@ -11,6 +11,9 @@ import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 
 public interface FileWritableChannel extends WritableByteChannel {
+    /**
+     * 请勿同时操作Channel、Stream
+     */
     default OutputStream stream() {
         return Channels.newOutputStream(this);
     }

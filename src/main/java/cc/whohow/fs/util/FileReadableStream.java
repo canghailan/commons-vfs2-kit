@@ -84,6 +84,11 @@ public class FileReadableStream extends InputStream implements FileReadableChann
     }
 
     @Override
+    public long size() {
+        return -1;
+    }
+
+    @Override
     public InputStream stream() {
         return stream;
     }

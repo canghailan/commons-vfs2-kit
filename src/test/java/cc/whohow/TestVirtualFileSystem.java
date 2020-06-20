@@ -2,7 +2,6 @@ package cc.whohow;
 
 import cc.whohow.fs.File;
 import cc.whohow.fs.FileStream;
-import cc.whohow.fs.FileWritableChannel;
 import cc.whohow.fs.VirtualFileSystem;
 import cc.whohow.fs.configuration.ConfigurationBuilder;
 import cc.whohow.fs.configuration.JsonConfigurationParser;
@@ -12,13 +11,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import org.junit.Test;
 
-import java.io.FileOutputStream;
-import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
-import java.nio.channels.FileChannel;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
-import java.util.Random;
 import java.util.UUID;
 
 public class TestVirtualFileSystem {
@@ -175,44 +168,6 @@ public class TestVirtualFileSystem {
         vfs.load(new LocalFileProvider());
 
         vfs.copyAsync(vfs.get("file:///D:/temp/"), vfs.get("/temp-cos/")).join();
-
-        vfs.close();
-    }
-
-    @Test
-    public void testQcloudCOSFileWritableChannel() throws Exception {
-        File<?, ?> configuration = new JsonConfigurationParser(new ConfigurationBuilder())
-                .parse(loadConfiguration())
-                .build();
-
-        VirtualFileSystem vfs = new DefaultVirtualFileSystem(configuration);
-        vfs.load(new LocalFileProvider());
-
-        StringBuilder buffer = new StringBuilder();
-
-        Random random = new Random();
-        try (FileWritableChannel channel = vfs.get("/temp-cos/test-wc.txt").newWritableChannel()) {
-            int i = 0;
-            while (buffer.length() < 32 * 1024 * 1024) {
-                int n = random.nextInt(4 * 1024 * 1024);
-                System.out.println("loop" + (i++) + ": " + n);
-                ByteBuffer buf = ByteBuffer.allocate(n);
-                while (buf.hasRemaining()) {
-                    char c = Character.forDigit(random.nextInt(36), 36);
-                    buf.put((byte) c);
-                }
-                buf.flip();
-                channel.write(buf.duplicate());
-                buffer.append(StandardCharsets.US_ASCII.decode(buf.duplicate()));
-            }
-        }
-
-        try (FileChannel channel = new FileOutputStream("D:\\test-wc.txt").getChannel()) {
-            ByteBuffer buf = StandardCharsets.US_ASCII.encode(CharBuffer.wrap(buffer));
-            while (buf.hasRemaining()) {
-                channel.write(buf);
-            }
-        }
 
         vfs.close();
     }

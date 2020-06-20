@@ -6,6 +6,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.vfs2.*;
 import org.apache.commons.vfs2.cache.NullFilesCache;
 import org.apache.commons.vfs2.impl.DefaultFileReplicator;
+import org.apache.commons.vfs2.operations.DefaultFileOperations;
 import org.apache.commons.vfs2.operations.FileOperationProvider;
 import org.apache.commons.vfs2.operations.FileOperations;
 import org.apache.commons.vfs2.provider.FileReplicator;
@@ -32,6 +33,7 @@ public class FileSystemManagerAdapter implements FileSystemManager, FileSystem, 
     protected final Map<String, List<FileOperationProvider>> fileOperationProvider = new ConcurrentHashMap<>();
     protected final Map<cc.whohow.fs.FileSystem<?, ?>, FileSystemAdapter> fileSystemCache = new ConcurrentHashMap<>();
     protected volatile DefaultFileReplicator defaultFileReplicator;
+    protected volatile DefaultFileOperations defaultFileOperations;
     protected volatile Log logger;
 
     public FileSystemManagerAdapter(cc.whohow.fs.VirtualFileSystem vfs) {
@@ -318,8 +320,10 @@ public class FileSystemManagerAdapter implements FileSystemManager, FileSystem, 
 
     @Override
     public FileOperations getFileOperations() throws FileSystemException {
-        // TODO
-        return null;
+        if (defaultFileOperations == null) {
+            defaultFileOperations = new DefaultFileOperations(this);
+        }
+        return defaultFileOperations;
     }
 
     @Override
