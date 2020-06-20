@@ -8,6 +8,9 @@ import java.io.InputStream;
 import java.security.MessageDigest;
 import java.util.concurrent.Callable;
 
+/**
+ * 文件MD5、SHA-1、SHA-256等计算工具
+ */
 public class Checksum implements Callable<String> {
     private final String algorithm;
     private final File<?, ?> file;

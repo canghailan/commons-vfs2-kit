@@ -14,7 +14,6 @@ import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
@@ -117,11 +116,13 @@ public abstract class AbstractFileBasedConfiguration<T> implements Configuration
      */
     @Override
     public void fileCreated(FileChangeEvent event) throws Exception {
-        T oldValue = clear();
-        T newValue = get();
-        if (!Objects.equals(oldValue, newValue)) {
-            onChange(newValue);
-        }
+//        T oldValue = clear();
+//        T newValue = get();
+//        if (!Objects.equals(oldValue, newValue)) {
+//            onChange(newValue);
+//        }
+        clear();
+        onChange(get());
     }
 
     /**
@@ -129,10 +130,12 @@ public abstract class AbstractFileBasedConfiguration<T> implements Configuration
      */
     @Override
     public void fileDeleted(FileChangeEvent event) throws Exception {
-        T oldValue = clear();
-        if (oldValue != null) {
-            onChange(null);
-        }
+//        T oldValue = clear();
+//        if (oldValue != null) {
+//            onChange(null);
+//        }
+        clear();
+        onChange(null);
     }
 
     /**
@@ -140,11 +143,13 @@ public abstract class AbstractFileBasedConfiguration<T> implements Configuration
      */
     @Override
     public void fileChanged(FileChangeEvent event) throws Exception {
-        T oldValue = clear();
-        T newValue = get();
-        if (!Objects.equals(oldValue, newValue)) {
-            onChange(newValue);
-        }
+//        T oldValue = clear();
+//        T newValue = get();
+//        if (!Objects.equals(oldValue, newValue)) {
+//            onChange(newValue);
+//        }
+        clear();
+        onChange(get());
     }
 
     /**

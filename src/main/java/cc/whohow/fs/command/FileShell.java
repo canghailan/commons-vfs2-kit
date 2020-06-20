@@ -63,7 +63,7 @@ public class FileShell {
         try {
             CallableCommand<R> callableCommand = new CallableCommand<>(command);
             install(callableCommand.getCommandName(), callableCommand);
-            install(callableCommand.getSimpleCommandName(), callableCommand);
+            install(callableCommand.getShortCommandName(), callableCommand);
         } catch (Exception e) {
             throw UncheckedException.unchecked(e);
         }

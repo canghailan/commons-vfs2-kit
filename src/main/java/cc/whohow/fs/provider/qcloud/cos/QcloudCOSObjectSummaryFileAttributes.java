@@ -53,13 +53,31 @@ public class QcloudCOSObjectSummaryFileAttributes implements FileAttributes {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
+    public <T> Optional<T> getValue(String name) {
+        Objects.requireNonNull(name);
+        switch (name) {
+            case SIZE:
+                return (Optional<T>) Optional.of(size());
+            case QcloudCOSFileAttributes.LAST_MODIFIED:
+                return (Optional<T>) Optional.of(getLastModified());
+            case QcloudCOSFileAttributes.ETAG:
+                return (Optional<T>) Optional.of(getETag());
+            case QcloudCOSFileAttributes.STORAGE_CLASS:
+                return (Optional<T>) Optional.of(getStorageClass());
+            default:
+                return Optional.empty();
+        }
+    }
+
+    @Override
     public Optional<? extends Attribute<?>> get(String name) {
         Objects.requireNonNull(name);
         switch (name) {
-            case QcloudCOSFileAttributes.LAST_MODIFIED:
-                return Optional.of(new DateAttribute(QcloudCOSFileAttributes.LAST_MODIFIED, getLastModified()));
             case SIZE:
                 return Optional.of(new LongAttribute(SIZE, size()));
+            case QcloudCOSFileAttributes.LAST_MODIFIED:
+                return Optional.of(new DateAttribute(QcloudCOSFileAttributes.LAST_MODIFIED, getLastModified()));
             case QcloudCOSFileAttributes.ETAG:
                 return Optional.of(new StringAttribute(QcloudCOSFileAttributes.ETAG, getETag()));
             case QcloudCOSFileAttributes.STORAGE_CLASS:
@@ -72,8 +90,8 @@ public class QcloudCOSObjectSummaryFileAttributes implements FileAttributes {
     @Override
     public Iterator<Attribute<?>> iterator() {
         return Arrays.<Attribute<?>>asList(
-                new DateAttribute(QcloudCOSFileAttributes.LAST_MODIFIED, objectSummary.getLastModified()),
                 new LongAttribute(SIZE, size()),
+                new DateAttribute(QcloudCOSFileAttributes.LAST_MODIFIED, objectSummary.getLastModified()),
                 new StringAttribute(QcloudCOSFileAttributes.ETAG, getETag()),
                 new StringAttribute(QcloudCOSFileAttributes.STORAGE_CLASS, getStorageClass())
         ).iterator();

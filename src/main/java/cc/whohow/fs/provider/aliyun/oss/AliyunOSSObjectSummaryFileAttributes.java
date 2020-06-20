@@ -53,13 +53,31 @@ public class AliyunOSSObjectSummaryFileAttributes implements FileAttributes {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
+    public <T> Optional<T> getValue(String name) {
+        Objects.requireNonNull(name);
+        switch (name) {
+            case SIZE:
+                return (Optional<T>) Optional.of(size());
+            case AliyunOSSFileAttributes.LAST_MODIFIED:
+                return (Optional<T>) Optional.of(getLastModified());
+            case AliyunOSSFileAttributes.ETAG:
+                return (Optional<T>) Optional.of(getETag());
+            case AliyunOSSFileAttributes.STORAGE_CLASS:
+                return (Optional<T>) Optional.of(getStorageClass());
+            default:
+                return Optional.empty();
+        }
+    }
+
+    @Override
     public Optional<? extends Attribute<?>> get(String name) {
         Objects.requireNonNull(name);
         switch (name) {
-            case AliyunOSSFileAttributes.LAST_MODIFIED:
-                return Optional.of(new DateAttribute(AliyunOSSFileAttributes.LAST_MODIFIED, getLastModified()));
             case SIZE:
                 return Optional.of(new LongAttribute(SIZE, size()));
+            case AliyunOSSFileAttributes.LAST_MODIFIED:
+                return Optional.of(new DateAttribute(AliyunOSSFileAttributes.LAST_MODIFIED, getLastModified()));
             case AliyunOSSFileAttributes.ETAG:
                 return Optional.of(new StringAttribute(AliyunOSSFileAttributes.ETAG, getETag()));
             case AliyunOSSFileAttributes.STORAGE_CLASS:
@@ -72,8 +90,8 @@ public class AliyunOSSObjectSummaryFileAttributes implements FileAttributes {
     @Override
     public Iterator<Attribute<?>> iterator() {
         return Arrays.<Attribute<?>>asList(
-                new DateAttribute(AliyunOSSFileAttributes.LAST_MODIFIED, objectSummary.getLastModified()),
                 new LongAttribute(SIZE, size()),
+                new DateAttribute(AliyunOSSFileAttributes.LAST_MODIFIED, objectSummary.getLastModified()),
                 new StringAttribute(AliyunOSSFileAttributes.ETAG, getETag()),
                 new StringAttribute(AliyunOSSFileAttributes.STORAGE_CLASS, getStorageClass())
         ).iterator();

@@ -19,7 +19,7 @@ public interface Attributes extends Iterable<Attribute<?>> {
 
     @SuppressWarnings("unchecked")
     default <T> Optional<T> getValue(String name) {
-        return (Optional<T>) get(name);
+        return (Optional<T>) get(name).map(Attribute::value);
     }
 
     default Optional<String> getAsString(String name) {

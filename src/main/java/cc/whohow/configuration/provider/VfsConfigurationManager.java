@@ -25,6 +25,7 @@ public class VfsConfigurationManager implements FileBasedConfigurationManager, F
 
     public VfsConfigurationManager(FileObject root) {
         this.root = root;
+        // 提前建立根目录监听
         this.root.getFileSystem().addListener(this.root, this);
     }
 

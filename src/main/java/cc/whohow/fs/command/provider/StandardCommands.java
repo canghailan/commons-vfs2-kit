@@ -24,15 +24,10 @@ public class StandardCommands {
             throw new IllegalArgumentException(String.join(" ", args));
         }
         File<?, ?> file = vfs.get(args[0]);
-        int max = 1000;
         try (DirectoryStream<? extends File<?, ?>> stream = file.newDirectoryStream()) {
-            int n = 0;
             StringJoiner buffer = new StringJoiner("\n");
             for (File<?, ?> f : stream) {
                 buffer.add(f.getPublicUri());
-                if (++n >= max) {
-                    break;
-                }
             }
             return buffer.toString();
         } catch (IOException e) {
@@ -45,15 +40,10 @@ public class StandardCommands {
             throw new IllegalArgumentException(String.join(" ", args));
         }
         File<?, ?> file = vfs.get(args[0]);
-        int max = 1000;
         try (FileStream<? extends File<?, ?>> stream = file.tree()) {
-            int n = 0;
             StringJoiner buffer = new StringJoiner("\n");
             for (File<?, ?> f : stream) {
                 buffer.add(f.getPublicUri());
-                if (++n >= max) {
-                    break;
-                }
             }
             return buffer.toString();
         } catch (IOException e) {

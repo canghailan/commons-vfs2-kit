@@ -146,7 +146,11 @@ public class AggregatedPollingFileWatchKey<P extends Path, F extends File<P, F>,
             }
             return index;
         } catch (IOException e) {
+            log.warn("watch ERROR", e);
             throw new UncheckedIOException(e);
+        } catch (Exception e) {
+            log.warn("watch ERROR", e);
+            throw e;
         }
     }
 
