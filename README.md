@@ -1,7 +1,7 @@
 # 虚拟文件系统
 
 ## 快速上手
-### 配置文件[vfs.yaml](vfs.yaml.md)
+### [配置文件 vfs.yaml](vfs.yaml.md)
 ```markdown
 providers:
   file:
@@ -9,8 +9,8 @@ providers:
   aliyun-oss:
     className: cc.whohow.fs.provider.aliyun.oss.AliyunOSSFileProvider
     profiles:
-    - accessKeyId: ******
-      secretAccessKey: ******
+    - accessKeyId: *****
+      secretAccessKey: *****
     automount: true
 ```
 
