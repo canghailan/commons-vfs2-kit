@@ -16,7 +16,7 @@ import java.util.UUID;
 
 public class TestVirtualFileSystem {
     private JsonNode loadConfiguration() throws Exception {
-        return new YAMLMapper().readTree(new java.io.File("vfs.yml"));
+        return new YAMLMapper().readTree(new java.io.File("vfs.yaml"));
     }
 
     private void print(File<?, ?> dir) throws Exception {

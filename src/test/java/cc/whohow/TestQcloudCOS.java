@@ -28,7 +28,7 @@ public class TestQcloudCOS {
     public static void beforeClass() throws Exception {
         base = Paths.get(".").toUri().normalize().toString();
         vfs = new DefaultVirtualFileSystem(new JsonConfigurationParser(new ConfigurationBuilder())
-                .parse(new YAMLMapper().readTree(new java.io.File("vfs.yml"))).build());
+                .parse(new YAMLMapper().readTree(new java.io.File("vfs.yaml"))).build());
         vfs.load(new LocalFileProvider());
     }
 

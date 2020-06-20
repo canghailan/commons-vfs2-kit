@@ -4,4 +4,4 @@ target/
 temp/
 test.txt
 *.log
-vfs.yml
+vfs.yaml
