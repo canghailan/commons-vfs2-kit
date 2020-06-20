@@ -8,6 +8,10 @@ public class JsonConfigurationParser {
     protected ConfigurationBuilder configurationBuilder;
     protected Deque<String> path = new LinkedList<>();
 
+    public JsonConfigurationParser() {
+        this(new ConfigurationBuilder());
+    }
+
     public JsonConfigurationParser(ConfigurationBuilder configurationBuilder) {
         this.configurationBuilder = configurationBuilder;
     }

@@ -1,15 +1,40 @@
 # 虚拟文件系统
 
 ## 快速上手
-配置文件[vfs.yaml](vfs.yaml.md)
+### 配置文件[vfs.yaml](vfs.yaml.md)
 ```markdown
 providers:
+  file:
+    className: cc.whohow.fs.provider.file.LocalFileProvider
   aliyun-oss:
     className: cc.whohow.fs.provider.aliyun.oss.AliyunOSSFileProvider
     profiles:
     - accessKeyId: ******
       secretAccessKey: ******
     automount: true
+```
+
+
+### [文件上传](src/test/java/example/Upload.java)
+```java
+public class Upload {
+    public static void main(String[] args) throws Exception {
+        JsonNode configuration = new YAMLMapper().readTree(new java.io.File("vfs.yaml"));
+        File<?, ?> metadata = new JsonConfigurationParser().parse(configuration).build();
+
+        String srcDir = Paths.get(".").toAbsolutePath().normalize().toUri().toString();
+        String dstDir = "oss://xxx-temp/temp/";
+
+        try (VirtualFileSystem vfs = new DefaultVirtualFileSystem(metadata)) {
+            File<?, ?> file = vfs.copyAsync(
+                    vfs.get(srcDir + "pom.xml"),
+                    vfs.get(dstDir + "backup-pom.xml")
+            ).join();
+            System.out.println(file);
+            // oss://xxx-temp/temp/backup-pom.xml
+        }
+    }
+}
 ```
 待补充
 

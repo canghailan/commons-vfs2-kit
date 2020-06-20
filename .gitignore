@@ -5,3 +5,4 @@ temp/
 test.txt
 *.log
 vfs.yaml
+vfs.yaml.bak
