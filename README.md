@@ -11,13 +11,92 @@ providers:
       secretAccessKey: ******
     automount: true
 ```
+待补充
 
+
+## 核心对象
+VFS核心参考对象存储，可以看做是一个URI为Key、文件对象为Value的KeyValue存储系统。
+在此基础上，通过URI地址模拟文件系统层级（文件树）。
+* VirtualFileSystem 虚拟文件系统，顶级对象，整合不同文件系统，提供统一的寻址入口
+* File 文件，轻量级对象，持有FileSystem、Path引用，代理了FileSystem中的各种操作，可对文件内容、属性进行读写，可进行文件树遍历
+* Path 路径，轻量级对象，已解析的URI字符串（针对不同的文件系统，解析出特定的字段供文件系统使用）
+* FileSystem 文件系统，重量级对象，KeyValue存储系统的客户端，可通过Path对进行各种操作
+* FileSystemProvider 文件系统SPI，重量级对象，负责根据配置文件初始化FileSystem，同时提供同类型文件Copy、Move操作的实现
+* FileReadableChannel、FileWritableChannel 文件读写通道，针对对象文件进行优化
+* DirectoryStream、FileStream 文件流（集合），**不保证可重复遍历，使用完后需关闭**
+* FileAttributes 文件属性
+* ObjectFile 对象文件，轻量级对象，只提供最基础的文件内容、属性读写，不支持文件树遍历
+* ObjectFileManager 对象文件管理服务，重量级对象，KeyValue存储系统的客户端，只能通过URI获取对象文件
+* FileWatchService 文件监听服务，监听文件变更事件（FileWatchEvent）
+
+### 核心对象关系
+* VirtualFileSystem （虚拟文件系统）
+  * FileSystemProvider （文件系统SPI）
+    * FileSystem （文件系统）
+      * Path （路径，URI）
+      * File （文件对象）
+        * FileAttributes （文件属性，文件/目录）
+        * FileReadableChannel （读通道，仅文件）
+        * FileWritableChannel （写通道，仅文件）
+        * DirectoryStream （下级文件列表，仅目录）
+        * FileStream tree() （以自身为根节点的文件树，文件/目录）
+    * FileWatchService （文件监听服务，一般同类型文件共用一个）
+* ObjectFileManager （对象文件管理服务）
+  * ObjectFile （对象文件）
 
 ## 文件存储支持
 * 本地文件系统
 * HTTP/HTTPS链接
 * 阿里云OSS
 * 腾讯云COS
+* 内存文件系统
+
+
+
+## 配置中心
+待补充
+
+
+
+## Apache Commons VFS API兼容
+待补充
+
+
+
+## Java NIO FileSystem API兼容
+TODO
+
+
+
+## Fish脚本（FIleSHell）
+基于Groovy的脚本，已注入VFS等对象。
+待补充
+
+
 
 ## 优化
+* 通用
+  * [x] 多线程文件拷贝
+  * [ ] TODO 大文件拷贝优化
+* 阿里云OSS
+  * [x] 自动识别网络环境：内网Endpoint可使用时（同地域阿里云VPC、经典网络）自动使用内网
+  * [x] OSSClient复用：同账号、同地域复用同一个OSSClient
+  * [x] 文件复制优化：同账号、同地域文件使用copyObject，其他情况零拷贝流复制
+  * [x] 批量删除使用deleteObjects
+  * [x] 流式写入使用缓冲区，缓冲区大小默认2MB
+* 腾讯云COS
+  * [x] COSClient复用：同账号、同地域复用同一个COSClient
+  * [x] 文件复制优化：同账号、同地域文件使用copyObject，其他情况零拷贝流复制
+  * [x] 批量删除使用deleteObjects
+  * [x] 流式写入使用缓冲区，缓冲区大小默认2MB
 
+
+
+## 轮询监听服务
+待补充
+
+
+
+## 文件同步
+差量同步。
+TODO

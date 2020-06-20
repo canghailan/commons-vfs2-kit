@@ -2,14 +2,14 @@
 
 ## 完整配置文件示例
 ```markdown
-vfs: # 虚拟目录挂载点，Key值为虚拟路径，Value值为实际文件系统路径，默认只有在此挂载的文件路径才可访问
+vfs: # 虚拟目录挂载点，Key值为虚拟路径，Value值为文件存储路径，默认只有在此挂载的文件路径才可访问
   /temp-oss/: oss://bucket/key/
   /temp-cos/: cos://bucket/key/
 
 providers:
-  file: # 本地文件系统，自动挂载
+  file: # 本地文件系统，自动挂载到vfs
     className: cc.whohow.fs.provider.file.LocalFileProvider
-  http: # HTTP链接文件系统，自动挂载
+  http: # HTTP链接文件系统，自动挂载到vfs
     className: cc.whohow.fs.provider.http.HttpFileProvider
   aliyun-oss: # 阿里云OSS对象存储
     className: cc.whohow.fs.provider.aliyun.oss.AliyunOSSFileProvider
@@ -45,7 +45,7 @@ executor: # IO线程池配置
 scheduler: # 定时线程池配置
   corePoolSize: 1 # 核心线程数，默认1
 
-cache: # 缓存配置，用于缓存文件路径解析结果
+cache: # 缓存配置，用于缓存寻址成功的文件对象
   ttl: PT15M # 缓存过期时间，默认15分钟
   maximumSize: 4096 # 缓存大小，默认4096
 ```
