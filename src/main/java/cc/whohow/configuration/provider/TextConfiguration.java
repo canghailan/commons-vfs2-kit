@@ -7,6 +7,9 @@ import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
+/**
+ * 文本配置文件
+ */
 public class TextConfiguration extends AbstractFileBasedConfiguration<String> {
     protected final Charset charset;
 

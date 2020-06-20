@@ -13,8 +13,14 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * 配置管理服务
+ */
 public class VfsConfigurationManager implements FileBasedConfigurationManager, FileListener {
     private static final Logger log = LogManager.getLogger(VfsConfigurationManager.class);
+    /**
+     * 配置文件目录
+     */
     protected final FileObject root;
 
     public VfsConfigurationManager(FileObject root) {

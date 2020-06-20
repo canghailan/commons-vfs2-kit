@@ -30,27 +30,44 @@ public interface File<P extends Path, F extends File<P, F>> extends ObjectFile {
 
     // 以下为代理方法
 
+    /**
+     * 文件存储URI
+     */
     default URI getUri() {
         return getPath().toUri();
     }
 
+    /**
+     * 文件公开URI，一般使用此URI
+     */
     default String getPublicUri() {
         return getFileSystem().getPublicUri(getPath());
     }
 
+    /**
+     * 文件所有URI集合
+     */
     default Collection<String> getUris() {
         return getFileSystem().getUris(getPath());
     }
 
+    /**
+     * 文件名
+     */
     default String getName() {
         return getPath().getName();
     }
 
+    /**
+     * 文件扩展名，无扩展名返回空字符串
+     */
     default String getExtension() {
         return getPath().getExtension();
     }
 
     /**
+     * 是否是文件
+     *
      * @see Files#isRegularFile(java.nio.file.Path, java.nio.file.LinkOption...)
      */
     default boolean isRegularFile() {
@@ -58,6 +75,8 @@ public interface File<P extends Path, F extends File<P, F>> extends ObjectFile {
     }
 
     /**
+     * 是否是文件夹
+     *
      * @see Files#isDirectory(java.nio.file.Path, java.nio.file.LinkOption...)
      */
     default boolean isDirectory() {
@@ -65,6 +84,8 @@ public interface File<P extends Path, F extends File<P, F>> extends ObjectFile {
     }
 
     /**
+     * 文件是否存在
+     *
      * @see Files#exists(java.nio.file.Path, java.nio.file.LinkOption...)
      */
     default boolean exists() {
@@ -72,6 +93,8 @@ public interface File<P extends Path, F extends File<P, F>> extends ObjectFile {
     }
 
     /**
+     * 读取文件属性
+     *
      * @see Files#readAttributes(java.nio.file.Path, java.lang.Class, java.nio.file.LinkOption...)
      */
     default FileAttributes readAttributes() {
@@ -79,6 +102,8 @@ public interface File<P extends Path, F extends File<P, F>> extends ObjectFile {
     }
 
     /**
+     * 获取文件/文件夹最后修改时间
+     *
      * @see Files#getLastModifiedTime(java.nio.file.Path, java.nio.file.LinkOption...)
      */
     default FileTime getLastModifiedTime() {
@@ -96,6 +121,8 @@ public interface File<P extends Path, F extends File<P, F>> extends ObjectFile {
     }
 
     /**
+     * 获取文件/文件夹大小
+     *
      * @see Files#size(java.nio.file.Path)
      */
     default long size() {
@@ -112,6 +139,8 @@ public interface File<P extends Path, F extends File<P, F>> extends ObjectFile {
     }
 
     /**
+     * 文件读通道
+     *
      * @see Files#newByteChannel(java.nio.file.Path, java.nio.file.OpenOption...)
      */
     default FileReadableChannel newReadableChannel() {
@@ -119,6 +148,8 @@ public interface File<P extends Path, F extends File<P, F>> extends ObjectFile {
     }
 
     /**
+     * 文件写通道
+     *
      * @see Files#newByteChannel(java.nio.file.Path, java.nio.file.OpenOption...)
      */
     default FileWritableChannel newWritableChannel() {
@@ -126,6 +157,8 @@ public interface File<P extends Path, F extends File<P, F>> extends ObjectFile {
     }
 
     /**
+     * 父文件夹
+     *
      * @see java.io.File#getParent()
      */
     default F getParent() {
@@ -137,6 +170,8 @@ public interface File<P extends Path, F extends File<P, F>> extends ObjectFile {
     }
 
     /**
+     * 子文件列表
+     *
      * @see Files#newDirectoryStream(java.nio.file.Path)
      */
     default DirectoryStream<F> newDirectoryStream() {
@@ -144,6 +179,8 @@ public interface File<P extends Path, F extends File<P, F>> extends ObjectFile {
     }
 
     /**
+     * 文件树（以此文件为根）
+     *
      * @see Files#walk(java.nio.file.Path, int, java.nio.file.FileVisitOption...)
      */
     default FileStream<F> tree() {
@@ -151,6 +188,8 @@ public interface File<P extends Path, F extends File<P, F>> extends ObjectFile {
     }
 
     /**
+     * 文件树（以此文件为根）
+     *
      * @see Files#walk(java.nio.file.Path, java.nio.file.FileVisitOption...)
      */
     default FileStream<F> tree(int maxDepth) {
@@ -158,21 +197,31 @@ public interface File<P extends Path, F extends File<P, F>> extends ObjectFile {
     }
 
     /**
+     * 删除文件（当文件不存在时，不执行任何操作）
+     *
      * @see Files#delete(java.nio.file.Path)
-     * 当文件不存在时，不执行任何操作
      */
     default void delete() {
         getFileSystem().delete(getPath());
     }
 
+    /**
+     * 添加文件监听
+     */
     default void watch(Consumer<FileWatchEvent<P, F>> listener) {
         getFileSystem().watch(getPath(), listener);
     }
 
+    /**
+     * 移除文件监听
+     */
     default void unwatch(Consumer<FileWatchEvent<P, F>> listener) {
         getFileSystem().unwatch(getPath(), listener);
     }
 
+    /**
+     * 解析下级文件
+     */
     default F resolve(CharSequence path) {
         return getFileSystem().get(getFileSystem().resolve(getPath(), path));
     }

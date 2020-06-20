@@ -9,6 +9,9 @@ import org.apache.logging.log4j.Logger;
 
 import java.util.*;
 
+/**
+ * 深度优先文件树遍历
+ */
 public class DepthFirstFileTreeIterator implements Iterator<FileSelectInfo> {
     private static final Logger log = LogManager.getLogger(DepthFirstFileTreeIterator.class);
     protected final FileSelector fileSelector;
@@ -35,6 +38,7 @@ public class DepthFirstFileTreeIterator implements Iterator<FileSelectInfo> {
                             for (FileObject child : children) {
                                 list.add(new ImmutableFileSelectInfo(fileSelectInfo, child));
                             }
+                            // 与广度优先遍历区别
                             deque.addFirst(list.iterator());
                         }
                     }

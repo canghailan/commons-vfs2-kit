@@ -4,6 +4,7 @@ import cc.whohow.fs.util.FileTree;
 
 import java.net.URI;
 import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
@@ -16,6 +17,9 @@ import java.util.function.Consumer;
  * @param <F> 文件对象
  */
 public interface FileSystem<P extends Path, F extends File<P, F>> extends ObjectFileManager {
+    /**
+     * 文件系统协议
+     */
     default String getScheme() {
         return getUri().getScheme();
     }
@@ -38,8 +42,9 @@ public interface FileSystem<P extends Path, F extends File<P, F>> extends Object
     FileSystemAttributes readAttributes();
 
     /**
+     * 解析文件系统内路径，使用URI.resolve来处理各种复杂情况
+     *
      * @see URI#resolve(java.lang.String)
-     * 解析文件路径，默认应用此方法解析，复用URI.resolve来处理各种复杂情况
      */
     default P resolve(CharSequence path) {
         return resolve(getUri().resolve(path.toString()));
@@ -49,11 +54,6 @@ public interface FileSystem<P extends Path, F extends File<P, F>> extends Object
      * 解析URI
      */
     P resolve(URI uri);
-
-    /**
-     * 获取上级路径
-     */
-    P getParent(P path);
 
     /**
      * 解析相对文件路径
@@ -72,6 +72,9 @@ public interface FileSystem<P extends Path, F extends File<P, F>> extends Object
      */
     F get(P path);
 
+    /**
+     * 获取文件对象
+     */
     default F get(CharSequence path) {
         return get(resolve(path));
     }
@@ -98,27 +101,62 @@ public interface FileSystem<P extends Path, F extends File<P, F>> extends Object
     }
 
     /**
-     * 获取文件属性
+     * 读取文件属性
+     *
+     * @see Files#readAttributes(java.nio.file.Path, java.lang.Class, java.nio.file.LinkOption...)
      */
     FileAttributes readAttributes(P path);
 
     /**
      * 文件读通道
+     *
+     * @see Files#newByteChannel(java.nio.file.Path, java.nio.file.OpenOption...)
      */
     FileReadableChannel newReadableChannel(P path);
 
     /**
      * 文件写通道
+     *
+     * @see Files#newByteChannel(java.nio.file.Path, java.nio.file.OpenOption...)
      */
     FileWritableChannel newWritableChannel(P path);
 
     /**
-     * 目录文件流
+     * 父路径
+     *
+     * @see java.io.File#getParent()
+     */
+    P getParent(P path);
+
+    /**
+     * 子文件列表
+     *
+     * @see Files#newDirectoryStream(java.nio.file.Path)
      */
     DirectoryStream<F> newDirectoryStream(P path);
 
     /**
-     * 删除文件
+     * 文件树（以此文件为根）
+     *
+     * @see Files#walk(java.nio.file.Path, int, java.nio.file.FileVisitOption...)
+     */
+    default FileStream<F> tree(P path) {
+        return tree(path, Integer.MAX_VALUE);
+    }
+
+    /**
+     * 文件树（以此文件为根）
+     *
+     * @see Files#walk(java.nio.file.Path, java.nio.file.FileVisitOption...)
+     */
+    default FileStream<F> tree(P path, int maxDepth) {
+        return new FileTree<>(this, path, maxDepth);
+    }
+
+    /**
+     * 删除文件（当文件不存在时，不执行任何操作）
+     *
+     * @see Files#delete(java.nio.file.Path)
      */
     void delete(P path);
 
@@ -126,25 +164,17 @@ public interface FileSystem<P extends Path, F extends File<P, F>> extends Object
         throw new UnsupportedOperationException("WatchService");
     }
 
+    /**
+     * 添加文件监听
+     */
     default void watch(P path, Consumer<FileWatchEvent<P, F>> listener) {
         getWatchService().watch(get(path), listener);
     }
 
+    /**
+     * 移除文件监听
+     */
     default void unwatch(P path, Consumer<FileWatchEvent<P, F>> listener) {
         getWatchService().unwatch(get(path), listener);
-    }
-
-    /**
-     * 文件树
-     */
-    default FileStream<F> tree(P path) {
-        return tree(path, Integer.MAX_VALUE);
-    }
-
-    /**
-     * 文件集（本级及下级）
-     */
-    default FileStream<F> tree(P path, int maxDepth) {
-        return new FileTree<>(this, path, maxDepth);
     }
 }

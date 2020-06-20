@@ -18,7 +18,7 @@ import java.util.concurrent.*;
 
 public class DefaultVirtualFileSystem implements VirtualFileSystem {
     private static final Logger log = LogManager.getLogger(DefaultVirtualFileSystem.class);
-    protected final File<?, ?> context;
+    protected final File<?, ?> metadata;
     protected final Map<String, FileSystemProvider<?, ?>> providers = new ConcurrentHashMap<>();
     protected final Map<String, String> mountPoints = new LinkedHashMap<>();
     // 可使用字典树Trie优化
@@ -27,8 +27,8 @@ public class DefaultVirtualFileSystem implements VirtualFileSystem {
     protected ScheduledExecutorService scheduledExecutor;
     protected Cache<String, File<?, ?>> cache;
 
-    public DefaultVirtualFileSystem(File<?, ?> context) {
-        this.context = context;
+    public DefaultVirtualFileSystem(File<?, ?> metadata) {
+        this.metadata = metadata;
         this.initialize();
     }
 
@@ -36,7 +36,7 @@ public class DefaultVirtualFileSystem implements VirtualFileSystem {
         log.debug("initialize vfs");
 
         try {
-            mount("meta:vfs:/", new DefaultFileResolver<>(context));
+            mount("meta:vfs:/", new DefaultFileResolver<>(metadata));
             initializeExecutor();
             initializeScheduledExecutor();
             initializeCache();
@@ -55,19 +55,19 @@ public class DefaultVirtualFileSystem implements VirtualFileSystem {
         if (executor != null) {
             throw new IllegalStateException();
         }
-        int corePoolSize = Files.optional(context.resolve("executor/corePoolSize"))
+        int corePoolSize = Files.optional(metadata.resolve("executor/corePoolSize"))
                 .map(File::readUtf8)
                 .map(Integer::parseInt)
                 .orElse(Runtime.getRuntime().availableProcessors());
-        int maximumPoolSize = Files.optional(context.resolve("executor/maximumPoolSize"))
+        int maximumPoolSize = Files.optional(metadata.resolve("executor/maximumPoolSize"))
                 .map(File::readUtf8)
                 .map(Integer::parseInt)
                 .orElse(corePoolSize * 8);
-        Duration keepAliveTime = Files.optional(context.resolve("executor/keepAliveTime"))
+        Duration keepAliveTime = Files.optional(metadata.resolve("executor/keepAliveTime"))
                 .map(File::readUtf8)
                 .map(Duration::parse)
                 .orElse(Duration.ofMinutes(1));
-        int maximumQueueSize = Files.optional(context.resolve("executor/maximumQueueSize"))
+        int maximumQueueSize = Files.optional(metadata.resolve("executor/maximumQueueSize"))
                 .map(File::readUtf8)
                 .map(Integer::parseInt)
                 .orElse(maximumPoolSize * 8);
@@ -87,7 +87,7 @@ public class DefaultVirtualFileSystem implements VirtualFileSystem {
         if (scheduledExecutor != null) {
             throw new IllegalStateException();
         }
-        int corePoolSize = Files.optional(context.resolve("scheduler/corePoolSize"))
+        int corePoolSize = Files.optional(metadata.resolve("scheduler/corePoolSize"))
                 .map(File::readUtf8)
                 .map(Integer::parseInt)
                 .orElse(1);
@@ -102,11 +102,11 @@ public class DefaultVirtualFileSystem implements VirtualFileSystem {
         if (cache != null) {
             throw new IllegalStateException();
         }
-        Duration ttl = Files.optional(context.resolve("cache/ttl"))
+        Duration ttl = Files.optional(metadata.resolve("cache/ttl"))
                 .map(File::readUtf8)
                 .map(Duration::parse)
                 .orElse(Duration.ofMinutes(15));
-        int maximumSize = Files.optional(context.resolve("cache/maximumSize"))
+        int maximumSize = Files.optional(metadata.resolve("cache/maximumSize"))
                 .map(File::readUtf8)
                 .map(Integer::parseInt)
                 .orElse(4096);
@@ -118,7 +118,7 @@ public class DefaultVirtualFileSystem implements VirtualFileSystem {
 
     protected synchronized void parseMountPoints() throws Exception {
         log.debug("parseMountPoints");
-        File<?, ?> vfs = context.resolve("vfs");
+        File<?, ?> vfs = metadata.resolve("vfs");
         if (vfs.exists()) {
             for (String line : vfs.readUtf8().split("\n")) {
                 if (line.isEmpty()) {
@@ -132,7 +132,7 @@ public class DefaultVirtualFileSystem implements VirtualFileSystem {
 
     protected synchronized void loadProviders() throws Exception {
         log.debug("loadProviders");
-        File<?, ?> configurations = context.resolve("providers/");
+        File<?, ?> configurations = metadata.resolve("providers/");
         if (configurations.exists()) {
             try (DirectoryStream<? extends File<?, ?>> stream = configurations.newDirectoryStream()) {
                 for (File<?, ?> configuration : stream) {
@@ -147,8 +147,8 @@ public class DefaultVirtualFileSystem implements VirtualFileSystem {
     }
 
     @Override
-    public File<?, ?> getContext() {
-        return context;
+    public File<?, ?> getMetadata() {
+        return metadata;
     }
 
     @Override
@@ -177,15 +177,15 @@ public class DefaultVirtualFileSystem implements VirtualFileSystem {
     }
 
     @Override
-    public synchronized void load(FileSystemProvider<?, ?> provider, File<?, ?> configuration) {
-        log.debug("loadProvider: {} {}", provider, configuration);
+    public synchronized void load(FileSystemProvider<?, ?> provider, File<?, ?> metadata) {
+        log.debug("loadProvider: {} {}", provider, metadata);
         try {
-            File<?, ?> context = this.context.resolve("providers/" + UUID.randomUUID() + "/");
-            context.resolve("className").writeUtf8(provider.getClass().getName());
-            if (configuration != null && configuration.exists()) {
-                copyAsync(configuration, context).join();
+            File<?, ?> configuration = this.metadata.resolve("providers/" + UUID.randomUUID() + "/");
+            configuration.resolve("className").writeUtf8(provider.getClass().getName());
+            if (metadata != null && metadata.exists()) {
+                copyAsync(metadata, configuration).join();
             }
-            provider.initialize(this, context);
+            provider.initialize(this, configuration);
             providers.put(provider.getScheme(), provider);
         } catch (Exception e) {
             throw UncheckedException.unchecked(e);

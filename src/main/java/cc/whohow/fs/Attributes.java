@@ -5,6 +5,9 @@ import java.util.Date;
 import java.util.Objects;
 import java.util.Optional;
 
+/**
+ * 属性集
+ */
 public interface Attributes extends Iterable<Attribute<?>> {
     static String toString(Attributes attributes) {
         StringBuilder buffer = new StringBuilder();

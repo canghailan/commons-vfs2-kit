@@ -6,10 +6,25 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.BiFunction;
 
+/**
+ * MapReduce单机版
+ */
 public class MapReduce<T, S> extends CompletableFuture<T> {
+    /**
+     * 完成计数器
+     */
     protected final LongAdder completed = new LongAdder();
+    /**
+     * 未完成计数器
+     */
     protected final AtomicLong uncompleted = new AtomicLong();
+    /**
+     * 任务状态/结果
+     */
     protected final AtomicReference<T> value;
+    /**
+     * 状态合并函数
+     */
     protected final BiFunction<T, S, T> reducer;
 
     public MapReduce(T value) {
@@ -25,32 +40,46 @@ public class MapReduce<T, S> extends CompletableFuture<T> {
         return t;
     }
 
-    public void map() {
+    /**
+     * 开始（计数）
+     */
+    public void begin() {
         uncompleted.getAndIncrement();
     }
 
-    public void map(CompletableFuture<S> s) {
-        map();
-        s.whenComplete(this::reduce);
-    }
-
-    public void reduce() {
+    /**
+     * 结束
+     */
+    public void end() {
         completed.increment();
         if (uncompleted.decrementAndGet() == 0) {
             complete(value.get());
         }
     }
 
+    /**
+     * 增加一个子任务
+     */
+    public void map(CompletableFuture<S> s) {
+        begin();
+        s.whenComplete(this::reduce);
+    }
+
+    /**
+     * 子任务完成回调
+     */
     public void reduce(S s, Throwable e) {
         if (e == null) {
             update(s);
-            reduce();
+            end();
         } else {
             completeExceptionally(e);
         }
     }
 
     /**
+     * 更新任务状态
+     *
      * @see AtomicReference#updateAndGet(java.util.function.UnaryOperator)
      */
     protected void update(S s) {
@@ -61,10 +90,16 @@ public class MapReduce<T, S> extends CompletableFuture<T> {
         } while (!value.compareAndSet(prev, next));
     }
 
+    /**
+     * 完成数
+     */
     public long getCompleted() {
         return completed.longValue();
     }
 
+    /**
+     * 未完成数
+     */
     public long getUncompleted() {
         return uncompleted.longValue();
     }

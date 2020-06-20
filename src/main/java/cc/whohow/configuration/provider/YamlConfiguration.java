@@ -12,6 +12,9 @@ import org.apache.commons.vfs2.FileObject;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
+/**
+ * YAML配置文件
+ */
 public class YamlConfiguration<T> extends AbstractFileBasedConfiguration<T> {
     protected static final YAMLMapper OBJECT_MAPPER = new YAMLMapper();
 

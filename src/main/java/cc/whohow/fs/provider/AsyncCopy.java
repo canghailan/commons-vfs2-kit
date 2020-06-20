@@ -71,23 +71,27 @@ public class AsyncCopy<F1 extends File<?, F1>, F2 extends File<?, F2>> implement
 
     protected CompletableFuture<F2> copyDirectory(F1 source, F2 target) {
         MapReduce<F2, F2> mapReduce = new MapReduce<>(target);
-        mapReduce.map();
+        mapReduce.begin();
         try (FileStream<F1> files = source.tree()) {
             for (F1 file : files) {
                 if (file.isRegularFile()) {
+                    // 异步并行拷贝，拆分成单文件拷贝子任务
                     mapReduce.map(
                             CompletableFuture.supplyAsync(newFileCopy(
                                     file, target.resolve(source.getPath().relativize(file.getPath()))), executor)
                                     .thenApply(CompletableFuture::join));
                 }
             }
-            mapReduce.reduce();
+            mapReduce.end();
         } catch (Exception e) {
             mapReduce.completeExceptionally(e);
         }
         return mapReduce;
     }
 
+    /**
+     * 生成单文件拷贝子任务，重写copyFile时需同时重写此方法
+     */
     protected Copy<F1, F2> newFileCopy(F1 source, F2 target) {
         return new AsyncCopy<>(source, target, executor);
     }

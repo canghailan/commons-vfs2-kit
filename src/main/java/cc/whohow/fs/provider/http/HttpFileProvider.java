@@ -19,9 +19,9 @@ public class HttpFileProvider implements FileSystemProvider<UriPath, HttpFile> {
     private volatile HttpFileSystem httpFileSystem;
 
     @Override
-    public void initialize(VirtualFileSystem vfs, File<?, ?> context) throws Exception {
+    public void initialize(VirtualFileSystem vfs, File<?, ?> metadata) throws Exception {
         this.vfs = vfs;
-        log.debug("initialize HttpFileProvider: {}", context);
+        log.debug("initialize HttpFileProvider: {}", metadata);
 
         httpFileSystem = new HttpFileSystem(URI.create("http:/"));
 

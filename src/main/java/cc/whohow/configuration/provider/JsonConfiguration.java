@@ -11,6 +11,9 @@ import org.apache.commons.vfs2.FileObject;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
+/**
+ * JSON配置文件
+ */
 public class JsonConfiguration<T> extends AbstractFileBasedConfiguration<T> {
     protected static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 

@@ -32,20 +32,20 @@ public class QcloudCOSFileProvider implements FileSystemProvider<S3UriPath, Qclo
     private final Map<String, COSCredentials> bucketCredentials = new ConcurrentHashMap<>();
     private final Map<S3Uri, COSClient> pool = new ConcurrentHashMap<>();
     private final Map<String, QcloudCOSFileSystem> fileSystems = new ConcurrentHashMap<>();
-    private volatile PollingWatchService<S3UriPath, QcloudCOSFile, String> watchService;
+    private volatile VirtualFileSystem vfs;
+    private volatile File<?, ?> metadata;
     private volatile String scheme;
     private volatile boolean automount;
     private volatile ClientConfig clientConfig;
     private volatile List<COSCredentials> credentialsConfiguration;
-    private volatile VirtualFileSystem vfs;
-    private volatile File<?, ?> context;
     private volatile Duration watchInterval;
+    private volatile PollingWatchService<S3UriPath, QcloudCOSFile, String> watchService;
 
     @Override
-    public void initialize(VirtualFileSystem vfs, File<?, ?> context) throws Exception {
+    public void initialize(VirtualFileSystem vfs, File<?, ?> metadata) throws Exception {
         this.vfs = vfs;
-        this.context = context;
-        log.debug("initialize QcloudCOSFileProvider: {}", context);
+        this.metadata = metadata;
+        log.debug("initialize QcloudCOSFileProvider: {}", metadata);
 
         parseConfiguration();
         parseClientConfig();
@@ -107,14 +107,14 @@ public class QcloudCOSFileProvider implements FileSystemProvider<S3UriPath, Qclo
     }
 
     protected void parseConfiguration() {
-        scheme = Files.optional(context.resolve("scheme"))
+        scheme = Files.optional(metadata.resolve("scheme"))
                 .map(File::readUtf8)
                 .orElse("cos");
-        automount = Files.optional(context.resolve("automount"))
+        automount = Files.optional(metadata.resolve("automount"))
                 .map(File::readUtf8)
                 .map(Boolean::parseBoolean)
                 .orElse(Boolean.FALSE);
-        watchInterval = Files.optional(context.resolve("watch/interval"))
+        watchInterval = Files.optional(metadata.resolve("watch/interval"))
                 .map(File::readUtf8)
                 .map(Duration::parse)
                 .orElse(Duration.ofSeconds(1));
@@ -133,7 +133,7 @@ public class QcloudCOSFileProvider implements FileSystemProvider<S3UriPath, Qclo
      */
     protected void parseProfilesConfiguration() throws IOException {
         log.debug("parseProfilesConfiguration");
-        File<?, ?> configurations = context.resolve("profiles/");
+        File<?, ?> configurations = metadata.resolve("profiles/");
         try (DirectoryStream<? extends File<?, ?>> stream = configurations.newDirectoryStream()) {
             credentialsConfiguration = new ArrayList<>();
             for (File<?, ?> configuration : stream) {

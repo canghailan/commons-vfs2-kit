@@ -36,21 +36,21 @@ public class AliyunOSSFileProvider implements FileSystemProvider<S3UriPath, Aliy
     private final Map<String, Credentials> bucketCredentials = new ConcurrentHashMap<>();
     private final Map<S3Uri, OSS> pool = new ConcurrentHashMap<>();
     private final Map<String, AliyunOSSFileSystem> fileSystems = new ConcurrentHashMap<>();
-    private volatile PollingWatchService<S3UriPath, AliyunOSSFile, String> watchService;
     private volatile VirtualFileSystem vfs;
-    private volatile File<?, ?> context;
+    private volatile File<?, ?> metadata;
     private volatile String scheme;
     private volatile boolean automount;
     private volatile ClientConfiguration clientConfiguration;
     private volatile List<Credentials> credentialsConfiguration;
     private volatile List<AliyunCDNConfiguration> cdnConfiguration;
     private volatile Duration watchInterval;
+    private volatile PollingWatchService<S3UriPath, AliyunOSSFile, String> watchService;
 
     @Override
-    public void initialize(VirtualFileSystem vfs, File<?, ?> context) throws Exception {
+    public void initialize(VirtualFileSystem vfs, File<?, ?> metadata) throws Exception {
         this.vfs = vfs;
-        this.context = context;
-        log.debug("initialize AliyunOSSFileProvider: {}", context);
+        this.metadata = metadata;
+        log.debug("initialize AliyunOSSFileProvider: {}", metadata);
 
         parseConfiguration();
         parseClientConfiguration();
@@ -129,14 +129,14 @@ public class AliyunOSSFileProvider implements FileSystemProvider<S3UriPath, Aliy
      * 解析配置
      */
     protected void parseConfiguration() {
-        scheme = Files.optional(context.resolve("scheme"))
+        scheme = Files.optional(metadata.resolve("scheme"))
                 .map(File::readUtf8)
                 .orElse("oss");
-        automount = Files.optional(context.resolve("automount"))
+        automount = Files.optional(metadata.resolve("automount"))
                 .map(File::readUtf8)
                 .map(Boolean::parseBoolean)
                 .orElse(Boolean.FALSE);
-        watchInterval = Files.optional(context.resolve("watch/interval"))
+        watchInterval = Files.optional(metadata.resolve("watch/interval"))
                 .map(File::readUtf8)
                 .map(Duration::parse)
                 .orElse(Duration.ofSeconds(1));
@@ -156,7 +156,7 @@ public class AliyunOSSFileProvider implements FileSystemProvider<S3UriPath, Aliy
     protected void parseProfilesConfiguration() throws IOException {
         log.debug("parseProfilesConfiguration");
         credentialsConfiguration = new ArrayList<>();
-        File<?, ?> configurations = context.resolve("profiles/");
+        File<?, ?> configurations = metadata.resolve("profiles/");
         try (DirectoryStream<? extends File<?, ?>> stream = configurations.newDirectoryStream()) {
             for (File<?, ?> configuration : stream) {
                 String accessKeyId = configuration.resolve("accessKeyId").readUtf8();
@@ -172,7 +172,7 @@ public class AliyunOSSFileProvider implements FileSystemProvider<S3UriPath, Aliy
     protected void parseCdnConfiguration() throws IOException {
         log.debug("parseCdnConfiguration");
         cdnConfiguration = new ArrayList<>();
-        File<?, ?> configurations = context.resolve("cdn/");
+        File<?, ?> configurations = metadata.resolve("cdn/");
         if (configurations.exists()) {
             try (DirectoryStream<? extends File<?, ?>> stream = configurations.newDirectoryStream()) {
                 for (File<?, ?> configuration : stream) {

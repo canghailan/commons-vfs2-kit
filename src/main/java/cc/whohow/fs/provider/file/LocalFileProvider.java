@@ -20,9 +20,9 @@ public class LocalFileProvider implements FileSystemProvider<LocalPath, LocalFil
     private volatile LocalFileSystem localFileSystem;
 
     @Override
-    public void initialize(VirtualFileSystem vfs, File<?, ?> context) throws Exception {
+    public void initialize(VirtualFileSystem vfs, File<?, ?> metadata) throws Exception {
         this.vfs = vfs;
-        log.debug("initialize LocalFileProvider: {}", context);
+        log.debug("initialize LocalFileProvider: {}", metadata);
 
         localFileSystem = new LocalFileSystem(URI.create("file:/"));
 

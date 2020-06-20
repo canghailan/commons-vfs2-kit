@@ -240,7 +240,7 @@ public class FileSystemManagerAdapter implements FileSystemManager, FileSystem, 
 
     @Override
     public Object getAttribute(String attrName) throws FileSystemException {
-        return vfs.getContext().resolve(attrName).readUtf8();
+        return vfs.getMetadata().resolve(attrName).readUtf8();
     }
 
     @Override
@@ -465,13 +465,13 @@ public class FileSystemManagerAdapter implements FileSystemManager, FileSystem, 
 
     @Override
     public FileSystemOptions getFileSystemOptions() {
-        try (FileStream<? extends cc.whohow.fs.File<?, ?>> stream = vfs.getContext().tree()) {
+        try (FileStream<? extends cc.whohow.fs.File<?, ?>> stream = vfs.getMetadata().tree()) {
             FileSystemOptions fileSystemOptions = new FileSystemOptions();
             FileSystemAdapterConfigBuilder fileSystemAdapterConfigBuilder = new FileSystemAdapterConfigBuilder();
             for (cc.whohow.fs.File<?, ?> file : stream) {
                 if (file.isRegularFile()) {
                     fileSystemAdapterConfigBuilder.setParam(fileSystemOptions,
-                            vfs.getContext().getPath().relativize(file.getPath()), file.readUtf8());
+                            vfs.getMetadata().getPath().relativize(file.getPath()), file.readUtf8());
                 }
             }
             return fileSystemOptions;

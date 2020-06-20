@@ -8,6 +8,9 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Properties;
 
+/**
+ * Properties配置文件
+ */
 public class PropertiesConfiguration extends AbstractFileBasedConfiguration<Properties> {
     public PropertiesConfiguration(FileObject fileObject) {
         super(fileObject);

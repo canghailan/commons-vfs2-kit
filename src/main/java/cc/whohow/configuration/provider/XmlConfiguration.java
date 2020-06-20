@@ -15,6 +15,9 @@ import javax.xml.transform.stream.StreamResult;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
+/**
+ * XML配置文件
+ */
 public class XmlConfiguration extends AbstractFileBasedConfiguration<Document> {
     protected static final DocumentBuilderFactory BUILDER_FACTORY = DocumentBuilderFactory.newInstance();
     protected static final TransformerFactory TRANSFORMER_FACTORY = TransformerFactory.newInstance();
