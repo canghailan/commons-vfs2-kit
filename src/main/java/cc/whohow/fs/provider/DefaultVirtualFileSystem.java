@@ -194,7 +194,7 @@ public class DefaultVirtualFileSystem implements VirtualFileSystem {
 
     @Override
     public void mount(String uri, FileResolver<?, ?> fileResolver) {
-        log.debug("mount: {}", uri);
+        log.debug("mount: {} -> {}", uri, fileResolver);
         vfs.put(uri, fileResolver);
     }
 

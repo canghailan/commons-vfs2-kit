@@ -48,6 +48,6 @@ public class DefaultFileResolver<P extends Path, F extends File<P, F>> implement
 
     @Override
     public String toString() {
-        return base;
+        return fileSystem + base;
     }
 }

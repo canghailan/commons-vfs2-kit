@@ -50,79 +50,15 @@ public class AliyunOSSFileProvider implements FileSystemProvider<S3UriPath, Aliy
     public void initialize(VirtualFileSystem vfs, File<?, ?> metadata) throws Exception {
         this.vfs = vfs;
         this.metadata = metadata;
-        log.debug("initialize AliyunOSSFileProvider: {}", metadata);
 
+        log.debug("initialize AliyunOSSFileProvider: {}", metadata);
         parseConfiguration();
         parseClientConfiguration();
         parseProfilesConfiguration();
         parseCdnConfiguration();
-
-        if (vfs.getScheduledExecutor() != null) {
-            watchService = new PollingWatchService<>(vfs.getScheduledExecutor(), watchInterval, AliyunOSSFile::getETag);
-        }
-
-        log.debug("scan buckets");
-        for (Credentials credentials : credentialsConfiguration) {
-            OSS oss = new OSSClient(DEFAULT_ENDPOINT, new DefaultCredentialProvider(credentials), clientConfiguration);
-            try {
-                List<Bucket> bucketList = oss.listBuckets();
-                for (Bucket bucket : bucketList) {
-                    log.trace("scan bucket: {}", bucket.getName());
-                    buckets.put(bucket.getName(), bucket);
-                    bucketCredentials.put(bucket.getName(), credentials);
-                }
-            } finally {
-                oss.shutdown();
-            }
-        }
-
-        log.debug("collect mount points");
-        Map<String, S3FileResolver<?, ?>> mount = new TreeMap<>();
-        if (automount) {
-            log.debug("automount enabled, mount all buckets");
-            for (Bucket bucket : buckets.values()) {
-                S3Uri s3Uri = new S3Uri(scheme, null, null, bucket.getName(), null, "");
-                log.debug("mount bucket {}: ", s3Uri);
-                AliyunOSSFileSystem fileSystem = getAliyunOSSFileSystem(s3Uri);
-                S3FileResolver<?, ?> fileResolver = new S3FileResolver<>(fileSystem);
-                for (String fileSystemUri : fileSystem.getUris()) {
-                    mount.put(fileSystemUri, fileResolver);
-                }
-            }
-        }
-
-        log.debug("mount cdn");
-        for (AliyunCDNConfiguration cdnConf : cdnConfiguration) {
-            log.debug("mount cdn: {} -> {}", cdnConf.getCdn(), cdnConf.getOrigin());
-            URI uri = URI.create(cdnConf.getOrigin());
-            S3Uri s3Uri = new S3Uri(uri);
-            AliyunOSSFileSystem fileSystem = getAliyunOSSFileSystem(s3Uri);
-            S3FileResolver<?, ?> fileResolver = new S3FileResolver<>(fileSystem, s3Uri.getKey());
-            vfs.mount(cdnConf.getOrigin(), fileResolver);
-            for (String fileSystemUri : fileSystem.getUris()) {
-                mount.put(fileSystemUri + fileResolver.getBase(), fileResolver);
-            }
-        }
-
-        log.debug("mount vfs");
-        for (Map.Entry<String, String> e : vfs.getMountPoints().entrySet()) {
-            URI uri = URI.create(e.getValue());
-            if (uri.getScheme().equals(scheme)) {
-                log.debug("mount vfs: {} -> {}", e.getKey(), e.getValue());
-                S3Uri s3Uri = new S3Uri(uri);
-                AliyunOSSFileSystem fileSystem = getAliyunOSSFileSystem(s3Uri);
-                S3FileResolver<?, ?> fileResolver = new S3FileResolver<>(fileSystem, s3Uri.getKey());
-                mount.put(e.getKey(), fileResolver);
-                for (String fileSystemUri : fileSystem.getUris()) {
-                    mount.put(fileSystemUri + fileResolver.getBase(), fileResolver);
-                }
-            }
-        }
-
-        // 合并、优化后挂载到VFS
-        for (Map.Entry<String, S3FileResolver<?, ?>> e : mount.entrySet()) {
-            vfs.mount(e.getKey(), e.getValue());
-        }
+        initializeWatchService();
+        scanBuckets();
+        mountVfs();
     }
 
     /**
@@ -187,11 +123,76 @@ public class AliyunOSSFileProvider implements FileSystemProvider<S3UriPath, Aliy
                             .map(Duration::parse);
                     if (key.isPresent()) {
                         cdnConfiguration.add(new AliyunCDNConfiguration(origin, cdn,
-                                type.orElse("A"), key.get(), ttl.orElse(Duration.ofMinutes(120))));
+                                type.orElse("A"), key.get(), ttl.orElse(Duration.ofHours(2))));
                     } else {
                         cdnConfiguration.add(new AliyunCDNConfiguration(origin, cdn));
                     }
                 }
+            }
+        }
+    }
+
+    public List<AliyunCDNConfiguration> getCdnConfiguration() {
+        return cdnConfiguration;
+    }
+
+    protected void initializeWatchService() {
+        if (vfs.getScheduledExecutor() != null) {
+            watchService = new PollingWatchService<>(vfs.getScheduledExecutor(), watchInterval, AliyunOSSFile::getETag);
+        }
+    }
+
+    protected void scanBuckets() {
+        log.debug("scanBuckets");
+        for (Credentials credentials : credentialsConfiguration) {
+            OSS oss = new OSSClient(DEFAULT_ENDPOINT, new DefaultCredentialProvider(credentials), clientConfiguration);
+            try {
+                List<Bucket> bucketList = oss.listBuckets();
+                for (Bucket bucket : bucketList) {
+                    log.trace("scan: {}", bucket.getName());
+                    buckets.put(bucket.getName(), bucket);
+                    bucketCredentials.put(bucket.getName(), credentials);
+                }
+            } finally {
+                oss.shutdown();
+            }
+        }
+    }
+
+    protected void mountVfs() {
+        log.debug("mountVfs");
+        log.debug("collect mount points");
+        Set<S3UriPath> mountPoints = new HashSet<>();
+        if (automount) {
+            for (Bucket bucket : buckets.values()) {
+                mountPoints.add(new S3UriPath(scheme, bucket.getName(), ""));
+            }
+        }
+        for (String mountPath : vfs.getMountPoints().values()) {
+            URI uri = URI.create(mountPath);
+            if (scheme.equals(uri.getScheme())) {
+                mountPoints.add(new S3UriPath(uri));
+            }
+        }
+
+        log.debug("build mount points");
+        Map<S3UriPath, FileResolver<S3UriPath, AliyunOSSFile>> fileResolvers = new HashMap<>();
+        for (S3UriPath mountPoint : mountPoints) {
+            AliyunOSSFileSystem fileSystem = getAliyunOSSFileSystem(mountPoint);
+            fileResolvers.put(mountPoint, new S3FileResolver<>(fileSystem, mountPoint.getKey()));
+        }
+
+        log.debug("mount");
+        for (S3UriPath mountPoint : mountPoints) {
+            AliyunOSSFileSystem fileSystem = getAliyunOSSFileSystem(mountPoint);
+            for (String uri : fileSystem.getUris(mountPoint)) {
+                vfs.mount(uri, fileResolvers.get(mountPoint));
+            }
+        }
+        for (Map.Entry<String, String> e : vfs.getMountPoints().entrySet()) {
+            URI uri = URI.create(e.getValue());
+            if (scheme.equals(uri.getScheme())) {
+                vfs.mount(e.getKey(), fileResolvers.get(new S3UriPath(uri)));
             }
         }
     }
@@ -223,7 +224,6 @@ public class AliyunOSSFileProvider implements FileSystemProvider<S3UriPath, Aliy
         AliyunOSSFileSystemAttributes fileSystemAttributes = new AliyunOSSFileSystemAttributes();
         fileSystemAttributes.setBucket(bucket);
         fileSystemAttributes.setEndpoint(endpoint);
-        fileSystemAttributes.setCdnConfiguration(cdnConfiguration);
 
         return new AliyunOSSFileSystem(this, uri, fileSystemAttributes, oss);
     }

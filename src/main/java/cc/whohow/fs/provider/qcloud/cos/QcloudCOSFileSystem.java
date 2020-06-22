@@ -16,8 +16,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.net.URI;
 import java.nio.file.DirectoryStream;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -50,6 +49,34 @@ public class QcloudCOSFileSystem implements FileSystem<S3UriPath, QcloudCOSFile>
     @Override
     public URI getUri() {
         return uri.toUri();
+    }
+
+    @Override
+    public String getPublicUri(S3UriPath path) {
+        return "https://" + attributes.getBucketName() + ".cos." + attributes.getLocation() + ".myqcloud.com/" + path.getKey();
+    }
+
+    public String getCOSUri(S3UriPath path) {
+        return uri.getScheme() + "://" + uri.getBucketName() + "/" + path.getKey();
+    }
+
+    public String getCOSLocationUri(S3UriPath path) {
+        return uri.getScheme() + "://" + attributes.getBucketName() + "." + attributes.getLocation() + "/" + path.getKey();
+    }
+
+    protected String toHttp(String https) {
+        return https.replaceFirst("^https://", "http://");
+    }
+
+    @Override
+    public Collection<String> getUris(S3UriPath path) {
+        Set<String> uris = new LinkedHashSet<>();
+        String http = getPublicUri(path);
+        uris.add(http);
+        uris.add(toHttp(http));
+        uris.add(getCOSUri(path));
+        uris.add(getCOSLocationUri(path));
+        return uris;
     }
 
     @Override

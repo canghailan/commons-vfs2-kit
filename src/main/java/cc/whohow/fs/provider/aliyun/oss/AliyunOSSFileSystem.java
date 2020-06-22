@@ -1,6 +1,7 @@
 package cc.whohow.fs.provider.aliyun.oss;
 
 import cc.whohow.fs.*;
+import cc.whohow.fs.provider.aliyun.cdn.AliyunCDNConfiguration;
 import cc.whohow.fs.provider.s3.S3Uri;
 import cc.whohow.fs.provider.s3.S3UriPath;
 import cc.whohow.fs.util.FileTree;
@@ -16,7 +17,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.net.URI;
 import java.nio.file.DirectoryStream;
-import java.util.Collections;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -25,6 +26,7 @@ public class AliyunOSSFileSystem implements FileSystem<S3UriPath, AliyunOSSFile>
     protected final S3Uri uri;
     protected final AliyunOSSFileSystemAttributes attributes;
     protected final OSS oss;
+    protected final Map<String, List<AliyunCDNConfiguration>> keyCdn = new LinkedHashMap<>();
     protected volatile FileWatchService<S3UriPath, AliyunOSSFile> watchService;
 
     public AliyunOSSFileSystem(AliyunOSSFileProvider provider, S3Uri uri, AliyunOSSFileSystemAttributes attributes, OSS oss) {
@@ -40,6 +42,15 @@ public class AliyunOSSFileSystem implements FileSystem<S3UriPath, AliyunOSSFile>
         this.attributes = attributes;
         this.oss = oss;
         this.watchService = provider.getWatchService();
+        if (provider.getCdnConfiguration() != null) {
+            for (AliyunCDNConfiguration configuration : provider.getCdnConfiguration()) {
+                S3UriPath path = new S3UriPath(URI.create(configuration.getOrigin()));
+                if (path.getBucketName().equals(uri.getBucketName())) {
+                    keyCdn.computeIfAbsent(path.getKey(), key -> new ArrayList<>())
+                            .add(configuration);
+                }
+            }
+        }
     }
 
     public OSS getOSS() {
@@ -49,6 +60,66 @@ public class AliyunOSSFileSystem implements FileSystem<S3UriPath, AliyunOSSFile>
     @Override
     public URI getUri() {
         return uri.toUri();
+    }
+
+    @Override
+    public String getPublicUri(S3UriPath path) {
+        for (Map.Entry<String, List<AliyunCDNConfiguration>> e : keyCdn.entrySet()) {
+            if (path.getKey().startsWith(e.getKey())) {
+                AliyunCDNConfiguration cdn = e.getValue().get(0);
+                return cdn.getCdn() + path.getKey().substring(e.getKey().length());
+            }
+        }
+        return getExtranetUri(path);
+    }
+
+    public String getExtranetUri(S3UriPath path) {
+        return "https://" + attributes.getBucketName() + "." + attributes.getExtranetEndpoint() + "/" + path.getKey();
+    }
+
+    public String getIntranetUri(S3UriPath path) {
+        return "https://" + attributes.getBucketName() + "." + attributes.getIntranetEndpoint() + "/" + path.getKey();
+    }
+
+    public String getOSSUri(S3UriPath path) {
+        return uri.getScheme() + "://" + uri.getBucketName() + "/" + path.getKey();
+    }
+
+    public String getOSSExtranetUri(S3UriPath path) {
+        return uri.getScheme() + "://" + attributes.getBucketName() + "." + attributes.getExtranetEndpoint() + "/" + path.getKey();
+    }
+
+    public String getOSSIntranetUri(S3UriPath path) {
+        return uri.getScheme() + "://" + attributes.getBucketName() + "." + attributes.getIntranetEndpoint() + "/" + path.getKey();
+    }
+
+    protected String toHttp(String https) {
+        return https.replaceFirst("^https://", "http://");
+    }
+
+    @Override
+    public Collection<String> getUris(S3UriPath path) {
+        Set<String> uris = new LinkedHashSet<>();
+        for (Map.Entry<String, List<AliyunCDNConfiguration>> e : keyCdn.entrySet()) {
+            if (path.getKey().startsWith(e.getKey())) {
+                for (AliyunCDNConfiguration cdn : e.getValue()) {
+                    String uri = cdn.getCdn() + path.getKey().substring(e.getKey().length());
+                    uris.add(uri);
+                    uris.add(toHttp(uri));
+                }
+                break;
+            }
+        }
+        String extranetUri = getExtranetUri(path);
+        String intranetUri = getIntranetUri(path);
+        uris.add(extranetUri);
+        uris.add(toHttp(extranetUri));
+        uris.add(intranetUri);
+        uris.add(toHttp(intranetUri));
+        uris.add(getOSSUri(path));
+        uris.add(getOSSExtranetUri(path));
+        uris.add(getOSSIntranetUri(path));
+        return uris;
     }
 
     @Override

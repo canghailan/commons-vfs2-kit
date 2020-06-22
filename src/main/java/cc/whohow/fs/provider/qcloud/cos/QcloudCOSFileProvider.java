@@ -45,65 +45,14 @@ public class QcloudCOSFileProvider implements FileSystemProvider<S3UriPath, Qclo
     public void initialize(VirtualFileSystem vfs, File<?, ?> metadata) throws Exception {
         this.vfs = vfs;
         this.metadata = metadata;
-        log.debug("initialize QcloudCOSFileProvider: {}", metadata);
 
+        log.debug("initialize QcloudCOSFileProvider: {}", metadata);
         parseConfiguration();
         parseClientConfig();
         parseProfilesConfiguration();
-
-        if (vfs.getScheduledExecutor() != null) {
-            watchService = new PollingWatchService<>(vfs.getScheduledExecutor(), watchInterval, QcloudCOSFile::getETag);
-        }
-
-        log.debug("scan buckets");
-        for (COSCredentials credentials : credentialsConfiguration) {
-            COSClient cos = new COSClient(credentials, clientConfig);
-            try {
-                List<Bucket> bucketList = cos.listBuckets();
-                for (Bucket bucket : bucketList) {
-                    log.trace("scan bucket: {}", bucket.getName());
-                    buckets.put(bucket.getName(), bucket);
-                    bucketCredentials.put(bucket.getName(), credentials);
-                }
-            } finally {
-                cos.shutdown();
-            }
-        }
-
-        log.debug("collect mount points");
-        Map<String, S3FileResolver<?, ?>> mount = new TreeMap<>();
-        if (automount) {
-            log.debug("scan enabled, mount all buckets");
-            for (Bucket bucket : buckets.values()) {
-                S3Uri s3Uri = new S3Uri(scheme, null, null, bucket.getName(), null, null);
-                log.debug("mount bucket {}: ", s3Uri);
-                QcloudCOSFileSystem fileSystem = getQcloudCOSFileSystem(s3Uri);
-                S3FileResolver<?, ?> fileResolver = new S3FileResolver<>(fileSystem);
-                for (String fileSystemUri : fileSystem.getUris()) {
-                    mount.put(fileSystemUri, fileResolver);
-                }
-            }
-        }
-
-        log.debug("mount vfs");
-        for (Map.Entry<String, String> e : vfs.getMountPoints().entrySet()) {
-            URI uri = URI.create(e.getValue());
-            if (uri.getScheme().equals(scheme)) {
-                log.debug("mount vfs: {} -> {}", e.getKey(), e.getValue());
-                S3Uri s3Uri = new S3Uri(uri);
-                QcloudCOSFileSystem fileSystem = getQcloudCOSFileSystem(s3Uri);
-                S3FileResolver<?, ?> fileResolver = new S3FileResolver<>(fileSystem, s3Uri.getKey());
-                mount.put(e.getKey(), fileResolver);
-                for (String fileSystemUri : fileSystem.getUris()) {
-                    mount.put(fileSystemUri + fileResolver.getBase(), fileResolver);
-                }
-            }
-        }
-
-        // 合并、优化后挂载到VFS
-        for (Map.Entry<String, S3FileResolver<?, ?>> e : mount.entrySet()) {
-            vfs.mount(e.getKey(), e.getValue());
-        }
+        initializeWatchService();
+        scanBuckets();
+        mountVfs();
     }
 
     protected void parseConfiguration() {
@@ -140,6 +89,67 @@ public class QcloudCOSFileProvider implements FileSystemProvider<S3UriPath, Qclo
                 String accessKeyId = configuration.resolve("accessKeyId").readUtf8();
                 String secretAccessKey = configuration.resolve("secretAccessKey").readUtf8();
                 credentialsConfiguration.add(new BasicCOSCredentials(accessKeyId, secretAccessKey));
+            }
+        }
+    }
+
+    protected void initializeWatchService() {
+        if (vfs.getScheduledExecutor() != null) {
+            watchService = new PollingWatchService<>(vfs.getScheduledExecutor(), watchInterval, QcloudCOSFile::getETag);
+        }
+    }
+
+    protected void scanBuckets() {
+        log.debug("scanBuckets");
+        for (COSCredentials credentials : credentialsConfiguration) {
+            COSClient cos = new COSClient(credentials, clientConfig);
+            try {
+                List<Bucket> bucketList = cos.listBuckets();
+                for (Bucket bucket : bucketList) {
+                    log.trace("scan: {}", bucket.getName());
+                    buckets.put(bucket.getName(), bucket);
+                    bucketCredentials.put(bucket.getName(), credentials);
+                }
+            } finally {
+                cos.shutdown();
+            }
+        }
+    }
+
+    protected void mountVfs() {
+        log.debug("mountVfs");
+        log.debug("collect mount points");
+        Set<S3UriPath> mountPoints = new HashSet<>();
+        if (automount) {
+            for (Bucket bucket : buckets.values()) {
+                mountPoints.add(new S3UriPath(scheme, bucket.getName(), ""));
+            }
+        }
+        for (String mountPath : vfs.getMountPoints().values()) {
+            URI uri = URI.create(mountPath);
+            if (scheme.equals(uri.getScheme())) {
+                mountPoints.add(new S3UriPath(uri));
+            }
+        }
+
+        log.debug("build mount points");
+        Map<S3UriPath, FileResolver<S3UriPath, QcloudCOSFile>> fileResolvers = new HashMap<>();
+        for (S3UriPath mountPoint : mountPoints) {
+            QcloudCOSFileSystem fileSystem = getQcloudCOSFileSystem(mountPoint);
+            fileResolvers.put(mountPoint, new S3FileResolver<>(fileSystem, mountPoint.getKey()));
+        }
+
+        log.debug("mount");
+        for (S3UriPath mountPoint : mountPoints) {
+            QcloudCOSFileSystem fileSystem = getQcloudCOSFileSystem(mountPoint);
+            for (String uri : fileSystem.getUris(mountPoint)) {
+                vfs.mount(uri, fileResolvers.get(mountPoint));
+            }
+        }
+        for (Map.Entry<String, String> e : vfs.getMountPoints().entrySet()) {
+            URI uri = URI.create(e.getValue());
+            if (scheme.equals(uri.getScheme())) {
+                vfs.mount(e.getKey(), fileResolvers.get(new S3UriPath(uri)));
             }
         }
     }
