@@ -107,7 +107,6 @@ public class AliyunOSSFileSystem implements FileSystem<S3UriPath, AliyunOSSFile>
                     uris.add(uri);
                     uris.add(toHttp(uri));
                 }
-                break;
             }
         }
         String extranetUri = getExtranetUri(path);
