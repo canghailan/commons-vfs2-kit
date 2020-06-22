@@ -1,11 +1,9 @@
 package cc.whohow.vfs;
 
-import cc.whohow.fs.Attribute;
-import cc.whohow.fs.File;
-import cc.whohow.fs.FileAttributes;
-import cc.whohow.fs.FileReadableChannel;
+import cc.whohow.fs.*;
 import cc.whohow.fs.util.IO;
 import cc.whohow.fs.util.MappingIterator;
+import org.apache.commons.vfs2.FileSystem;
 import org.apache.commons.vfs2.*;
 import org.apache.commons.vfs2.impl.DefaultFileContentInfo;
 import org.apache.commons.vfs2.operations.DefaultFileOperations;
@@ -193,13 +191,11 @@ public class FileObjectAdapter implements FileObject, FileContent {
             if (isFolder()) {
                 log.trace("copyFrom[folder->folder]({}): -> {}", srcFile, this);
                 DepthFirstFileTreeIterator iterator = new DepthFirstFileTreeIterator(srcFile, selector);
-                try {
-                    FileObject baseFolder = this;
+                try (FileObject baseFolder = resolveFile(srcFile.getName().getBaseName() + "/")) {
+                    baseFolder.createFolder();
                     while (iterator.hasNext()) {
                         FileSelectInfo fileSelectInfo = iterator.next();
                         if (fileSelectInfo.getDepth() == 0) {
-                            baseFolder = resolveFile(fileSelectInfo.getFile().getName().getBaseName() + "/");
-                            baseFolder.createFolder();
                             continue;
                         }
                         try (FileObject fileObject = fileSelectInfo.getFile()) {
@@ -214,9 +210,7 @@ public class FileObjectAdapter implements FileObject, FileContent {
                                         fileSelectInfo.getBaseFolder().getName()
                                                 .getRelativeName(fileObject.getName()))) {
                                     newFileObject.createFile();
-                                    try (FileContent content = newFileObject.getContent()) {
-                                        content.write(fileObject);
-                                    }
+                                    newFileObject.copyFrom(fileObject, Selectors.SELECT_ALL);
                                 }
                             }
                         }
@@ -243,14 +237,18 @@ public class FileObjectAdapter implements FileObject, FileContent {
                         log.trace("copyFrom[file->folder]({}): -> {}", srcFile, this);
                         try (FileObject newFileObject = resolveFile(srcFile.getName().getBaseName())) {
                             newFileObject.createFile();
-                            try (FileContent content = newFileObject.getContent()) {
-                                content.write(srcFile);
-                            }
+                            newFileObject.copyFrom(srcFile, Selectors.SELECT_ALL);
                         }
                     } else {
                         log.trace("copyFrom[file->file]({}): -> {}", srcFile, this);
                         createFile();
-                        write(srcFile);
+                        try (FileContent srcContent = srcFile.getContent()) {
+                            try (InputStream stream = srcContent.getInputStream()) {
+                                try (FileWritableChannel channel = path.toFile().newWritableChannel()) {
+                                    channel.transferFrom(stream);
+                                }
+                            }
+                        }
                     }
                 }
             } catch (Exception e) {
@@ -273,7 +271,7 @@ public class FileObjectAdapter implements FileObject, FileContent {
     public synchronized void createFolder() throws FileSystemException {
         if (path.isFile()) {
             File<?, ?> file = path.toFile();
-            path = new FilePath(path.getFileSystem(), file.getFileSystem().get(file.getUri().resolve(file.getName() + "/")));
+            path = new FilePath(path.getFileSystem(), file.getFileSystem().get(file.getUri() + "/"));
         }
         log.trace("createFolder: {}", this);
     }

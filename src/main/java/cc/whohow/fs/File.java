@@ -197,7 +197,7 @@ public interface File<P extends Path, F extends File<P, F>> extends ObjectFile {
     }
 
     /**
-     * 删除文件（当文件不存在时，不执行任何操作）
+     * 删除文件/文件夹（当文件/文件夹不存在时，不执行任何操作）
      *
      * @see Files#delete(java.nio.file.Path)
      */

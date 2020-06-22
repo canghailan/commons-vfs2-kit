@@ -108,8 +108,12 @@ public class QcloudCOSFileSystem implements FileSystem<S3UriPath, QcloudCOSFile>
 
     @Override
     public boolean exists(S3UriPath path) {
-        log.trace("doesObjectExist: cos://{}/{}", path.getBucketName(), path.getKey());
-        return cos.doesObjectExist(path.getBucketName(), path.getKey());
+        if (path.isRegularFile()) {
+            log.trace("doesObjectExist: cos://{}/{}", path.getBucketName(), path.getKey());
+            return cos.doesObjectExist(path.getBucketName(), path.getKey());
+        } else {
+            return true;
+        }
     }
 
     @Override

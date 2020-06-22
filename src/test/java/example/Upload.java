@@ -15,15 +15,14 @@ public class Upload {
         File<?, ?> metadata = new JsonConfigurationParser().parse(configuration).build();
 
         String srcDir = Paths.get(".").toAbsolutePath().normalize().toUri().toString();
-        String dstDir = "oss://xxx-temp/temp/";
+        String dstDir = "oss://yt-temp/temp/";
 
         try (VirtualFileSystem vfs = new DefaultVirtualFileSystem(metadata)) {
             File<?, ?> file = vfs.copyAsync(
                     vfs.get(srcDir + "pom.xml"),
-                    vfs.get(dstDir + "backup-pom.xml")
+                    vfs.get(dstDir + "pom1.xml")
             ).join();
             System.out.println(file);
-            // oss://xxx-temp/temp/backup-pom.xml
         }
     }
 }

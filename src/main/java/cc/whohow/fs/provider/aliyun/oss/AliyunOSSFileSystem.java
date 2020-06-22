@@ -150,8 +150,12 @@ public class AliyunOSSFileSystem implements FileSystem<S3UriPath, AliyunOSSFile>
 
     @Override
     public boolean exists(S3UriPath path) {
-        log.trace("doesObjectExist: oss://{}/{}", path.getBucketName(), path.getKey());
-        return oss.doesObjectExist(path.getBucketName(), path.getKey());
+        if (path.isRegularFile()) {
+            log.trace("doesObjectExist: oss://{}/{}", path.getBucketName(), path.getKey());
+            return oss.doesObjectExist(path.getBucketName(), path.getKey());
+        } else {
+            return true;
+        }
     }
 
     @Override

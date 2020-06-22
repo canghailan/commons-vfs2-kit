@@ -1,7 +1,6 @@
 package cc.whohow;
 
 import cc.whohow.fs.File;
-import cc.whohow.fs.FileStream;
 import cc.whohow.fs.VirtualFileSystem;
 import cc.whohow.fs.configuration.ConfigurationBuilder;
 import cc.whohow.fs.provider.DefaultVirtualFileSystem;
@@ -30,16 +29,6 @@ public class TestCommand {
     @AfterClass
     public static void afterClass() throws Exception {
         vfs.close();
-    }
-
-    private String tree(File<?, ? extends File<?, ?>> file) throws Exception {
-        StringBuilder buffer = new StringBuilder();
-        try (FileStream<? extends File<?, ?>> stream = file.tree()) {
-            for (File<?, ?> f : stream) {
-                buffer.append(file.getPath().relativize(f.getPath())).append("\n");
-            }
-        }
-        return buffer.toString();
     }
 
     @Test
@@ -83,9 +72,9 @@ public class TestCommand {
         vfs.copyAsync(source, target).join();
 
         Assert.assertTrue(target.exists());
-        Assert.assertEquals(tree(source), tree(target));
+        Assert.assertEquals(TestFiles.tree(source), TestFiles.tree(target));
 
-        System.out.println(tree(source));
+        System.out.println(TestFiles.tree(source));
     }
 
     @Test
@@ -190,7 +179,8 @@ public class TestCommand {
         target.delete();
 
         List<CompletableFuture<? extends File<?, ?>>> list = new ArrayList<>();
-        for (int i = 0; i < 1000; i++) {
+        for (int i = 0; i < 10; i++) {
+//        for (int i = 0; i < 1000; i++) {
             list.add(vfs.copyAsync(source, target.resolve(i + "/")));
         }
 

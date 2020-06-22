@@ -120,14 +120,17 @@ public class AliyunOSSFileWritableChannel extends OutputStream implements FileWr
 
     @Override
     public synchronized void close() throws IOException {
-        if (buffer != null) {
-            // 如果有缓冲区，提交缓冲区
-            flush();
-        }
         if (position == 0) {
-            // 空文件
-            log.debug("empty file: oss://{}/{}", bucketName, key);
-            overwrite(ByteBuffer.allocate(0));
+            if (buffer != null) {
+                // 小文件优化，如果没有调用过appendObject，直接putObject
+                overwrite(ByteBuffer.wrap(buffer, readIndex, readableBytes()));
+            } else {
+                // 空文件
+                log.debug("empty file: oss://{}/{}", bucketName, key);
+                overwrite(ByteBuffer.allocate(0));
+            }
+        } else {
+            flush();
         }
     }
 
@@ -262,6 +265,11 @@ public class AliyunOSSFileWritableChannel extends OutputStream implements FileWr
             buffer = new byte[bufferSize];
             readIndex = 0;
             writeIndex = 0;
+        }
+        if (position == 0) {
+            // 删除已有文件
+            log.trace("deleteObject: oss://{}/{}", bucketName, key);
+            oss.deleteObject(bucketName, key);
         }
     }
 }

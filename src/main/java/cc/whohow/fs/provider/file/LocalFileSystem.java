@@ -130,9 +130,13 @@ public class LocalFileSystem implements FileSystem<LocalPath, LocalFile> {
     @Override
     public DirectoryStream<LocalFile> newDirectoryStream(LocalPath path) {
         try {
-            log.trace("Files.newDirectoryStream: {}", path);
-            DirectoryStream<java.nio.file.Path> directoryStream = java.nio.file.Files.newDirectoryStream(path.getFilePath());
-            return Files.newDirectoryStream(new MappingIterable<>(directoryStream, this::get), directoryStream);
+            if (java.nio.file.Files.exists(path.getFilePath())) {
+                log.trace("Files.newDirectoryStream: {}", path);
+                DirectoryStream<java.nio.file.Path> directoryStream = java.nio.file.Files.newDirectoryStream(path.getFilePath());
+                return Files.newDirectoryStream(new MappingIterable<>(directoryStream, this::get), directoryStream);
+            } else {
+                return Files.emptyDirectoryStream();
+            }
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -141,7 +145,7 @@ public class LocalFileSystem implements FileSystem<LocalPath, LocalFile> {
     @Override
     public void delete(LocalPath path) {
         try {
-            if (!exists(path)) {
+            if (java.nio.file.Files.notExists(path.getFilePath())) {
                 return;
             }
             if (path.isDirectory()) {

@@ -23,14 +23,17 @@ public class FileListenerAdapter<E extends FileWatchEvent<?, ?>> implements Cons
                 case CREATE: {
                     fileListener.fileCreated(new FileChangeEvent(
                             new FileObjectAdapter(new FilePath(fileSystem, fileWatchEvent.file()))));
+                    break;
                 }
                 case DELETE: {
                     fileListener.fileDeleted(new FileChangeEvent(
                             new FileObjectAdapter(new FilePath(fileSystem, fileWatchEvent.file()))));
+                    break;
                 }
                 case MODIFY: {
                     fileListener.fileChanged(new FileChangeEvent(
                             new FileObjectAdapter(new FilePath(fileSystem, fileWatchEvent.file()))));
+                    break;
                 }
                 default: {
                     break;

@@ -566,7 +566,19 @@ public class FileSystemManagerAdapter implements FileSystemManager, FileSystem, 
     @Override
     public FilePath resolveURI(String uri) throws FileSystemException {
         cc.whohow.fs.File<?, ?> file = vfs.get(uri);
-        return new FilePath(fileSystemCache.computeIfAbsent(file.getFileSystem(), FileSystemAdapter::new), file);
+        return new FilePath(fileSystemCache.computeIfAbsent(file.getFileSystem(), this::newFileSystemAdapter), file);
+    }
+
+    protected FileSystemAdapter newFileSystemAdapter(cc.whohow.fs.FileSystem<?, ?> fileSystem) {
+        try {
+            FileSystemAdapter fileSystemAdapter = new FileSystemAdapter(fileSystem);
+            fileSystemAdapter.setContext(this);
+            fileSystemAdapter.setLogger(logger);
+            fileSystemAdapter.init();
+            return fileSystemAdapter;
+        } catch (FileSystemException e) {
+            throw FileSystemExceptions.unchecked(e);
+        }
     }
 
     @Override

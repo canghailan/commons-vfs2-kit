@@ -86,4 +86,78 @@ public class TestQcloudCOS {
         Assert.assertEquals(new Checksum("MD5", source).call(), md5);
         System.out.println("md5: " + md5);
     }
+
+    @Test
+    public void testCopyToQcloud() throws Exception {
+        File<?, ?> source = vfs.get(base + "/src/");
+        File<?, ?> target = vfs.get("/temp-cos/temp/src/");
+
+        target.delete();
+        Assert.assertEquals("", TestFiles.treeFile(target));
+
+        vfs.copyAsync(source, target).join();
+
+        Assert.assertEquals(
+                TestFiles.list(source.resolve("main/java/cc/whohow/fs/")),
+                TestFiles.list(target.resolve("main/java/cc/whohow/fs/")));
+        System.out.println(TestFiles.list(target.resolve("main/java/cc/whohow/fs/")));
+
+        Assert.assertEquals(TestFiles.treeFile(source), TestFiles.treeFile(target));
+        System.out.println(TestFiles.treeFile(target));
+    }
+
+    @Test
+    public void testCopyToFile() throws Exception {
+        File<?, ?> source = vfs.get("/temp-cos/temp/src/");
+        File<?, ?> target = vfs.get(base + "/temp/");
+
+        target.delete();
+        Assert.assertEquals("", TestFiles.treeFile(target));
+
+        vfs.copyAsync(source, target).join();
+
+        Assert.assertEquals(TestFiles.treeFile(source), TestFiles.treeFile(target));
+        System.out.println(TestFiles.treeFile(target));
+    }
+
+    @Test
+    public void testPath() throws Exception {
+        Assert.assertEquals(
+                "cos://yt-temp-1256265957/temp/src/main/java/cc/whohow/fs/File.java",
+                vfs.get("/temp-cos/temp/src/main/java/cc/whohow/fs/File.java").getUri().toString());
+        Assert.assertEquals(
+                "https://yt-temp-1256265957.cos.ap-shanghai.myqcloud.com/temp/src/main/java/cc/whohow/fs/File.java",
+                vfs.get("/temp-cos/temp/src/main/java/cc/whohow/fs/File.java").getPublicUri());
+        Assert.assertEquals(4,
+                vfs.get("/temp-cos/temp/src/main/java/cc/whohow/fs/File.java").getUris().size());
+        Assert.assertEquals(
+                "File.java",
+                vfs.get("/temp-cos/temp/src/main/java/cc/whohow/fs/File.java").getName());
+        Assert.assertEquals(
+                "java",
+                vfs.get("/temp-cos/temp/src/main/java/cc/whohow/fs/File.java").getExtension());
+        Assert.assertTrue(
+                vfs.get("/temp-cos/temp/src/main/java/cc/whohow/fs/File.java").isRegularFile());
+        Assert.assertTrue(
+                vfs.get("/temp-cos/temp/src/main/java/cc/whohow/fs/").isDirectory());
+        Assert.assertEquals(
+                vfs.get("/temp-cos/temp/"),
+                vfs.get("/temp-cos/temp/src/").getParent());
+        Assert.assertEquals(
+                vfs.get("/temp-cos/temp/src/main/java/cc/whohow/fs/"),
+                vfs.get("/temp-cos/temp/src/main/java/cc/whohow/fs/File.java").getParent());
+        Assert.assertEquals(
+                vfs.get("/temp-cos/temp/src/main/java/cc/whohow/fs/File.java"),
+                vfs.get("/temp-cos/temp/src/").resolve("main/java/cc/whohow/fs/File.java"));
+    }
+
+    @Test
+    public void testReadAttributes() {
+        System.out.println(vfs.get("/temp-cos/temp/src/main/java/cc/whohow/fs/File.java").readAttributes());
+    }
+
+    @Test
+    public void testDelete() {
+        vfs.get("/temp-cos/not-exists.txt").delete();
+    }
 }
