@@ -52,9 +52,19 @@ public class LocalFileReadableChannel implements FileReadableChannel {
     @Override
     public ByteBuffer readAllBytes() throws IOException {
         long size = fileChannel.size();
-        log.trace("FileChannel.map: {} - {}", 0, size);
-        ByteBuffer buffer = fileChannel.map(FileChannel.MapMode.READ_ONLY, 0, size);
-        fileChannel.position(size);
+//        log.trace("FileChannel.map: {} - {}", 0, size);
+//        ByteBuffer buffer = fileChannel.map(FileChannel.MapMode.READ_ONLY, 0, size);
+//        fileChannel.position(size);
+        if (size > Integer.MAX_VALUE) {
+            throw new IllegalStateException("file too large");
+        }
+        ByteBuffer buffer = ByteBuffer.allocate((int) size);
+        while (buffer.hasRemaining()) {
+            if (fileChannel.read(buffer) < 0) {
+                break;
+            }
+        }
+        buffer.flip();
         return buffer;
     }
 
