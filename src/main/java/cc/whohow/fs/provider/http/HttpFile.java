@@ -1,11 +1,11 @@
 package cc.whohow.fs.provider.http;
 
-import cc.whohow.fs.File;
+import cc.whohow.fs.GenericFile;
 import cc.whohow.fs.provider.UriPath;
 
 import java.util.Objects;
 
-public class HttpFile implements File<UriPath, HttpFile> {
+public class HttpFile implements GenericFile<UriPath, HttpFile> {
     private final HttpFileSystem fileSystem;
     private final UriPath path;
 

@@ -1,11 +1,11 @@
 package cc.whohow.fs.provider.aliyun.oss;
 
-import cc.whohow.fs.File;
+import cc.whohow.fs.GenericFile;
 import cc.whohow.fs.provider.s3.S3UriPath;
 
 import java.util.Objects;
 
-public class AliyunOSSFile implements File<S3UriPath, AliyunOSSFile> {
+public class AliyunOSSFile implements GenericFile<S3UriPath, AliyunOSSFile> {
     private final AliyunOSSFileSystem fileSystem;
     private final S3UriPath path;
 

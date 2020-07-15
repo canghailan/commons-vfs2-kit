@@ -8,7 +8,7 @@ import java.util.Iterator;
 import java.util.Optional;
 
 public class Files {
-    public static <F extends File<?, ?>> Optional<F> optional(F file) {
+    public static <F extends File> Optional<F> optional(F file) {
         if (file != null && file.exists()) {
             return Optional.of(file);
         } else {

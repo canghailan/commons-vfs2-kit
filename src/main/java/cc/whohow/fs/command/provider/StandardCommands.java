@@ -12,7 +12,7 @@ import java.util.StringJoiner;
 import java.util.stream.Collectors;
 
 public class StandardCommands {
-    public static File<?, ?> file(VirtualFileSystem vfs, String... args) {
+    public static File file(VirtualFileSystem vfs, String... args) {
         if (args.length < 1) {
             throw new IllegalArgumentException(String.join(" ", args));
         }
@@ -23,10 +23,10 @@ public class StandardCommands {
         if (args.length < 1) {
             throw new IllegalArgumentException(String.join(" ", args));
         }
-        File<?, ?> file = vfs.get(args[0]);
-        try (DirectoryStream<? extends File<?, ?>> stream = file.newDirectoryStream()) {
+        File file = vfs.get(args[0]);
+        try (DirectoryStream<? extends File> stream = file.newDirectoryStream()) {
             StringJoiner buffer = new StringJoiner("\n");
-            for (File<?, ?> f : stream) {
+            for (File f : stream) {
                 buffer.add(f.getPublicUri());
             }
             return buffer.toString();
@@ -39,10 +39,10 @@ public class StandardCommands {
         if (args.length < 1) {
             throw new IllegalArgumentException(String.join(" ", args));
         }
-        File<?, ?> file = vfs.get(args[0]);
-        try (FileStream<? extends File<?, ?>> stream = file.tree()) {
+        File file = vfs.get(args[0]);
+        try (FileStream<? extends File> stream = file.tree()) {
             StringJoiner buffer = new StringJoiner("\n");
-            for (File<?, ?> f : stream) {
+            for (File f : stream) {
                 buffer.add(f.getPublicUri());
             }
             return buffer.toString();
@@ -55,8 +55,8 @@ public class StandardCommands {
         if (args.length < 2) {
             throw new IllegalArgumentException(String.join(" ", args));
         }
-        File<?, ?> source = vfs.get(args[0]);
-        File<?, ?> target = vfs.get(args[1]);
+        File source = vfs.get(args[0]);
+        File target = vfs.get(args[1]);
         return vfs.copyAsync(source, target).join().getPublicUri();
     }
 
@@ -64,8 +64,8 @@ public class StandardCommands {
         if (args.length < 2) {
             throw new IllegalArgumentException(String.join(" ", args));
         }
-        File<?, ?> source = vfs.get(args[0]);
-        File<?, ?> target = vfs.get(args[1]);
+        File source = vfs.get(args[0]);
+        File target = vfs.get(args[1]);
         return vfs.moveAsync(source, target).join().getPublicUri();
     }
 

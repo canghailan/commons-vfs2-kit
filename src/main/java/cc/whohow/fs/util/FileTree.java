@@ -7,7 +7,7 @@ import java.io.IOException;
 /**
  * 文件树（深度优先）
  */
-public class FileTree<P extends Path, F extends File<P, F>> implements FileStream<F> {
+public class FileTree<P extends Path, F extends GenericFile<P, F>> implements FileStream<F> {
     private final FileSystem<P, F> fileSystem;
     private final P path;
     private final int maxDepth;

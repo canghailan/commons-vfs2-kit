@@ -1,13 +1,12 @@
 package cc.whohow.fs.provider.ram;
 
-import cc.whohow.fs.File;
 import cc.whohow.fs.FileAttributes;
-import cc.whohow.fs.provider.KeyPath;
+import cc.whohow.fs.GenericFile;
 import cc.whohow.fs.util.Files;
 
 import java.util.Objects;
 
-public class RamFile implements File<KeyPath, RamFile> {
+public class RamFile implements GenericFile<KeyPath, RamFile> {
     protected final RamFileSystem fileSystem;
     protected final KeyPath path;
 

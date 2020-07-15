@@ -1,7 +1,7 @@
 package cc.whohow;
 
 import cc.whohow.fs.File;
-import cc.whohow.fs.FileWatchEvent;
+import cc.whohow.fs.FileEvent;
 import cc.whohow.fs.VirtualFileSystem;
 import cc.whohow.fs.configuration.ConfigurationBuilder;
 import cc.whohow.fs.configuration.JsonConfigurationParser;
@@ -56,7 +56,7 @@ public class TestWatch {
             Assert.assertFalse(vfs.get(dir + f).exists());
         }
 
-        Collection<FileWatchEvent<?, ?>> events = new ConcurrentLinkedDeque<>();
+        Collection<FileEvent> events = new ConcurrentLinkedDeque<>();
         vfs.get(dir).watch(System.out::println);
         vfs.get(dir).watch(events::add);
 

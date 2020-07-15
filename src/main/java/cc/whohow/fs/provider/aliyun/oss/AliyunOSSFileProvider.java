@@ -1,8 +1,9 @@
 package cc.whohow.fs.provider.aliyun.oss;
 
 import cc.whohow.fs.*;
+import cc.whohow.fs.provider.FileMetadata;
 import cc.whohow.fs.provider.aliyun.cdn.AliyunCDNConfiguration;
-import cc.whohow.fs.provider.s3.S3FileResolver;
+import cc.whohow.fs.provider.s3.S3MountPoint;
 import cc.whohow.fs.provider.s3.S3Uri;
 import cc.whohow.fs.provider.s3.S3UriPath;
 import cc.whohow.fs.util.Files;
@@ -23,10 +24,8 @@ import java.net.URI;
 import java.nio.file.DirectoryStream;
 import java.time.Duration;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
-import java.util.concurrent.ExecutorService;
 
 public class AliyunOSSFileProvider implements FileSystemProvider<S3UriPath, AliyunOSSFile> {
     private static final Logger log = LogManager.getLogger(AliyunOSSFileProvider.class);
@@ -37,7 +36,7 @@ public class AliyunOSSFileProvider implements FileSystemProvider<S3UriPath, Aliy
     private final Map<S3Uri, OSS> pool = new ConcurrentHashMap<>();
     private final Map<String, AliyunOSSFileSystem> fileSystems = new ConcurrentHashMap<>();
     private volatile VirtualFileSystem vfs;
-    private volatile File<?, ?> metadata;
+    private volatile FileMetadata metadata;
     private volatile String scheme;
     private volatile boolean automount;
     private volatile ClientConfiguration clientConfiguration;
@@ -47,71 +46,51 @@ public class AliyunOSSFileProvider implements FileSystemProvider<S3UriPath, Aliy
     private volatile PollingWatchService<S3UriPath, AliyunOSSFile, String> watchService;
 
     @Override
-    public void initialize(VirtualFileSystem vfs, File<?, ?> metadata) throws Exception {
-        this.vfs = vfs;
-        this.metadata = metadata;
-
+    public void initialize(VirtualFileSystem vfs, File metadata) throws Exception {
         log.debug("initialize AliyunOSSFileProvider: {}", metadata);
-        parseConfiguration();
-        parseClientConfiguration();
-        parseProfilesConfiguration();
-        parseCdnConfiguration();
+
+        this.vfs = vfs;
+        this.metadata = new FileMetadata(metadata);
+
+        readMetadata();
         initializeWatchService();
         scanBuckets();
-        mountVfs();
+        mount();
     }
 
-    /**
-     * 解析配置
-     */
-    protected void parseConfiguration() {
-        scheme = Files.optional(metadata.resolve("scheme"))
-                .map(File::readUtf8)
+    protected void readMetadata() throws IOException {
+        log.debug("readMetadata");
+
+        scheme = this.metadata.getString("scheme")
                 .orElse("oss");
-        automount = Files.optional(metadata.resolve("automount"))
-                .map(File::readUtf8)
-                .map(Boolean::parseBoolean)
+        log.debug("scheme: {}", scheme);
+
+        automount = this.metadata.getBoolean("automount")
                 .orElse(Boolean.FALSE);
-        watchInterval = Files.optional(metadata.resolve("watch/interval"))
-                .map(File::readUtf8)
-                .map(Duration::parse)
-                .orElse(Duration.ofSeconds(1));
-    }
+        log.debug("automount: {}", automount);
 
-    /**
-     * 解析客户端配置
-     */
-    public void parseClientConfiguration() {
-        log.debug("parseClientConfiguration");
+        watchInterval = this.metadata.getDuration("watch/interval")
+                .orElse(Duration.ofSeconds(5));
+        log.debug("watch/interval: {}", watchInterval);
+
         clientConfiguration = new ClientConfiguration();
-    }
 
-    /**
-     * 解析账号配置
-     */
-    protected void parseProfilesConfiguration() throws IOException {
-        log.debug("parseProfilesConfiguration");
         credentialsConfiguration = new ArrayList<>();
-        File<?, ?> configurations = metadata.resolve("profiles/");
-        try (DirectoryStream<? extends File<?, ?>> stream = configurations.newDirectoryStream()) {
-            for (File<?, ?> configuration : stream) {
+        File profilesConfigurations = metadata.getFileMetadata().resolve("profiles/");
+        try (DirectoryStream<? extends File> list = profilesConfigurations.newDirectoryStream()) {
+            for (File configuration : list) {
                 String accessKeyId = configuration.resolve("accessKeyId").readUtf8();
                 String secretAccessKey = configuration.resolve("secretAccessKey").readUtf8();
                 credentialsConfiguration.add(new DefaultCredentials(accessKeyId, secretAccessKey));
             }
         }
-    }
+        log.debug("profiles: {}", credentialsConfiguration);
 
-    /**
-     * 解析CDN配置
-     */
-    protected void parseCdnConfiguration() throws IOException {
-        log.debug("parseCdnConfiguration");
         cdnConfiguration = new ArrayList<>();
-        File<?, ?> configurations = metadata.resolve("cdn/");
-        if (configurations.exists()) {
-            try (DirectoryStream<? extends File<?, ?>> stream = configurations.newDirectoryStream()) {
-                for (File<?, ?> configuration : stream) {
+        File cdnConfigurations = metadata.getFileMetadata().resolve("cdn/");
+        if (cdnConfigurations.exists()) {
+            try (DirectoryStream<? extends File> list = cdnConfigurations.newDirectoryStream()) {
+                for (File configuration : list) {
                     String origin = configuration.resolve("origin").readUtf8();
                     String cdn = configuration.resolve("cdn").readUtf8();
                     Optional<String> type = Files.optional(configuration.resolve("type"))
@@ -130,13 +109,11 @@ public class AliyunOSSFileProvider implements FileSystemProvider<S3UriPath, Aliy
                 }
             }
         }
-    }
-
-    public List<AliyunCDNConfiguration> getCdnConfiguration() {
-        return cdnConfiguration;
+        log.debug("cdn: {}", cdnConfiguration);
     }
 
     protected void initializeWatchService() {
+        log.debug("initializeWatchService");
         if (vfs.getScheduledExecutor() != null) {
             watchService = new PollingWatchService<>(vfs.getScheduledExecutor(), watchInterval, AliyunOSSFile::getETag);
         }
@@ -159,40 +136,33 @@ public class AliyunOSSFileProvider implements FileSystemProvider<S3UriPath, Aliy
         }
     }
 
-    protected void mountVfs() {
-        log.debug("mountVfs");
-        log.debug("collect mount points");
-        Set<S3UriPath> mountPoints = new HashSet<>();
+    protected void mount() {
+        log.debug("mount");
+        Set<S3UriPath> mountPaths = new HashSet<>();
         if (automount) {
             for (Bucket bucket : buckets.values()) {
-                mountPoints.add(new S3UriPath(scheme, bucket.getName(), ""));
+                mountPaths.add(new S3UriPath(scheme, bucket.getName(), ""));
             }
         }
-        for (String mountPath : vfs.getMountPoints().values()) {
+        for (String mountPath : vfs.getMetadata().getMountPoints().values()) {
             URI uri = URI.create(mountPath);
             if (scheme.equals(uri.getScheme())) {
-                mountPoints.add(new S3UriPath(uri));
+                mountPaths.add(new S3UriPath(uri));
             }
         }
 
-        log.debug("build mount points");
-        Map<S3UriPath, FileResolver<S3UriPath, AliyunOSSFile>> fileResolvers = new HashMap<>();
-        for (S3UriPath mountPoint : mountPoints) {
-            AliyunOSSFileSystem fileSystem = getAliyunOSSFileSystem(mountPoint);
-            fileResolvers.put(mountPoint, new S3FileResolver<>(fileSystem, mountPoint.getKey()));
-        }
-
-        log.debug("mount");
-        for (S3UriPath mountPoint : mountPoints) {
-            AliyunOSSFileSystem fileSystem = getAliyunOSSFileSystem(mountPoint);
-            for (String uri : fileSystem.getUris(mountPoint)) {
-                vfs.mount(uri, fileResolvers.get(mountPoint));
+        for (S3UriPath mountPath : mountPaths) {
+            AliyunOSSFileSystem fileSystem = getAliyunOSSFileSystem(mountPath);
+            for (String uri : fileSystem.getUris(mountPath)) {
+                vfs.mount(new S3MountPoint<>(uri, fileSystem, mountPath.getKey()));
             }
         }
-        for (Map.Entry<String, String> e : vfs.getMountPoints().entrySet()) {
+        for (Map.Entry<String, String> e : vfs.getMetadata().getMountPoints().entrySet()) {
             URI uri = URI.create(e.getValue());
             if (scheme.equals(uri.getScheme())) {
-                vfs.mount(e.getKey(), fileResolvers.get(new S3UriPath(uri)));
+                S3UriPath mountPath = new S3UriPath(uri);
+                vfs.mount(new S3MountPoint<>(e.getKey(),
+                        getAliyunOSSFileSystem(mountPath), mountPath.getKey()));
             }
         }
     }
@@ -225,7 +195,16 @@ public class AliyunOSSFileProvider implements FileSystemProvider<S3UriPath, Aliy
         fileSystemAttributes.setBucket(bucket);
         fileSystemAttributes.setEndpoint(endpoint);
 
-        return new AliyunOSSFileSystem(this, uri, fileSystemAttributes, oss);
+        AliyunOSSFileSystem fileSystem = new AliyunOSSFileSystem(uri, fileSystemAttributes, oss);
+        fileSystem.setWatchService(watchService);
+        for (AliyunCDNConfiguration configuration : cdnConfiguration) {
+            S3Uri origin = new S3Uri(configuration.getOrigin());
+            if (origin.getBucketName().equals(uri.getBucketName())) {
+                fileSystem.addCdn(configuration);
+            }
+        }
+
+        return fileSystem;
     }
 
     /**
@@ -272,10 +251,6 @@ public class AliyunOSSFileProvider implements FileSystemProvider<S3UriPath, Aliy
                 clientConfiguration);
     }
 
-    public FileWatchService<S3UriPath, AliyunOSSFile> getWatchService() {
-        return watchService;
-    }
-
     @Override
     public String getScheme() {
         return scheme;
@@ -292,15 +267,8 @@ public class AliyunOSSFileProvider implements FileSystemProvider<S3UriPath, Aliy
     }
 
     @Override
-    public ExecutorService getExecutor() {
-        return vfs.getExecutor();
-    }
-
-    @Override
-    public CompletableFuture<AliyunOSSFile> copyAsync(AliyunOSSFile source, AliyunOSSFile target) {
-        return CompletableFuture.supplyAsync(
-                new AliyunOSSCopy(source, target, getExecutor()), getExecutor())
-                .join();
+    public Copy<AliyunOSSFile, AliyunOSSFile> copy(AliyunOSSFile source, AliyunOSSFile target) {
+        return new AliyunOSSCopy(source, target);
     }
 
     @Override

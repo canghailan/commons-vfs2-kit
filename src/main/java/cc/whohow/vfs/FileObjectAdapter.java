@@ -23,11 +23,15 @@ import java.util.*;
 
 public class FileObjectAdapter implements FileObject, FileContent {
     private static final Logger log = LogManager.getLogger(FileObjectAdapter.class);
-    protected FilePath path;
+    protected VirtualFileSystemAdapter vfs;
+    protected File file;
+    protected FileName name;
 
-    public FileObjectAdapter(FilePath path) {
-        Objects.requireNonNull(path);
-        this.path = path;
+    public FileObjectAdapter(VirtualFileSystemAdapter vfs, File file) {
+        Objects.requireNonNull(vfs);
+        Objects.requireNonNull(file);
+        this.vfs = vfs;
+        this.file = file;
     }
 
     @Override
@@ -44,7 +48,7 @@ public class FileObjectAdapter implements FileObject, FileContent {
     @Override
     public Object getAttribute(String attrName) throws FileSystemException {
         log.trace("getAttribute({}): {}", attrName, this);
-        return path.toFile().readAttributes()
+        return file.readAttributes()
                 .getValue(attrName)
                 .orElse(null);
     }
@@ -53,7 +57,7 @@ public class FileObjectAdapter implements FileObject, FileContent {
     public String[] getAttributeNames() throws FileSystemException {
         log.trace("getAttributeNames: {}", this);
         List<String> attributeNames = new ArrayList<>();
-        for (Attribute<?> attribute : path.toFile().readAttributes()) {
+        for (Attribute<?> attribute : file.readAttributes()) {
             attributeNames.add(attribute.name());
         }
         return attributeNames.toArray(new String[0]);
@@ -63,7 +67,7 @@ public class FileObjectAdapter implements FileObject, FileContent {
     public Map<String, Object> getAttributes() throws FileSystemException {
         log.trace("getAttributes: {}", this);
         Map<String, Object> attributes = new LinkedHashMap<>();
-        for (Attribute<?> attribute : path.toFile().readAttributes()) {
+        for (Attribute<?> attribute : file.readAttributes()) {
             attributes.put(attribute.name(), attribute.value());
         }
         return attributes;
@@ -78,7 +82,7 @@ public class FileObjectAdapter implements FileObject, FileContent {
     @Override
     public FileContentInfo getContentInfo() throws FileSystemException {
         log.trace("getContentInfo: {}", this);
-        FileAttributes fileAttributes = path.toFile().readAttributes();
+        FileAttributes fileAttributes = file.readAttributes();
         Optional<String> contentType = fileAttributes.getAsString("Content-Type");
         Optional<String> contentEncoding = fileAttributes.getAsString("Content-Encoding");
         return new DefaultFileContentInfo(contentType.orElse(null), contentEncoding.orElse(null));
@@ -93,13 +97,13 @@ public class FileObjectAdapter implements FileObject, FileContent {
     @Override
     public InputStream getInputStream() throws FileSystemException {
         log.trace("getInputStream: {}", this);
-        return path.toFile().newReadableChannel().stream();
+        return file.newReadableChannel().stream();
     }
 
     @Override
     public long getLastModifiedTime() throws FileSystemException {
         log.trace("getLastModifiedTime: {}", this);
-        return path.toFile().readAttributes().lastModifiedTime().toMillis();
+        return file.readAttributes().lastModifiedTime().toMillis();
     }
 
     @Override
@@ -110,7 +114,7 @@ public class FileObjectAdapter implements FileObject, FileContent {
     @Override
     public OutputStream getOutputStream() throws FileSystemException {
         log.trace("getOutputStream: {}", this);
-        return path.toFile().newWritableChannel().stream();
+        return file.newWritableChannel().stream();
     }
 
     @Override
@@ -129,13 +133,13 @@ public class FileObjectAdapter implements FileObject, FileContent {
     @Override
     public long getSize() throws FileSystemException {
         log.trace("getSize: {}", this);
-        return path.toFile().size();
+        return file.size();
     }
 
     @Override
     public boolean hasAttribute(String attrName) throws FileSystemException {
         log.trace("hasAttribute({}): {}", attrName, this);
-        return path.toFile().readAttributes().get(attrName).isPresent();
+        return file.readAttributes().get(attrName).isPresent();
     }
 
     @Override
@@ -180,7 +184,7 @@ public class FileObjectAdapter implements FileObject, FileContent {
     @Override
     public long write(OutputStream output, int bufferSize) throws IOException {
         log.trace("write: <- {}", this);
-        try (FileReadableChannel channel = path.toFile().newReadableChannel()) {
+        try (FileReadableChannel channel = file.newReadableChannel()) {
             return channel.transferTo(output);
         }
     }
@@ -244,7 +248,7 @@ public class FileObjectAdapter implements FileObject, FileContent {
                         createFile();
                         try (FileContent srcContent = srcFile.getContent()) {
                             try (InputStream stream = srcContent.getInputStream()) {
-                                try (FileWritableChannel channel = path.toFile().newWritableChannel()) {
+                                try (FileWritableChannel channel = file.newWritableChannel()) {
                                     channel.transferFrom(stream);
                                 }
                             }
@@ -260,7 +264,7 @@ public class FileObjectAdapter implements FileObject, FileContent {
 
     @Override
     public void createFile() throws FileSystemException {
-        if (path.isFile()) {
+        if (file.isRegularFile()) {
             log.trace("createFile: {}", this);
         } else {
             throw new FileSystemException("vfs.provider/create-file.error", this);
@@ -269,9 +273,8 @@ public class FileObjectAdapter implements FileObject, FileContent {
 
     @Override
     public synchronized void createFolder() throws FileSystemException {
-        if (path.isFile()) {
-            File<?, ?> file = path.toFile();
-            path = new FilePath(path.getFileSystem(), file.getFileSystem().get(file.getUri() + "/"));
+        if (file.isRegularFile()) {
+            file = vfs.getVfsFile(file.getUri() + "/");
         }
         log.trace("createFolder: {}", this);
     }
@@ -279,18 +282,18 @@ public class FileObjectAdapter implements FileObject, FileContent {
     @Override
     public boolean delete() throws FileSystemException {
         log.trace("delete: {}", this);
-        if (path.toFile().isDirectory()) {
-            try (DirectoryStream<? extends File<?, ?>> stream = path.toFile().newDirectoryStream()) {
+        if (file.isDirectory()) {
+            try (DirectoryStream<? extends File> stream = file.newDirectoryStream()) {
                 if (stream.iterator().hasNext()) {
                     return false;
                 }
-                path.toFile().delete();
+                file.delete();
                 return true;
             } catch (IOException e) {
                 throw FileSystemExceptions.rethrow(e);
             }
         } else {
-            path.toFile().delete();
+            file.delete();
             return true;
         }
     }
@@ -345,7 +348,7 @@ public class FileObjectAdapter implements FileObject, FileContent {
         } else {
             try {
                 if (selector.includeFile(new ImmutableFileSelectInfo(null, this, 0))) {
-                    path.toFile().delete();
+                    file.delete();
                     return 1;
                 } else {
                     return 0;
@@ -360,11 +363,11 @@ public class FileObjectAdapter implements FileObject, FileContent {
     @Override
     public int deleteAll() throws FileSystemException {
         log.trace("deleteAll: {}", this);
-        if (path.toFile().isDirectory()) {
-            path.toFile().delete();
+        if (file.isDirectory()) {
+            file.delete();
             return -1;
         } else {
-            path.toFile().delete();
+            file.delete();
             return 1;
         }
     }
@@ -372,7 +375,7 @@ public class FileObjectAdapter implements FileObject, FileContent {
     @Override
     public boolean exists() throws FileSystemException {
         log.trace("exists: {}", this);
-        return path.toFile().exists();
+        return file.exists();
     }
 
     @Override
@@ -408,10 +411,10 @@ public class FileObjectAdapter implements FileObject, FileContent {
     public FileObject getChild(String name) throws FileSystemException {
         log.trace("getChild({}): {}", name, this);
         if (getType().hasChildren()) {
-            try (DirectoryStream<? extends File<?, ?>> stream = path.toFile().newDirectoryStream()) {
-                for (File<?, ?> file : stream) {
+            try (DirectoryStream<? extends File> stream = file.newDirectoryStream()) {
+                for (File file : stream) {
                     if (file.getName().equals(name)) {
-                        return new FileObjectAdapter(new FilePath(path.getFileSystem(), file));
+                        return new FileObjectAdapter(vfs, file);
                     }
                 }
                 return null;
@@ -427,10 +430,10 @@ public class FileObjectAdapter implements FileObject, FileContent {
     public FileObject[] getChildren() throws FileSystemException {
         log.trace("getChildren: {}", this);
         if (getType().hasChildren()) {
-            try (DirectoryStream<? extends File<?, ?>> stream = path.toFile().newDirectoryStream()) {
+            try (DirectoryStream<? extends File> stream = file.newDirectoryStream()) {
                 List<FileObject> list = new ArrayList<>();
-                for (File<?, ?> file : stream) {
-                    list.add(new FileObjectAdapter(new FilePath(path.getFileSystem(), file)));
+                for (File file : stream) {
+                    list.add(new FileObjectAdapter(vfs, file));
                 }
                 return list.toArray(new FileObject[0]);
             } catch (IOException e) {
@@ -454,37 +457,40 @@ public class FileObjectAdapter implements FileObject, FileContent {
 
     @Override
     public FileSystem getFileSystem() {
-        return path.getFileSystem();
+        return vfs;
     }
 
     @Override
     public FileName getName() {
-        return path;
+        if (name == null) {
+            name = new FileNameAdapter(file);
+        }
+        return name;
     }
 
     @Override
     public FileObject getParent() throws FileSystemException {
-        FilePath parent = path.getParent();
+        File parent = file.getParent();
         if (parent == null) {
             return null;
         }
-        return new FileObjectAdapter(parent);
+        return new FileObjectAdapter(vfs, parent);
     }
 
     @Override
     public String getPublicURIString() {
-        return path.toFile().getPublicUri();
+        return file.getPublicUri();
     }
 
     @Override
     public FileType getType() throws FileSystemException {
-        return path.getType();
+        return file.isDirectory() ? FileType.FOLDER : FileType.FILE;
     }
 
     @Override
     public URL getURL() throws FileSystemException {
         try {
-            return new URL(path.toFile().getPublicUri());
+            return new URL(file.getPublicUri());
         } catch (MalformedURLException e) {
             throw FileSystemExceptions.rethrow(e);
         }
@@ -627,18 +633,18 @@ public class FileObjectAdapter implements FileObject, FileContent {
         }
         if (o instanceof FileObjectAdapter) {
             FileObjectAdapter that = (FileObjectAdapter) o;
-            return path.equals(that.path);
+            return file.equals(that.file);
         }
         return false;
     }
 
     @Override
     public int hashCode() {
-        return path.hashCode();
+        return file.hashCode();
     }
 
     @Override
     public String toString() {
-        return path.toString();
+        return file.toString();
     }
 }

@@ -5,7 +5,7 @@ import cc.whohow.fs.configuration.ConfigurationBuilder;
 import cc.whohow.fs.configuration.JsonConfigurationParser;
 import cc.whohow.fs.provider.DefaultVirtualFileSystem;
 import cc.whohow.vfs.FileObjects;
-import cc.whohow.vfs.FileSystemManagerAdapter;
+import cc.whohow.vfs.VirtualFileSystemAdapter;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import org.apache.commons.vfs2.*;
 import org.junit.AfterClass;
@@ -27,7 +27,7 @@ public class TestCommonsVFS {
         base = Paths.get(".").toUri().normalize().toString();
         vfs = new DefaultVirtualFileSystem(new JsonConfigurationParser(new ConfigurationBuilder())
                 .parse(new YAMLMapper().readTree(new java.io.File("vfs.yaml"))).build());
-        VFS.setManager(new FileSystemManagerAdapter(vfs));
+        VFS.setManager(new VirtualFileSystemAdapter(vfs));
     }
 
     @AfterClass

@@ -39,8 +39,8 @@ public class TestQcloudCOS {
 
     @Test
     public void testQcloudCOSFileWritableChannel() throws Exception {
-        File<?, ?> source = vfs.get(base + "test.txt");
-        File<?, ?> target = vfs.get("/temp-cos/test.txt");
+        File source = vfs.get(base + "test.txt");
+        File target = vfs.get("/temp-cos/test.txt");
 
         source.delete();
         Assert.assertFalse(source.exists());
@@ -89,8 +89,8 @@ public class TestQcloudCOS {
 
     @Test
     public void testCopyToQcloud() throws Exception {
-        File<?, ?> source = vfs.get(base + "/src/");
-        File<?, ?> target = vfs.get("/temp-cos/temp/src/");
+        File source = vfs.get(base + "/src/");
+        File target = vfs.get("/temp-cos/temp/src/");
 
         target.delete();
         Assert.assertEquals("", TestFiles.treeFile(target));
@@ -108,8 +108,8 @@ public class TestQcloudCOS {
 
     @Test
     public void testCopyToFile() throws Exception {
-        File<?, ?> source = vfs.get("/temp-cos/temp/src/");
-        File<?, ?> target = vfs.get(base + "/temp/");
+        File source = vfs.get("/temp-cos/temp/src/");
+        File target = vfs.get(base + "/temp/");
 
         target.delete();
         Assert.assertEquals("", TestFiles.treeFile(target));

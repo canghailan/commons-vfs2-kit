@@ -1,7 +1,7 @@
 package cc.whohow;
 
-import cc.whohow.fs.File;
 import cc.whohow.fs.FileStream;
+import cc.whohow.fs.GenericFile;
 import cc.whohow.fs.provider.file.LocalFileSystem;
 import org.junit.Test;
 
@@ -15,8 +15,8 @@ public class TestFileTree {
     @Test
     public void testTree() throws Exception {
         LocalFileSystem fileSystem = new LocalFileSystem(URI.create("file:///"));
-        try (FileStream<? extends File<?, ?>> tree = fileSystem.get(fileSystem.resolve(Paths.get("src/").toAbsolutePath().toUri())).tree()) {
-            for (File<?, ?> file : tree) {
+        try (FileStream<? extends GenericFile<?, ?>> tree = fileSystem.get(fileSystem.resolve(Paths.get("src/").toAbsolutePath().toUri())).tree()) {
+            for (GenericFile<?, ?> file : tree) {
                 System.out.println(file);
             }
         }
@@ -26,8 +26,8 @@ public class TestFileTree {
     @Test
     public void testTree0() throws Exception {
         LocalFileSystem fileSystem = new LocalFileSystem(URI.create("file:///"));
-        try (FileStream<? extends File<?, ?>> tree = fileSystem.get(fileSystem.resolve(Paths.get("src/").toAbsolutePath().toUri())).tree(0)) {
-            for (File<?, ?> file : tree) {
+        try (FileStream<? extends GenericFile<?, ?>> tree = fileSystem.get(fileSystem.resolve(Paths.get("src/").toAbsolutePath().toUri())).tree(0)) {
+            for (GenericFile<?, ?> file : tree) {
                 System.out.println(file);
             }
         }
@@ -37,8 +37,8 @@ public class TestFileTree {
     @Test
     public void testTree1() throws Exception {
         LocalFileSystem fileSystem = new LocalFileSystem(URI.create("file:///"));
-        try (FileStream<? extends File<?, ?>> tree = fileSystem.get(fileSystem.resolve(Paths.get("src/").toAbsolutePath().toUri())).tree(1)) {
-            for (File<?, ?> file : tree) {
+        try (FileStream<? extends GenericFile<?, ?>> tree = fileSystem.get(fileSystem.resolve(Paths.get("src/").toAbsolutePath().toUri())).tree(1)) {
+            for (GenericFile<?, ?> file : tree) {
                 System.out.println(file);
             }
         }
@@ -48,8 +48,8 @@ public class TestFileTree {
     @Test
     public void testTree2() throws Exception {
         LocalFileSystem fileSystem = new LocalFileSystem(URI.create("file:///"));
-        try (FileStream<? extends File<?, ?>> tree = fileSystem.get(fileSystem.resolve(Paths.get("src/").toAbsolutePath().toUri())).tree(2)) {
-            for (File<?, ?> file : tree) {
+        try (FileStream<? extends GenericFile<?, ?>> tree = fileSystem.get(fileSystem.resolve(Paths.get("src/").toAbsolutePath().toUri())).tree(2)) {
+            for (GenericFile<?, ?> file : tree) {
                 System.out.println(file);
             }
         }
@@ -59,8 +59,8 @@ public class TestFileTree {
     @Test
     public void testTree3() throws Exception {
         LocalFileSystem fileSystem = new LocalFileSystem(URI.create("file:///"));
-        try (FileStream<? extends File<?, ?>> tree = fileSystem.get(fileSystem.resolve(Paths.get("src/").toAbsolutePath().toUri())).tree(3)) {
-            for (File<?, ?> file : tree) {
+        try (FileStream<? extends GenericFile<?, ?>> tree = fileSystem.get(fileSystem.resolve(Paths.get("src/").toAbsolutePath().toUri())).tree(3)) {
+            for (GenericFile<?, ?> file : tree) {
                 System.out.println(file);
             }
         }
@@ -70,8 +70,8 @@ public class TestFileTree {
     @Test
     public void testTree4() throws Exception {
         LocalFileSystem fileSystem = new LocalFileSystem(URI.create("file:///"));
-        try (FileStream<? extends File<?, ?>> tree = fileSystem.get(fileSystem.resolve(Paths.get("src/").toAbsolutePath().toUri())).tree(4)) {
-            for (File<?, ?> file : tree) {
+        try (FileStream<? extends GenericFile<?, ?>> tree = fileSystem.get(fileSystem.resolve(Paths.get("src/").toAbsolutePath().toUri())).tree(4)) {
+            for (GenericFile<?, ?> file : tree) {
                 System.out.println(file);
             }
         }
@@ -81,8 +81,8 @@ public class TestFileTree {
     @Test
     public void testTree5() throws Exception {
         LocalFileSystem fileSystem = new LocalFileSystem(URI.create("file:///"));
-        try (FileStream<? extends File<?, ?>> tree = fileSystem.get(fileSystem.resolve(Paths.get("src/").toAbsolutePath().toUri())).tree(5)) {
-            for (File<?, ?> file : tree) {
+        try (FileStream<? extends GenericFile<?, ?>> tree = fileSystem.get(fileSystem.resolve(Paths.get("src/").toAbsolutePath().toUri())).tree(5)) {
+            for (GenericFile<?, ?> file : tree) {
                 System.out.println(file);
             }
         }
@@ -92,8 +92,8 @@ public class TestFileTree {
     @Test
     public void testTree6() throws Exception {
         LocalFileSystem fileSystem = new LocalFileSystem(URI.create("file:///"));
-        try (FileStream<? extends File<?, ?>> tree = fileSystem.get(fileSystem.resolve(Paths.get("src/").toAbsolutePath().toUri())).tree(6)) {
-            for (File<?, ?> file : tree) {
+        try (FileStream<? extends GenericFile<?, ?>> tree = fileSystem.get(fileSystem.resolve(Paths.get("src/").toAbsolutePath().toUri())).tree(6)) {
+            for (GenericFile<?, ?> file : tree) {
                 System.out.println(file);
             }
         }

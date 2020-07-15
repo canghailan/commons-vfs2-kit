@@ -1,6 +1,5 @@
 package cc.whohow.fs;
 
-
 import cc.whohow.fs.util.FileTimes;
 
 import java.net.URI;
@@ -12,26 +11,16 @@ import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 /**
- * 文件对象
- *
- * @param <P> 文件路径
- * @param <F> 文件对象（本身）
+ * @see java.io.File
  */
-public interface File<P extends Path, F extends File<P, F>> extends ObjectFile {
-    /**
-     * 文件系统
-     */
-    FileSystem<P, F> getFileSystem();
-
+public interface File extends ObjectFile {
     /**
      * 文件路径
      */
-    P getPath();
-
-    // 以下为代理方法
+    Path getPath();
 
     /**
-     * 文件存储URI
+     * 文件标准URI
      */
     default URI getUri() {
         return getPath().toUri();
@@ -40,16 +29,12 @@ public interface File<P extends Path, F extends File<P, F>> extends ObjectFile {
     /**
      * 文件公开URI，一般使用此URI
      */
-    default String getPublicUri() {
-        return getFileSystem().getPublicUri(getPath());
-    }
+    String getPublicUri();
 
     /**
      * 文件所有URI集合
      */
-    default Collection<String> getUris() {
-        return getFileSystem().getUris(getPath());
-    }
+    Collection<String> getUris();
 
     /**
      * 文件名
@@ -66,40 +51,18 @@ public interface File<P extends Path, F extends File<P, F>> extends ObjectFile {
     }
 
     /**
-     * 是否是文件
-     *
-     * @see Files#isRegularFile(java.nio.file.Path, java.nio.file.LinkOption...)
-     */
-    default boolean isRegularFile() {
-        return getPath().isRegularFile();
-    }
-
-    /**
-     * 是否是文件夹
-     *
-     * @see Files#isDirectory(java.nio.file.Path, java.nio.file.LinkOption...)
-     */
-    default boolean isDirectory() {
-        return getPath().isDirectory();
-    }
-
-    /**
      * 文件是否存在
      *
      * @see Files#exists(java.nio.file.Path, java.nio.file.LinkOption...)
      */
-    default boolean exists() {
-        return getFileSystem().exists(getPath());
-    }
+    boolean exists();
 
     /**
-     * 读取文件属性
+     * 删除文件/文件夹（当文件/文件夹不存在时，不执行任何操作）
      *
-     * @see Files#readAttributes(java.nio.file.Path, java.lang.Class, java.nio.file.LinkOption...)
+     * @see Files#delete(java.nio.file.Path)
      */
-    default FileAttributes readAttributes() {
-        return getFileSystem().readAttributes(getPath());
-    }
+    void delete();
 
     /**
      * 获取文件/文件夹最后修改时间
@@ -108,10 +71,10 @@ public interface File<P extends Path, F extends File<P, F>> extends ObjectFile {
      */
     default FileTime getLastModifiedTime() {
         if (isDirectory()) {
-            try (Stream<F> stream = tree().stream()) {
+            try (Stream<? extends File> stream = tree().stream()) {
                 return stream
-                        .filter(F::isRegularFile)
-                        .map(F::getLastModifiedTime)
+                        .filter(File::isRegularFile)
+                        .map(File::getLastModifiedTime)
                         .max(FileTime::compareTo)
                         .orElse(FileTimes.epoch());
             }
@@ -127,10 +90,10 @@ public interface File<P extends Path, F extends File<P, F>> extends ObjectFile {
      */
     default long size() {
         if (isDirectory()) {
-            try (Stream<F> stream = tree().stream()) {
+            try (Stream<? extends File> stream = tree().stream()) {
                 return stream
-                        .filter(F::isRegularFile)
-                        .mapToLong(F::size)
+                        .filter(File::isRegularFile)
+                        .mapToLong(File::size)
                         .sum();
             }
         } else {
@@ -139,90 +102,90 @@ public interface File<P extends Path, F extends File<P, F>> extends ObjectFile {
     }
 
     /**
-     * 文件读通道
-     *
-     * @see Files#newByteChannel(java.nio.file.Path, java.nio.file.OpenOption...)
+     * 添加文件监听
      */
-    default FileReadableChannel newReadableChannel() {
-        return getFileSystem().newReadableChannel(getPath());
-    }
+    void watch(Consumer<FileEvent> listener);
 
     /**
-     * 文件写通道
-     *
-     * @see Files#newByteChannel(java.nio.file.Path, java.nio.file.OpenOption...)
+     * 移除文件监听
      */
-    default FileWritableChannel newWritableChannel() {
-        return getFileSystem().newWritableChannel(getPath());
-    }
+    void unwatch(Consumer<FileEvent> listener);
 
     /**
      * 父文件夹
      *
      * @see java.io.File#getParent()
      */
-    default F getParent() {
-        P parent = getFileSystem().getParent(getPath());
-        if (parent == null) {
-            return null;
-        }
-        return getFileSystem().get(parent);
+    File getParent();
+
+    // --- 以下是文件夹方法 --- //
+
+    /**
+     * 是否是文件夹
+     *
+     * @see java.io.File#isDirectory()
+     * @see Files#isDirectory(java.nio.file.Path, java.nio.file.LinkOption...)
+     */
+    default boolean isDirectory() {
+        return getPath().isDirectory();
     }
 
     /**
      * 子文件列表
      *
+     * @see java.io.File#listFiles()
      * @see Files#newDirectoryStream(java.nio.file.Path)
      */
-    default DirectoryStream<F> newDirectoryStream() {
-        return getFileSystem().newDirectoryStream(getPath());
-    }
+    DirectoryStream<? extends File> newDirectoryStream();
 
     /**
      * 文件树（以此文件为根）
      *
      * @see Files#walk(java.nio.file.Path, int, java.nio.file.FileVisitOption...)
      */
-    default FileStream<F> tree() {
-        return getFileSystem().tree(getPath());
-    }
+    FileStream<? extends File> tree();
 
     /**
      * 文件树（以此文件为根）
      *
      * @see Files#walk(java.nio.file.Path, java.nio.file.FileVisitOption...)
      */
-    default FileStream<F> tree(int maxDepth) {
-        return getFileSystem().tree(getPath(), maxDepth);
-    }
-
-    /**
-     * 删除文件/文件夹（当文件/文件夹不存在时，不执行任何操作）
-     *
-     * @see Files#delete(java.nio.file.Path)
-     */
-    default void delete() {
-        getFileSystem().delete(getPath());
-    }
-
-    /**
-     * 添加文件监听
-     */
-    default void watch(Consumer<FileWatchEvent<P, F>> listener) {
-        getFileSystem().watch(getPath(), listener);
-    }
-
-    /**
-     * 移除文件监听
-     */
-    default void unwatch(Consumer<FileWatchEvent<P, F>> listener) {
-        getFileSystem().unwatch(getPath(), listener);
-    }
+    FileStream<? extends File> tree(int maxDepth);
 
     /**
      * 解析下级文件
      */
-    default F resolve(CharSequence path) {
-        return getFileSystem().get(getFileSystem().resolve(getPath(), path));
+    File resolve(CharSequence path);
+
+    // --- 以下是文件方法 --- //
+
+    /**
+     * 是否是文件
+     *
+     * @see Files#isRegularFile(java.nio.file.Path, java.nio.file.LinkOption...)
+     */
+    default boolean isRegularFile() {
+        return getPath().isRegularFile();
     }
+
+    /**
+     * 读取文件属性
+     *
+     * @see Files#readAttributes(java.nio.file.Path, java.lang.Class, java.nio.file.LinkOption...)
+     */
+    FileAttributes readAttributes();
+
+    /**
+     * 文件读通道
+     *
+     * @see Files#newByteChannel(java.nio.file.Path, java.nio.file.OpenOption...)
+     */
+    FileReadableChannel newReadableChannel();
+
+    /**
+     * 文件写通道
+     *
+     * @see Files#newByteChannel(java.nio.file.Path, java.nio.file.OpenOption...)
+     */
+    FileWritableChannel newWritableChannel();
 }

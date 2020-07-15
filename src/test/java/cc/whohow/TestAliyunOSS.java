@@ -39,8 +39,8 @@ public class TestAliyunOSS {
 
     @Test
     public void testAliyunOSSFileWritableChannel() throws Exception {
-        File<?, ?> source = vfs.get(base + "test.txt");
-        File<?, ?> target = vfs.get("/temp-oss/test.txt");
+        File source = vfs.get(base + "test.txt");
+        File target = vfs.get("/temp-oss/test.txt");
 
         source.delete();
         Assert.assertFalse(source.exists());
@@ -89,8 +89,8 @@ public class TestAliyunOSS {
 
     @Test
     public void testCopyToAliyun() throws Exception {
-        File<?, ?> source = vfs.get(base + "/src/");
-        File<?, ?> target = vfs.get("/temp-oss/temp/src/");
+        File source = vfs.get(base + "/src/");
+        File target = vfs.get("/temp-oss/temp/src/");
 
         target.delete();
         Assert.assertEquals("", TestFiles.treeFile(target));
@@ -108,8 +108,8 @@ public class TestAliyunOSS {
 
     @Test
     public void testCopyToFile() throws Exception {
-        File<?, ?> source = vfs.get("/temp-oss/temp/src/");
-        File<?, ?> target = vfs.get(base + "/temp/");
+        File source = vfs.get("/temp-oss/temp/src/");
+        File target = vfs.get(base + "/temp/");
 
         target.delete();
         Assert.assertEquals("", TestFiles.treeFile(target));

@@ -16,7 +16,7 @@ import java.util.function.Consumer;
  * @param <P> 文件路径
  * @param <F> 文件对象
  */
-public interface FileSystem<P extends Path, F extends File<P, F>> extends ObjectFileManager {
+public interface FileSystem<P extends Path, F extends GenericFile<P, F>> extends ObjectFileManager {
     /**
      * 文件系统协议
      */
@@ -42,30 +42,40 @@ public interface FileSystem<P extends Path, F extends File<P, F>> extends Object
     FileSystemAttributes readAttributes();
 
     /**
+     * 文件监听服务
+     */
+    default FileWatchService<P, F> getWatchService() {
+        throw new UnsupportedOperationException("WatchService");
+    }
+
+    /**
      * 解析文件系统内路径，使用URI.resolve来处理各种复杂情况
      *
      * @see URI#resolve(java.lang.String)
      */
     default P resolve(CharSequence path) {
-        return resolve(getUri().resolve(path.toString()));
+        if (path.length() == 0) {
+            return resolve(getUri());
+        } else {
+            return resolve(getUri().resolve(path.toString()));
+        }
+    }
+
+    /**
+     * 解析相对文件路径
+     */
+    default P resolve(P base, CharSequence path) {
+        if (path.length() == 0) {
+            return base;
+        } else {
+            return resolve(base.toUri().resolve(path.toString()));
+        }
     }
 
     /**
      * 解析URI
      */
     P resolve(URI uri);
-
-    /**
-     * 解析相对文件路径
-     */
-    default P resolve(P base, CharSequence path) {
-        return resolve(base.toUri().resolve(path.toString()));
-    }
-
-    /**
-     * 文件是否存在
-     */
-    boolean exists(P path);
 
     /**
      * 获取文件对象
@@ -101,25 +111,30 @@ public interface FileSystem<P extends Path, F extends File<P, F>> extends Object
     }
 
     /**
-     * 读取文件属性
-     *
-     * @see Files#readAttributes(java.nio.file.Path, java.lang.Class, java.nio.file.LinkOption...)
+     * 文件是否存在
      */
-    FileAttributes readAttributes(P path);
+    boolean exists(P path);
 
     /**
-     * 文件读通道
+     * 删除文件（当文件不存在时，不执行任何操作）
      *
-     * @see Files#newByteChannel(java.nio.file.Path, java.nio.file.OpenOption...)
+     * @see Files#delete(java.nio.file.Path)
      */
-    FileReadableChannel newReadableChannel(P path);
+    void delete(P path);
 
     /**
-     * 文件写通道
-     *
-     * @see Files#newByteChannel(java.nio.file.Path, java.nio.file.OpenOption...)
+     * 添加文件监听
      */
-    FileWritableChannel newWritableChannel(P path);
+    default void watch(P path, Consumer<FileEvent> listener) {
+        getWatchService().watch(get(path), listener);
+    }
+
+    /**
+     * 移除文件监听
+     */
+    default void unwatch(P path, Consumer<FileEvent> listener) {
+        getWatchService().unwatch(get(path), listener);
+    }
 
     /**
      * 父路径
@@ -154,27 +169,23 @@ public interface FileSystem<P extends Path, F extends File<P, F>> extends Object
     }
 
     /**
-     * 删除文件（当文件不存在时，不执行任何操作）
+     * 读取文件属性
      *
-     * @see Files#delete(java.nio.file.Path)
+     * @see Files#readAttributes(java.nio.file.Path, java.lang.Class, java.nio.file.LinkOption...)
      */
-    void delete(P path);
-
-    default FileWatchService<P, F> getWatchService() {
-        throw new UnsupportedOperationException("WatchService");
-    }
+    FileAttributes readAttributes(P path);
 
     /**
-     * 添加文件监听
+     * 文件读通道
+     *
+     * @see Files#newByteChannel(java.nio.file.Path, java.nio.file.OpenOption...)
      */
-    default void watch(P path, Consumer<FileWatchEvent<P, F>> listener) {
-        getWatchService().watch(get(path), listener);
-    }
+    FileReadableChannel newReadableChannel(P path);
 
     /**
-     * 移除文件监听
+     * 文件写通道
+     *
+     * @see Files#newByteChannel(java.nio.file.Path, java.nio.file.OpenOption...)
      */
-    default void unwatch(P path, Consumer<FileWatchEvent<P, F>> listener) {
-        getWatchService().unwatch(get(path), listener);
-    }
+    FileWritableChannel newWritableChannel(P path);
 }

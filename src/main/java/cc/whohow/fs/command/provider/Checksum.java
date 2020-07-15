@@ -13,7 +13,7 @@ import java.util.concurrent.Callable;
  */
 public class Checksum implements Callable<String> {
     private final String algorithm;
-    private final File<?, ?> file;
+    private final File file;
 
     public Checksum(VirtualFileSystem vfs, String... args) {
         if (args.length < 2) {
@@ -23,7 +23,7 @@ public class Checksum implements Callable<String> {
         this.file = vfs.get(args[1]);
     }
 
-    public Checksum(String algorithm, File<?, ?> file) {
+    public Checksum(String algorithm, File file) {
         this.algorithm = algorithm;
         this.file = file;
     }

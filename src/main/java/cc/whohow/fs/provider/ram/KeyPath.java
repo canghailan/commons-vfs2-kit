@@ -1,4 +1,6 @@
-package cc.whohow.fs.provider;
+package cc.whohow.fs.provider.ram;
+
+import cc.whohow.fs.provider.UriPath;
 
 import java.net.URI;
 

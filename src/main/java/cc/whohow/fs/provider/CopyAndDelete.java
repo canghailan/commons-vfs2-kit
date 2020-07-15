@@ -7,8 +7,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 
-public class CopyAndDelete<F1 extends File<?, F1>, F2 extends File<?, F2>> implements Move<F1, F2> {
+public class CopyAndDelete<F1 extends File, F2 extends File> implements Move<F1, F2> {
     private static final Logger log = LogManager.getLogger(CopyAndDelete.class);
     protected final Copy<F1, F2> copy;
 
@@ -27,18 +28,34 @@ public class CopyAndDelete<F1 extends File<?, F1>, F2 extends File<?, F2>> imple
     }
 
     @Override
-    public CompletableFuture<F2> get() {
+    public F2 call() throws Exception {
         log.trace("move {} -> {}", getSource(), getTarget());
-        return copy.get().thenApply(this::deleteSource);
+        F2 file = copy.call();
+        getSource().delete();
+        return file;
     }
 
-    protected F2 deleteSource(F2 result) {
-        copy.getSource().delete();
-        return result;
+    @Override
+    public F2 callUnchecked() {
+        log.trace("move {} -> {}", getSource(), getTarget());
+        F2 file = copy.callUnchecked();
+        getSource().delete();
+        return file;
+    }
+
+    @Override
+    public CompletableFuture<F2> callAsync(ExecutorService executor) {
+        log.trace("move {} -> {}", getSource(), getTarget());
+        return copy.callAsync(executor).thenApply(this::afterCopy);
+    }
+
+    protected F2 afterCopy(F2 file) {
+        getSource().delete();
+        return file;
     }
 
     @Override
     public String toString() {
-        return "move " + getSource() + " " + getTarget();
+        return "move " + getSource() + " -> " + getTarget();
     }
 }

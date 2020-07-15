@@ -1,10 +1,10 @@
 package cc.whohow.fs.provider.file;
 
-import cc.whohow.fs.File;
+import cc.whohow.fs.GenericFile;
 
 import java.util.Objects;
 
-public class LocalFile implements File<LocalPath, LocalFile> {
+public class LocalFile implements GenericFile<LocalPath, LocalFile> {
     private final LocalFileSystem fileSystem;
     private final LocalPath path;
 

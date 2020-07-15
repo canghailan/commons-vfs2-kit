@@ -70,8 +70,12 @@ public class MapReduce<T, S> extends CompletableFuture<T> {
      */
     public void reduce(S s, Throwable e) {
         if (e == null) {
-            update(s);
-            end();
+            try {
+                update(s);
+                end();
+            } catch (Throwable ex) {
+                completeExceptionally(ex);
+            }
         } else {
             completeExceptionally(e);
         }

@@ -6,7 +6,6 @@ import org.apache.logging.log4j.Logger;
 
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
-import java.util.concurrent.CompletableFuture;
 
 public class LocalFileMove implements Move<LocalFile, LocalFile> {
     private static final Logger log = LogManager.getLogger(LocalFileMove.class);
@@ -29,39 +28,33 @@ public class LocalFileMove implements Move<LocalFile, LocalFile> {
     }
 
     @Override
-    public CompletableFuture<LocalFile> get() {
+    public LocalFile call() throws Exception {
         log.debug("move: {} -> {}", source, target);
-        CompletableFuture<LocalFile> future = new CompletableFuture<>();
-        try {
-            if (source.isDirectory()) {
-                if (target.isDirectory()) {
-                    target.createDirectories();
-                    log.debug("Files.move: {} -> {}", source, target);
-                    Files.move(source.getPath().getFilePath(), target.getPath().getFilePath(),
-                            StandardCopyOption.REPLACE_EXISTING);
-                    future.complete(target);
-                } else {
-                    future.completeExceptionally(new UnsupportedOperationException("move directory to file: " + source + " -> " + target));
-                }
-            } else {
+        if (source.isDirectory()) {
+            if (target.isDirectory()) {
                 target.createDirectories();
-                if (target.isDirectory()) {
-                    LocalFile file = target.resolve(source.getName());
-                    log.debug("Files.move: {} -> {}", source, file);
-                    Files.move(source.getPath().getFilePath(), file.getPath().getFilePath(),
-                            StandardCopyOption.REPLACE_EXISTING);
-                    future.complete(file);
-                } else {
-                    log.debug("Files.move: {} -> {}", source, target);
-                    Files.move(source.getPath().getFilePath(), target.getPath().getFilePath(),
-                            StandardCopyOption.REPLACE_EXISTING);
-                    future.complete(target);
-                }
+                log.debug("Files.move: {} -> {}", source, target);
+                Files.move(source.getPath().getFilePath(), target.getPath().getFilePath(),
+                        StandardCopyOption.REPLACE_EXISTING);
+                return target;
+            } else {
+                throw new UnsupportedOperationException("move directory to file: " + source + " -> " + target);
             }
-        } catch (Exception e) {
-            future.completeExceptionally(e);
+        } else {
+            target.createDirectories();
+            if (target.isDirectory()) {
+                LocalFile file = target.resolve(source.getName());
+                log.debug("Files.move: {} -> {}", source, file);
+                Files.move(source.getPath().getFilePath(), file.getPath().getFilePath(),
+                        StandardCopyOption.REPLACE_EXISTING);
+                return file;
+            } else {
+                log.debug("Files.move: {} -> {}", source, target);
+                Files.move(source.getPath().getFilePath(), target.getPath().getFilePath(),
+                        StandardCopyOption.REPLACE_EXISTING);
+                return target;
+            }
         }
-        return future;
     }
 
     @Override

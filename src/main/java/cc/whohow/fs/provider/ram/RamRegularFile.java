@@ -3,7 +3,6 @@ package cc.whohow.fs.provider.ram;
 import cc.whohow.fs.FileAttributes;
 import cc.whohow.fs.FileReadableChannel;
 import cc.whohow.fs.FileWritableChannel;
-import cc.whohow.fs.provider.KeyPath;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;

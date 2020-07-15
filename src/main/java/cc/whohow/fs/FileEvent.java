@@ -3,21 +3,16 @@ package cc.whohow.fs;
 /**
  * 文件监听事件
  */
-public interface FileWatchEvent<P extends Path, F extends File<P, F>> {
+public interface FileEvent {
     /**
      * 类型
      */
     Kind kind();
 
     /**
-     * 监听文件/文件夹
-     */
-    File<P, F> watchable();
-
-    /**
      * 触发事件文件
      */
-    File<P, F> file();
+    File file();
 
     enum Kind {
         /**

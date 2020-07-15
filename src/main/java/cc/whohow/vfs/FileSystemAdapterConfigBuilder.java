@@ -7,7 +7,7 @@ import org.apache.commons.vfs2.FileSystemOptions;
 public class FileSystemAdapterConfigBuilder extends FileSystemConfigBuilder {
     @Override
     protected Class<? extends FileSystem> getConfigClass() {
-        return FileSystemAdapter.class;
+        return FileSystem.class;
     }
 
     @Override

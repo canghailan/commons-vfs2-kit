@@ -2,7 +2,6 @@ package cc.whohow.fs.provider;
 
 import cc.whohow.fs.*;
 import cc.whohow.fs.util.FileSystemThreadFactory;
-import cc.whohow.fs.util.Files;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import org.apache.logging.log4j.LogManager;
@@ -18,17 +17,16 @@ import java.util.concurrent.*;
 
 public class DefaultVirtualFileSystem implements VirtualFileSystem {
     private static final Logger log = LogManager.getLogger(DefaultVirtualFileSystem.class);
-    protected final File<?, ?> metadata;
+    protected final DefaultVirtualFileSystemMetadata metadata;
     protected final Map<String, FileSystemProvider<?, ?>> providers = new ConcurrentHashMap<>();
-    protected final Map<String, String> mountPoints = new LinkedHashMap<>();
     // 可使用字典树Trie优化
-    protected final NavigableMap<String, FileResolver<?, ?>> vfs = new ConcurrentSkipListMap<>(Comparator.reverseOrder());
+    protected final NavigableMap<String, MountPoint> vfs = new ConcurrentSkipListMap<>(Comparator.reverseOrder());
     protected ExecutorService executor;
     protected ScheduledExecutorService scheduledExecutor;
-    protected Cache<String, File<?, ?>> cache;
+    protected Cache<String, File> cache;
 
-    public DefaultVirtualFileSystem(File<?, ?> metadata) {
-        this.metadata = metadata;
+    public DefaultVirtualFileSystem(File metadata) {
+        this.metadata = new DefaultVirtualFileSystemMetadata(metadata);
         this.initialize();
     }
 
@@ -36,11 +34,10 @@ public class DefaultVirtualFileSystem implements VirtualFileSystem {
         log.debug("initialize vfs");
 
         try {
-            mount("meta:vfs:/", new DefaultFileResolver<>(metadata));
+            mount(new FileBasedMountPoint("meta:vfs:/", metadata.getFileMetadata()));
             initializeExecutor();
             initializeScheduledExecutor();
             initializeCache();
-            parseMountPoints();
             loadProviders();
         } catch (Exception e) {
             log.error("initialize vfs error", e);
@@ -52,24 +49,17 @@ public class DefaultVirtualFileSystem implements VirtualFileSystem {
 
     protected synchronized void initializeExecutor() {
         log.debug("initialize executor");
-        if (executor != null) {
+        if (this.executor != null) {
             throw new IllegalStateException();
         }
-        int corePoolSize = Files.optional(metadata.resolve("executor/corePoolSize"))
-                .map(File::readUtf8)
-                .map(Integer::parseInt)
+
+        int corePoolSize = metadata.getInteger("executor/corePoolSize")
                 .orElse(Runtime.getRuntime().availableProcessors());
-        int maximumPoolSize = Files.optional(metadata.resolve("executor/maximumPoolSize"))
-                .map(File::readUtf8)
-                .map(Integer::parseInt)
+        int maximumPoolSize = metadata.getInteger("executor/maximumPoolSize")
                 .orElse(corePoolSize * 8);
-        Duration keepAliveTime = Files.optional(metadata.resolve("executor/keepAliveTime"))
-                .map(File::readUtf8)
-                .map(Duration::parse)
+        Duration keepAliveTime = metadata.getDuration("executor/keepAliveTime")
                 .orElse(Duration.ofMinutes(1));
-        int maximumQueueSize = Files.optional(metadata.resolve("executor/maximumQueueSize"))
-                .map(File::readUtf8)
-                .map(Integer::parseInt)
+        int maximumQueueSize = metadata.getInteger("executor/maximumQueueSize")
                 .orElse(maximumPoolSize * 8);
 
         this.executor = new ThreadPoolExecutor(
@@ -84,13 +74,13 @@ public class DefaultVirtualFileSystem implements VirtualFileSystem {
 
     protected synchronized void initializeScheduledExecutor() {
         log.debug("initialize scheduler");
-        if (scheduledExecutor != null) {
+        if (this.scheduledExecutor != null) {
             throw new IllegalStateException();
         }
-        int corePoolSize = Files.optional(metadata.resolve("scheduler/corePoolSize"))
-                .map(File::readUtf8)
-                .map(Integer::parseInt)
+
+        int corePoolSize = metadata.getInteger("scheduler/corePoolSize")
                 .orElse(1);
+
         this.scheduledExecutor = new ScheduledThreadPoolExecutor(
                 corePoolSize,
                 new FileSystemThreadFactory("vfs-sched-"),
@@ -102,13 +92,9 @@ public class DefaultVirtualFileSystem implements VirtualFileSystem {
         if (cache != null) {
             throw new IllegalStateException();
         }
-        Duration ttl = Files.optional(metadata.resolve("cache/ttl"))
-                .map(File::readUtf8)
-                .map(Duration::parse)
+        Duration ttl = metadata.getDuration("cache/ttl")
                 .orElse(Duration.ofMinutes(15));
-        int maximumSize = Files.optional(metadata.resolve("cache/maximumSize"))
-                .map(File::readUtf8)
-                .map(Integer::parseInt)
+        int maximumSize = metadata.getInteger("cache/maximumSize")
                 .orElse(4096);
         this.cache = Caffeine.newBuilder()
                 .expireAfterWrite(ttl)
@@ -116,26 +102,12 @@ public class DefaultVirtualFileSystem implements VirtualFileSystem {
                 .build();
     }
 
-    protected synchronized void parseMountPoints() throws Exception {
-        log.debug("parseMountPoints");
-        File<?, ?> vfs = metadata.resolve("vfs");
-        if (vfs.exists()) {
-            for (String line : vfs.readUtf8().split("\n")) {
-                if (line.isEmpty()) {
-                    continue;
-                }
-                String[] keyValue = line.split(":", 2);
-                mountPoints.put(keyValue[0].trim(), keyValue[1].trim());
-            }
-        }
-    }
-
     protected synchronized void loadProviders() throws Exception {
         log.debug("loadProviders");
-        File<?, ?> configurations = metadata.resolve("providers/");
+        File configurations = resolveMetadata("providers/");
         if (configurations.exists()) {
-            try (DirectoryStream<? extends File<?, ?>> stream = configurations.newDirectoryStream()) {
-                for (File<?, ?> configuration : stream) {
+            try (DirectoryStream<? extends File> stream = configurations.newDirectoryStream()) {
+                for (File configuration : stream) {
                     String className = configuration.resolve("className").readUtf8();
                     log.debug("loadProvider: {}", className);
                     FileSystemProvider<?, ?> provider = (FileSystemProvider<?, ?>) Class.forName(className).newInstance();
@@ -146,8 +118,12 @@ public class DefaultVirtualFileSystem implements VirtualFileSystem {
         }
     }
 
+    protected File resolveMetadata(String path) {
+        return metadata.getFileMetadata().resolve(path);
+    }
+
     @Override
-    public File<?, ?> getMetadata() {
+    public VirtualFileSystemMetadata getMetadata() {
         return metadata;
     }
 
@@ -162,11 +138,6 @@ public class DefaultVirtualFileSystem implements VirtualFileSystem {
     }
 
     @Override
-    public Map<String, String> getMountPoints() {
-        return mountPoints;
-    }
-
-    @Override
     public Collection<FileSystemProvider<?, ?>> getProviders() {
         return Collections.unmodifiableCollection(providers.values());
     }
@@ -177,10 +148,10 @@ public class DefaultVirtualFileSystem implements VirtualFileSystem {
     }
 
     @Override
-    public synchronized void load(FileSystemProvider<?, ?> provider, File<?, ?> metadata) {
+    public synchronized void load(FileSystemProvider<?, ?> provider, File metadata) {
         log.debug("loadProvider: {} {}", provider, metadata);
         try {
-            File<?, ?> configuration = this.metadata.resolve("providers/" + UUID.randomUUID() + "/");
+            File configuration = resolveMetadata("providers/" + UUID.randomUUID() + "/");
             configuration.resolve("className").writeUtf8(provider.getClass().getName());
             if (metadata != null && metadata.exists()) {
                 copyAsync(metadata, configuration).join();
@@ -193,34 +164,29 @@ public class DefaultVirtualFileSystem implements VirtualFileSystem {
     }
 
     @Override
-    public void mount(String uri, FileResolver<?, ?> fileResolver) {
-        log.debug("mount: {} -> {}", uri, fileResolver);
-        vfs.put(uri, fileResolver);
+    public void mount(MountPoint mountPoint) {
+        log.debug("mount: {}", mountPoint);
+        vfs.put(mountPoint.getPath(), mountPoint);
     }
 
     @Override
-    public void umount(String uri) {
-        log.debug("umount: {}", uri);
-        vfs.remove(uri);
+    public void umount(String path) {
+        log.debug("umount: {}", path);
+        vfs.remove(path);
     }
 
     @Override
-    @SuppressWarnings("unchecked")
-    public <F extends File<?, F>> File<?, F> get(String uri) {
-        return (File<?, F>) cache.get(uri, this::doGet);
+    public File get(CharSequence uri) {
+        return cache.get(uri.toString(), this::doGet);
     }
 
-    protected File<?, ?> doGet(String uri) {
+    protected File doGet(String uri) {
         URI normalizedUri = URI.create(uri).normalize();
-        String normalized = normalizedUri.toString();
-        for (Map.Entry<String, FileResolver<?, ?>> e : vfs.entrySet()) {
-            if (normalized.startsWith(e.getKey())) {
-                Optional<? extends File<?, ?>> file = e.getValue().resolve(
-                        normalizedUri, e.getKey(), normalized.substring(e.getKey().length()));
-                if (file.isPresent()) {
-                    log.trace("{} -> {}", uri, file.get());
-                    return file.get();
-                }
+        for (MountPoint mountPoint : vfs.values()) {
+            Optional<? extends File> file = mountPoint.resolve(normalizedUri);
+            if (file.isPresent()) {
+                log.trace("{} -> {}", uri, file.get());
+                return file.get();
             }
         }
         throw new UncheckedIOException(new FileNotFoundException(uri));
@@ -228,31 +194,35 @@ public class DefaultVirtualFileSystem implements VirtualFileSystem {
 
     @Override
     @SuppressWarnings({"rawtypes", "unchecked"})
-    public CompletableFuture<? extends File<?, ?>> copyAsync(File<?, ?> source, File<?, ?> target) {
-        if (source.getFileSystem().getScheme().equals(target.getFileSystem().getScheme())) {
-            FileSystemProvider fileSystemProvider = providers.get(source.getFileSystem().getScheme());
-            return fileSystemProvider.copyAsync(source, target);
+    public CompletableFuture<? extends File> copyAsync(File source, File target) {
+        FileSystemProvider sourceProvider = getProvider(source);
+        FileSystemProvider targetProvider = getProvider(target);
+        if (Objects.equals(sourceProvider, targetProvider)) {
+            return sourceProvider.copy((GenericFile) source, (GenericFile) target).callAsync(executor);
+        } else {
+            return new FileCopy(source, target).callAsync(executor);
         }
-        return (CompletableFuture<? extends File<?, ?>>) CompletableFuture.supplyAsync(
-                new AsyncCopy(source, target, executor), executor)
-                .join();
     }
 
     @Override
     @SuppressWarnings({"rawtypes", "unchecked"})
-    public CompletableFuture<? extends File<?, ?>> moveAsync(File<?, ?> source, File<?, ?> target) {
-        if (source.getFileSystem().getScheme().equals(target.getFileSystem().getScheme())) {
-            FileSystemProvider fileSystemProvider = providers.get(source.getFileSystem().getScheme());
-            return fileSystemProvider.moveAsync(source, target);
+    public CompletableFuture<? extends File> moveAsync(File source, File target) {
+        FileSystemProvider sourceProvider = getProvider(source);
+        FileSystemProvider targetProvider = getProvider(target);
+        if (Objects.equals(sourceProvider, targetProvider)) {
+            return sourceProvider.move((GenericFile) source, (GenericFile) target).callAsync(executor);
+        } else {
+            return new CopyAndDelete<>(new FileCopy(source, target)).callAsync(executor);
         }
-        return (CompletableFuture<? extends File<?, ?>>) CompletableFuture.supplyAsync(
-                new CopyAndDelete(new AsyncCopy(source, target, executor)), executor)
-                .join();
+    }
+
+    protected FileSystemProvider<?, ?> getProvider(File file) {
+        return providers.get(file.getUri().getScheme());
     }
 
     @Override
     public void close() throws Exception {
-        log.debug("close DefaultFileManager");
+        log.debug("close DefaultVirtualFileSystem");
         for (FileSystemProvider<?, ?> provider : providers.values()) {
             try {
                 provider.close();

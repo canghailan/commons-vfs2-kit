@@ -26,10 +26,11 @@ public class AliyunOSSFileSystem implements FileSystem<S3UriPath, AliyunOSSFile>
     protected final S3Uri uri;
     protected final AliyunOSSFileSystemAttributes attributes;
     protected final OSS oss;
-    protected final Map<String, List<AliyunCDNConfiguration>> keyCdn = new LinkedHashMap<>();
+    // key -> [cdn]
+    protected final Map<String, List<AliyunCDNConfiguration>> cdnIndex = new LinkedHashMap<>();
     protected volatile FileWatchService<S3UriPath, AliyunOSSFile> watchService;
 
-    public AliyunOSSFileSystem(AliyunOSSFileProvider provider, S3Uri uri, AliyunOSSFileSystemAttributes attributes, OSS oss) {
+    public AliyunOSSFileSystem(S3Uri uri, AliyunOSSFileSystemAttributes attributes, OSS oss) {
         if (uri.getScheme() == null ||
                 uri.getAccessKeyId() != null ||
                 uri.getSecretAccessKey() != null ||
@@ -41,16 +42,15 @@ public class AliyunOSSFileSystem implements FileSystem<S3UriPath, AliyunOSSFile>
         this.uri = uri;
         this.attributes = attributes;
         this.oss = oss;
-        this.watchService = provider.getWatchService();
-        if (provider.getCdnConfiguration() != null) {
-            for (AliyunCDNConfiguration configuration : provider.getCdnConfiguration()) {
-                S3UriPath path = new S3UriPath(URI.create(configuration.getOrigin()));
-                if (path.getBucketName().equals(uri.getBucketName())) {
-                    keyCdn.computeIfAbsent(path.getKey(), key -> new ArrayList<>())
-                            .add(configuration);
-                }
-            }
+    }
+
+    public void addCdn(AliyunCDNConfiguration configuration) {
+        S3Uri origin = new S3Uri(URI.create(configuration.getOrigin()));
+        if (!origin.getBucketName().equals(uri.getBucketName())) {
+            throw new IllegalArgumentException(configuration.getOrigin());
         }
+        cdnIndex.computeIfAbsent(origin.getKey(), key -> new ArrayList<>())
+                .add(configuration);
     }
 
     public OSS getOSS() {
@@ -64,7 +64,7 @@ public class AliyunOSSFileSystem implements FileSystem<S3UriPath, AliyunOSSFile>
 
     @Override
     public String getPublicUri(S3UriPath path) {
-        for (Map.Entry<String, List<AliyunCDNConfiguration>> e : keyCdn.entrySet()) {
+        for (Map.Entry<String, List<AliyunCDNConfiguration>> e : cdnIndex.entrySet()) {
             if (path.getKey().startsWith(e.getKey())) {
                 AliyunCDNConfiguration cdn = e.getValue().get(0);
                 return cdn.getCdn() + path.getKey().substring(e.getKey().length());
@@ -100,7 +100,7 @@ public class AliyunOSSFileSystem implements FileSystem<S3UriPath, AliyunOSSFile>
     @Override
     public Collection<String> getUris(S3UriPath path) {
         Set<String> uris = new LinkedHashSet<>();
-        for (Map.Entry<String, List<AliyunCDNConfiguration>> e : keyCdn.entrySet()) {
+        for (Map.Entry<String, List<AliyunCDNConfiguration>> e : cdnIndex.entrySet()) {
             if (path.getKey().startsWith(e.getKey())) {
                 for (AliyunCDNConfiguration cdn : e.getValue()) {
                     String uri = cdn.getCdn() + path.getKey().substring(e.getKey().length());
@@ -223,7 +223,7 @@ public class AliyunOSSFileSystem implements FileSystem<S3UriPath, AliyunOSSFile>
     }
 
     @Override
-    public void watch(S3UriPath path, Consumer<FileWatchEvent<S3UriPath, AliyunOSSFile>> listener) {
+    public void watch(S3UriPath path, Consumer<FileEvent> listener) {
         if (watchService != null) {
             watchService.watch(get(path), listener);
         } else {
@@ -232,7 +232,7 @@ public class AliyunOSSFileSystem implements FileSystem<S3UriPath, AliyunOSSFile>
     }
 
     @Override
-    public void unwatch(S3UriPath path, Consumer<FileWatchEvent<S3UriPath, AliyunOSSFile>> listener) {
+    public void unwatch(S3UriPath path, Consumer<FileEvent> listener) {
         if (watchService != null) {
             watchService.unwatch(get(path), listener);
         } else {
@@ -265,6 +265,18 @@ public class AliyunOSSFileSystem implements FileSystem<S3UriPath, AliyunOSSFile>
         } else {
             return Files.newFileStream(Collections.singleton(get(path)));
         }
+    }
+
+    @Override
+    public FileWatchService<S3UriPath, AliyunOSSFile> getWatchService() {
+        return watchService;
+    }
+
+    public void setWatchService(FileWatchService<S3UriPath, AliyunOSSFile> watchService) {
+        if (this.watchService != null) {
+            throw new IllegalStateException();
+        }
+        this.watchService = watchService;
     }
 
     @Override

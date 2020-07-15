@@ -27,7 +27,7 @@ public class QcloudCOSFileSystem implements FileSystem<S3UriPath, QcloudCOSFile>
     protected final COS cos;
     protected volatile FileWatchService<S3UriPath, QcloudCOSFile> watchService;
 
-    public QcloudCOSFileSystem(QcloudCOSFileProvider provider, S3Uri uri, QcloudCOSFileSystemAttributes attributes, COS cos) {
+    public QcloudCOSFileSystem(S3Uri uri, QcloudCOSFileSystemAttributes attributes, COS cos) {
         if (uri.getScheme() == null ||
                 uri.getAccessKeyId() != null ||
                 uri.getSecretAccessKey() != null ||
@@ -39,7 +39,6 @@ public class QcloudCOSFileSystem implements FileSystem<S3UriPath, QcloudCOSFile>
         this.uri = uri;
         this.attributes = attributes;
         this.cos = cos;
-        this.watchService = provider.getWatchService();
     }
 
     public COS getCOS() {
@@ -181,7 +180,7 @@ public class QcloudCOSFileSystem implements FileSystem<S3UriPath, QcloudCOSFile>
     }
 
     @Override
-    public void watch(S3UriPath path, Consumer<FileWatchEvent<S3UriPath, QcloudCOSFile>> listener) {
+    public void watch(S3UriPath path, Consumer<FileEvent> listener) {
         if (watchService != null) {
             watchService.watch(get(path), listener);
         } else {
@@ -190,7 +189,7 @@ public class QcloudCOSFileSystem implements FileSystem<S3UriPath, QcloudCOSFile>
     }
 
     @Override
-    public void unwatch(S3UriPath path, Consumer<FileWatchEvent<S3UriPath, QcloudCOSFile>> listener) {
+    public void unwatch(S3UriPath path, Consumer<FileEvent> listener) {
         if (watchService != null) {
             watchService.unwatch(get(path), listener);
         } else {
@@ -223,6 +222,18 @@ public class QcloudCOSFileSystem implements FileSystem<S3UriPath, QcloudCOSFile>
         } else {
             return Files.newFileStream(Collections.singleton(get(path)));
         }
+    }
+
+    @Override
+    public FileWatchService<S3UriPath, QcloudCOSFile> getWatchService() {
+        return watchService;
+    }
+
+    public void setWatchService(FileWatchService<S3UriPath, QcloudCOSFile> watchService) {
+        if (this.watchService != null) {
+            throw new IllegalStateException();
+        }
+        this.watchService = watchService;
     }
 
     @Override

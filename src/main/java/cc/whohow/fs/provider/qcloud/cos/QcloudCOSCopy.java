@@ -1,22 +1,20 @@
 package cc.whohow.fs.provider.qcloud.cos;
 
-import cc.whohow.fs.Copy;
-import cc.whohow.fs.provider.AsyncCopy;
+import cc.whohow.fs.provider.GenericFileCopy;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 
-public class QcloudCOSCopy extends AsyncCopy<QcloudCOSFile, QcloudCOSFile> {
+public class QcloudCOSCopy extends GenericFileCopy<QcloudCOSFile, QcloudCOSFile> {
     private static final Logger log = LogManager.getLogger(QcloudCOSCopy.class);
 
-    public QcloudCOSCopy(QcloudCOSFile source, QcloudCOSFile target, ExecutorService executor) {
-        super(source, target, executor);
+    public QcloudCOSCopy(QcloudCOSFile source, QcloudCOSFile target) {
+        super(source, target);
     }
 
-    @Override
-    protected CompletableFuture<QcloudCOSFile> copyFile(QcloudCOSFile source, QcloudCOSFile target) {
+    protected QcloudCOSFile copyFile(QcloudCOSFile source, QcloudCOSFile target) throws Exception {
         if (source.getFileSystem().getCOS().equals(target.getFileSystem().getCOS())) {
             log.trace("copyObject: cos://{}/{} -> cos://{}/{}",
                     source.getPath().getBucketName(), source.getPath().getKey(),
@@ -24,15 +22,15 @@ public class QcloudCOSCopy extends AsyncCopy<QcloudCOSFile, QcloudCOSFile> {
             source.getFileSystem().getCOS().copyObject(
                     source.getPath().getBucketName(), source.getPath().getKey(),
                     target.getPath().getBucketName(), target.getPath().getKey());
-            return CompletableFuture.completedFuture(target);
+            return target;
         } else {
-            return super.copyFile(source, target);
+            return transferFile(source, target);
         }
     }
 
     @Override
-    protected Copy<QcloudCOSFile, QcloudCOSFile> newFileCopy(QcloudCOSFile source, QcloudCOSFile target) {
-        return new QcloudCOSCopy(source, target, executor);
+    protected CompletableFuture<QcloudCOSFile> copyFileAsync(QcloudCOSFile source, QcloudCOSFile target, ExecutorService executor) {
+        return new QcloudCOSCopy(source, target).copyFileAsync(executor);
     }
 
     @Override

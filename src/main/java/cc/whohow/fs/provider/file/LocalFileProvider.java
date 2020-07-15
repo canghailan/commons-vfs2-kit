@@ -1,18 +1,13 @@
 package cc.whohow.fs.provider.file;
 
-import cc.whohow.fs.File;
-import cc.whohow.fs.FileSystem;
-import cc.whohow.fs.FileSystemProvider;
-import cc.whohow.fs.VirtualFileSystem;
-import cc.whohow.fs.provider.DefaultFileResolver;
+import cc.whohow.fs.*;
+import cc.whohow.fs.provider.FileSystemBasedMountPoint;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.net.URI;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
 
 public class LocalFileProvider implements FileSystemProvider<LocalPath, LocalFile> {
     private static final Logger log = LogManager.getLogger(LocalFileProvider.class);
@@ -20,13 +15,13 @@ public class LocalFileProvider implements FileSystemProvider<LocalPath, LocalFil
     private volatile LocalFileSystem localFileSystem;
 
     @Override
-    public void initialize(VirtualFileSystem vfs, File<?, ?> metadata) throws Exception {
+    public void initialize(VirtualFileSystem vfs, File metadata) throws Exception {
         this.vfs = vfs;
         log.debug("initialize LocalFileProvider: {}", metadata);
 
         localFileSystem = new LocalFileSystem(URI.create("file:/"));
 
-        vfs.mount("file:/", new DefaultFileResolver<>(localFileSystem, "file:/"));
+        vfs.mount(new FileSystemBasedMountPoint<>("file:/", localFileSystem, "file:/"));
     }
 
     @Override
@@ -51,17 +46,12 @@ public class LocalFileProvider implements FileSystemProvider<LocalPath, LocalFil
     }
 
     @Override
-    public ExecutorService getExecutor() {
-        return vfs.getExecutor();
+    public Copy<LocalFile, LocalFile> copy(LocalFile source, LocalFile target) {
+        return new LocalFileCopy(source, target);
     }
 
     @Override
-    public CompletableFuture<LocalFile> copyAsync(LocalFile source, LocalFile target) {
-        return CompletableFuture.supplyAsync(new LocalFileCopy(source, target, getExecutor()), getExecutor()).join();
-    }
-
-    @Override
-    public CompletableFuture<LocalFile> moveAsync(LocalFile source, LocalFile target) {
-        return CompletableFuture.supplyAsync(new LocalFileMove(source, target), getExecutor()).join();
+    public Move<LocalFile, LocalFile> move(LocalFile source, LocalFile target) {
+        return new LocalFileMove(source, target);
     }
 }

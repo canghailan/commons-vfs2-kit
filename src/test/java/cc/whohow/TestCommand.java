@@ -33,8 +33,8 @@ public class TestCommand {
 
     @Test
     public void testCopyFile() throws Exception {
-        File<?, ?> source = vfs.get(base + "test.txt");
-        File<?, ?> target = vfs.get(base + "temp/test.txt");
+        File source = vfs.get(base + "test.txt");
+        File target = vfs.get(base + "temp/test.txt");
 
         source.writeUtf8(RandomContent.randomString(30));
         System.out.println(source.readUtf8());
@@ -58,8 +58,8 @@ public class TestCommand {
 
     @Test
     public void testCopyDir() throws Exception {
-        File<?, ?> source = vfs.get(base + "src/");
-        File<?, ?> target = vfs.get(base + "temp/");
+        File source = vfs.get(base + "src/");
+        File target = vfs.get(base + "temp/");
 
         Assert.assertTrue(source.isDirectory());
         Assert.assertTrue(target.isDirectory());
@@ -79,8 +79,8 @@ public class TestCommand {
 
     @Test
     public void testCopyFileToDir() throws Exception {
-        File<?, ?> source = vfs.get(base + "test.txt");
-        File<?, ?> target = vfs.get(base + "temp/");
+        File source = vfs.get(base + "test.txt");
+        File target = vfs.get(base + "temp/");
 
         source.writeUtf8(RandomContent.randomString(30));
         System.out.println(source.readUtf8());
@@ -103,8 +103,8 @@ public class TestCommand {
 
     @Test
     public void testMoveFile() throws Exception {
-        File<?, ?> source = vfs.get(base + "test.txt");
-        File<?, ?> target = vfs.get(base + "temp/test.txt");
+        File source = vfs.get(base + "test.txt");
+        File target = vfs.get(base + "temp/test.txt");
 
         source.writeUtf8(RandomContent.randomString(30));
         String content = source.readUtf8();
@@ -130,8 +130,8 @@ public class TestCommand {
 
     @Test
     public void testMoveDir() throws Exception {
-        File<?, ?> source = vfs.get(base + "temp/");
-        File<?, ?> target = vfs.get(base + "temp-move/");
+        File source = vfs.get(base + "temp/");
+        File target = vfs.get(base + "temp-move/");
 
         Assert.assertTrue(source.exists());
         Assert.assertTrue(source.isDirectory());
@@ -147,8 +147,8 @@ public class TestCommand {
 
     @Test
     public void testMoveFileToDir() throws Exception {
-        File<?, ?> source = vfs.get(base + "test.txt");
-        File<?, ?> target = vfs.get(base + "temp/");
+        File source = vfs.get(base + "test.txt");
+        File target = vfs.get(base + "temp/");
 
         source.writeUtf8(RandomContent.randomString(30));
         String content = source.readUtf8();
@@ -173,14 +173,14 @@ public class TestCommand {
 
     @Test
     public void testDeadlock() throws Exception {
-        File<?, ?> source = vfs.get(base + "src/");
-        File<?, ?> target = vfs.get(base + "temp/");
+        File source = vfs.get(base + "src/");
+        File target = vfs.get(base + "temp/");
 
         target.delete();
 
-        List<CompletableFuture<? extends File<?, ?>>> list = new ArrayList<>();
-        for (int i = 0; i < 10; i++) {
-//        for (int i = 0; i < 1000; i++) {
+        List<CompletableFuture<? extends File>> list = new ArrayList<>();
+//        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 1000; i++) {
             list.add(vfs.copyAsync(source, target.resolve(i + "/")));
         }
 
@@ -190,7 +190,7 @@ public class TestCommand {
 
     @Test
     public void clean() {
-        File<?, ?> target = vfs.get(base + "temp/");
+        File target = vfs.get(base + "temp/");
         target.delete();
     }
 }

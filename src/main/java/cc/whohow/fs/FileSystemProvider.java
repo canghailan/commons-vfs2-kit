@@ -1,18 +1,15 @@
 package cc.whohow.fs;
 
-import cc.whohow.fs.provider.AsyncCopy;
 import cc.whohow.fs.provider.CopyAndDelete;
-import cc.whohow.fs.provider.ProviderCopy;
+import cc.whohow.fs.provider.GenericFileCopy;
 
 import java.net.URI;
 import java.util.Collection;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
 
 /**
  * 文件系统SPI，负责根据配置文件初始化FileSystem，同时提供同类型文件Copy、Move操作的实现
  */
-public interface FileSystemProvider<P extends Path, F extends File<P, F>> extends AutoCloseable {
+public interface FileSystemProvider<P extends Path, F extends GenericFile<P, F>> extends AutoCloseable {
     default String getName() {
         return getClass().getName();
     }
@@ -20,7 +17,7 @@ public interface FileSystemProvider<P extends Path, F extends File<P, F>> extend
     /**
      * 初始化
      */
-    void initialize(VirtualFileSystem vfs, File<?, ?> metadata) throws Exception;
+    void initialize(VirtualFileSystem vfs, File metadata) throws Exception;
 
     /**
      * 文件协议
@@ -38,25 +35,16 @@ public interface FileSystemProvider<P extends Path, F extends File<P, F>> extend
     Collection<? extends FileSystem<P, F>> getFileSystems();
 
     /**
-     * IO线程池
-     */
-    ExecutorService getExecutor();
-
-    /**
      * 复制文件
      */
-    default CompletableFuture<F> copyAsync(F source, F target) {
-        return CompletableFuture.supplyAsync(
-                new AsyncCopy<>(source, target, getExecutor()), getExecutor())
-                .join();
+    default Copy<F, F> copy(F source, F target) {
+        return new GenericFileCopy<>(source, target);
     }
 
     /**
      * 剪切文件
      */
-    default CompletableFuture<F> moveAsync(F source, F target) {
-        return CompletableFuture.supplyAsync(
-                new CopyAndDelete<>(new ProviderCopy<>(this, source, target)), getExecutor())
-                .join();
+    default Move<F, F> move(F source, F target) {
+        return new CopyAndDelete<>(copy(source, target));
     }
 }

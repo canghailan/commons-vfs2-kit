@@ -1,8 +1,8 @@
 package cc.whohow.fs.util;
 
-import cc.whohow.fs.File;
 import cc.whohow.fs.FileIterator;
 import cc.whohow.fs.FileSystem;
+import cc.whohow.fs.GenericFile;
 import cc.whohow.fs.Path;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -17,7 +17,7 @@ import java.util.LinkedList;
 /**
  * 文件树遍历器（深度优先）
  */
-public class FileTreeIterator<P extends Path, F extends File<P, F>> implements FileIterator<F> {
+public class FileTreeIterator<P extends Path, F extends GenericFile<P, F>> implements FileIterator<F> {
     private static final Logger log = LogManager.getLogger(FileTreeIterator.class);
     private final FileSystem<P, F> fileSystem;
     private final P path;

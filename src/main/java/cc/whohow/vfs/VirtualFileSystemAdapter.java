@@ -2,6 +2,9 @@ package cc.whohow.vfs;
 
 import cc.whohow.fs.FileStream;
 import cc.whohow.fs.FileSystemProvider;
+import cc.whohow.fs.VirtualFileSystem;
+import cc.whohow.fs.provider.FileBasedMountPoint;
+import cc.whohow.fs.util.Files;
 import org.apache.commons.logging.Log;
 import org.apache.commons.vfs2.*;
 import org.apache.commons.vfs2.cache.NullFilesCache;
@@ -26,18 +29,25 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-public class FileSystemManagerAdapter implements FileSystemManager, FileSystem, FileObject, VfsComponentContext {
-    private static final Logger log = LogManager.getLogger(FileSystemManagerAdapter.class);
+public class VirtualFileSystemAdapter implements FileSystemManager, org.apache.commons.vfs2.FileSystem, FileObject, VfsComponentContext {
+    private static final Logger log = LogManager.getLogger(VirtualFileSystemAdapter.class);
     private static final FileName ROOT = new UriFileName(URI.create("/"));
-    protected final cc.whohow.fs.VirtualFileSystem vfs;
+    protected final VirtualFileSystem vfs;
     protected final Map<String, List<FileOperationProvider>> fileOperationProvider = new ConcurrentHashMap<>();
-    protected final Map<cc.whohow.fs.FileSystem<?, ?>, FileSystemAdapter> fileSystemCache = new ConcurrentHashMap<>();
     protected volatile DefaultFileReplicator defaultFileReplicator;
     protected volatile DefaultFileOperations defaultFileOperations;
     protected volatile Log logger;
 
-    public FileSystemManagerAdapter(cc.whohow.fs.VirtualFileSystem vfs) {
+    public VirtualFileSystemAdapter(VirtualFileSystem vfs) {
         this.vfs = vfs;
+    }
+
+    public VirtualFileSystem getVfs() {
+        return vfs;
+    }
+
+    public cc.whohow.fs.File getVfsFile(String uri) {
+        return vfs.get(uri);
     }
 
     @Override
@@ -67,7 +77,7 @@ public class FileSystemManagerAdapter implements FileSystemManager, FileSystem, 
     }
 
     @Override
-    public void closeFileSystem(FileSystem fileSystem) {
+    public void closeFileSystem(org.apache.commons.vfs2.FileSystem fileSystem) {
         log.trace("closeFileSystem({})", fileSystem);
         if (fileSystem instanceof VfsComponent) {
             VfsComponent vfsComponent = (VfsComponent) fileSystem;
@@ -188,9 +198,9 @@ public class FileSystemManagerAdapter implements FileSystemManager, FileSystem, 
     @Override
     public FileObject resolveFile(FileObject baseFile, String name) throws FileSystemException {
         if (baseFile == null) {
-            return new FileObjectAdapter(resolveURI(name));
+            return resolveFile(name);
         } else {
-            return new FileObjectAdapter(resolveName(baseFile.getName(), name));
+            return resolveFile(URI.create(baseFile.getName().getURI()).resolve(name));
         }
     }
 
@@ -240,7 +250,9 @@ public class FileSystemManagerAdapter implements FileSystemManager, FileSystem, 
 
     @Override
     public Object getAttribute(String attrName) throws FileSystemException {
-        return vfs.getMetadata().resolve(attrName).readUtf8();
+        return Files.optional(vfs.get("meta:vfs:/").resolve(attrName))
+                .map(cc.whohow.fs.File::readUtf8)
+                .orElse(null);
     }
 
     @Override
@@ -250,7 +262,7 @@ public class FileSystemManagerAdapter implements FileSystemManager, FileSystem, 
 
     @Override
     public FileObject resolveFile(FileName name) throws FileSystemException {
-        return new FileObjectAdapter(resolveURI(name.getURI()));
+        return resolveFile(name.getURI());
     }
 
     @Override
@@ -327,7 +339,7 @@ public class FileSystemManagerAdapter implements FileSystemManager, FileSystem, 
     }
 
     @Override
-    public FileSystem getFileSystem() {
+    public org.apache.commons.vfs2.FileSystem getFileSystem() {
         return this;
     }
 
@@ -417,7 +429,7 @@ public class FileSystemManagerAdapter implements FileSystemManager, FileSystem, 
     @Override
     public FileObject resolveFile(String name, NameScope scope) throws FileSystemException {
         if (scope == NameScope.FILE_SYSTEM) {
-            return new FileObjectAdapter(resolveURI(name));
+            return new FileObjectAdapter(this, vfs.get(name));
         } else {
             throw new FileSystemException("vfs.provider/resolve-file.error", name);
         }
@@ -440,22 +452,22 @@ public class FileSystemManagerAdapter implements FileSystemManager, FileSystem, 
 
     @Override
     public void addListener(FileObject file, FileListener listener) {
-        throw new UnsupportedOperationException();
+        vfs.get(file.getName().getURI()).watch(new FileListenerAdapter(this, listener));
     }
 
     @Override
     public void removeListener(FileObject file, FileListener listener) {
-        throw new UnsupportedOperationException();
+        vfs.get(file.getName().getURI()).unwatch(new FileListenerAdapter(this, listener));
     }
 
     @Override
-    public void addJunction(String junctionPoint, FileObject targetFile) throws FileSystemException {
-        throw new FileSystemException("vfs.provider/junctions-not-supported.error", this);
+    public void addJunction(String junctionPoint, FileObject targetFile) {
+        vfs.mount(new FileBasedMountPoint(junctionPoint, vfs.get(targetFile.getName().getURI())));
     }
 
     @Override
-    public void removeJunction(String junctionPoint) throws FileSystemException {
-        throw new FileSystemException("vfs.provider/junctions-not-supported.error", this);
+    public void removeJunction(String junctionPoint) {
+        vfs.umount(junctionPoint);
     }
 
     @Override
@@ -465,13 +477,14 @@ public class FileSystemManagerAdapter implements FileSystemManager, FileSystem, 
 
     @Override
     public FileSystemOptions getFileSystemOptions() {
-        try (FileStream<? extends cc.whohow.fs.File<?, ?>> stream = vfs.getMetadata().tree()) {
+        cc.whohow.fs.File metadata = vfs.get("meta:vfs:/");
+        try (FileStream<? extends cc.whohow.fs.File> tree = metadata.tree()) {
             FileSystemOptions fileSystemOptions = new FileSystemOptions();
             FileSystemAdapterConfigBuilder fileSystemAdapterConfigBuilder = new FileSystemAdapterConfigBuilder();
-            for (cc.whohow.fs.File<?, ?> file : stream) {
+            for (cc.whohow.fs.File file : tree) {
                 if (file.isRegularFile()) {
                     fileSystemAdapterConfigBuilder.setParam(fileSystemOptions,
-                            vfs.getMetadata().getPath().relativize(file.getPath()), file.readUtf8());
+                            metadata.getPath().relativize(file.getPath()), file.readUtf8());
                 }
             }
             return fileSystemOptions;
@@ -519,22 +532,22 @@ public class FileSystemManagerAdapter implements FileSystemManager, FileSystem, 
 
     @Override
     public FileObject resolveFile(URI uri) throws FileSystemException {
-        return new FileObjectAdapter(resolveURI(uri.toString()));
+        return resolveFile(uri.toString());
     }
 
     @Override
     public FileObject resolveFile(URL url) throws FileSystemException {
-        return new FileObjectAdapter(resolveURI(url.toString()));
+        return resolveFile(url.toString());
     }
 
     @Override
-    public FilePath resolveName(FileName root, String name) throws FileSystemException {
+    public FileName resolveName(FileName root, String name) throws FileSystemException {
         return resolveName(root, name, NameScope.FILE_SYSTEM);
     }
 
     @Override
-    public FilePath resolveName(FileName root, String name, NameScope scope) throws FileSystemException {
-        FilePath fileName = resolveURI(URI.create(root.getURI()).resolve(name).toString());
+    public FileName resolveName(FileName root, String name, NameScope scope) throws FileSystemException {
+        FileName fileName = resolveURI(URI.create(root.getURI()).resolve(name).toString());
         switch (scope) {
             case FILE_SYSTEM: {
                 return fileName;
@@ -564,21 +577,8 @@ public class FileSystemManagerAdapter implements FileSystemManager, FileSystem, 
     }
 
     @Override
-    public FilePath resolveURI(String uri) throws FileSystemException {
-        cc.whohow.fs.File<?, ?> file = vfs.get(uri);
-        return new FilePath(fileSystemCache.computeIfAbsent(file.getFileSystem(), this::newFileSystemAdapter), file);
-    }
-
-    protected FileSystemAdapter newFileSystemAdapter(cc.whohow.fs.FileSystem<?, ?> fileSystem) {
-        try {
-            FileSystemAdapter fileSystemAdapter = new FileSystemAdapter(fileSystem);
-            fileSystemAdapter.setContext(this);
-            fileSystemAdapter.setLogger(logger);
-            fileSystemAdapter.init();
-            return fileSystemAdapter;
-        } catch (FileSystemException e) {
-            throw FileSystemExceptions.unchecked(e);
-        }
+    public FileName resolveURI(String uri) throws FileSystemException {
+        return new FileNameAdapter(vfs.get(uri));
     }
 
     @Override
@@ -588,7 +588,7 @@ public class FileSystemManagerAdapter implements FileSystemManager, FileSystem, 
 
     @Override
     public FileObject toFileObject(File file) throws FileSystemException {
-        return new FileObjectAdapter(resolveURI(file.toURI().toString()));
+        return resolveFile(file.toURI());
     }
 
     @Override

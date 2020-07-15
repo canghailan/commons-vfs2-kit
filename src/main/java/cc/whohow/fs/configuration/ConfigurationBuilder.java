@@ -1,7 +1,7 @@
 package cc.whohow.fs.configuration;
 
-import cc.whohow.fs.File;
 import cc.whohow.fs.FileSystem;
+import cc.whohow.fs.GenericFile;
 import cc.whohow.fs.provider.ram.RamFileSystem;
 
 import java.net.URI;
@@ -11,7 +11,7 @@ public class ConfigurationBuilder {
     protected StringBuilder vfs;
 
     public ConfigurationBuilder() {
-        this(URI.create("etc:/"));
+        this(URI.create("meta:vfs:/"));
     }
 
     public ConfigurationBuilder(URI uri) {
@@ -39,7 +39,7 @@ public class ConfigurationBuilder {
         return this;
     }
 
-    public File<?, ?> build() {
+    public GenericFile<?, ?> build() {
         conf.get("vfs").writeUtf8(vfs);
         return conf.get("");
     }

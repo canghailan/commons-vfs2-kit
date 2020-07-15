@@ -39,8 +39,8 @@ public class TestVirtualFileSystem {
 
     @Test
     public void testCopy() throws Exception {
-        File<?, ?> source = vfs.get("/temp-oss/temp/src/");
-        File<?, ?> target = vfs.get("/temp-cos/temp-copy/src/");
+        File source = vfs.get("/temp-oss/temp/src/");
+        File target = vfs.get("/temp-cos/temp-copy/src/");
 
         target.delete();
         Assert.assertEquals("", TestFiles.treeFile(target));

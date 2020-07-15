@@ -7,7 +7,7 @@ import cc.whohow.fs.provider.aliyun.oss.AliyunOSSFile;
 import java.util.concurrent.Callable;
 
 public class AliyunOSSProcess implements Callable<String> {
-    protected final File<?, ?> file;
+    protected final File file;
     protected final String process;
 
     public AliyunOSSProcess(VirtualFileSystem vfs, String... args) {
@@ -18,7 +18,7 @@ public class AliyunOSSProcess implements Callable<String> {
         this.process = args[1];
     }
 
-    public AliyunOSSProcess(File<?, ?> file, String process) {
+    public AliyunOSSProcess(File file, String process) {
         this.file = file;
         this.process = process;
     }

@@ -1,7 +1,6 @@
 package cc.whohow.fs.provider.ram;
 
 import cc.whohow.fs.*;
-import cc.whohow.fs.provider.KeyPath;
 import cc.whohow.fs.util.ByteBuffers;
 import cc.whohow.fs.util.Files;
 import org.apache.logging.log4j.LogManager;
@@ -57,7 +56,12 @@ public class RamFileSystem implements FileSystem<KeyPath, RamFile> {
     public KeyPath resolve(URI uri) {
         URI key = this.uri.relativize(uri);
         if (key.isAbsolute() || key.toString().startsWith("/")) {
-            throw new IllegalArgumentException(uri.toString());
+            if (key.equals(this.uri)) {
+                // root
+                return new KeyPath(key, "");
+            } else {
+                throw new IllegalArgumentException(uri.toString());
+            }
         }
         return new KeyPath(uri, key.toString());
     }

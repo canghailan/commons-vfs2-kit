@@ -1,11 +1,11 @@
 package cc.whohow.fs.provider.qcloud.cos;
 
-import cc.whohow.fs.File;
+import cc.whohow.fs.GenericFile;
 import cc.whohow.fs.provider.s3.S3UriPath;
 
 import java.util.Objects;
 
-public class QcloudCOSFile implements File<S3UriPath, QcloudCOSFile> {
+public class QcloudCOSFile implements GenericFile<S3UriPath, QcloudCOSFile> {
     private final QcloudCOSFileSystem fileSystem;
     private final S3UriPath path;
 
