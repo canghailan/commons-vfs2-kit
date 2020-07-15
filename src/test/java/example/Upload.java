@@ -1,7 +1,6 @@
 package example;
 
 import cc.whohow.fs.File;
-import cc.whohow.fs.GenericFile;
 import cc.whohow.fs.VirtualFileSystem;
 import cc.whohow.fs.configuration.JsonConfigurationParser;
 import cc.whohow.fs.provider.DefaultVirtualFileSystem;
@@ -13,7 +12,7 @@ import java.nio.file.Paths;
 public class Upload {
     public static void main(String[] args) throws Exception {
         JsonNode configuration = new YAMLMapper().readTree(new java.io.File("vfs.yaml"));
-        GenericFile<?, ?> metadata = new JsonConfigurationParser().parse(configuration).build();
+        File metadata = new JsonConfigurationParser().parse(configuration).build();
 
         String srcDir = Paths.get(".").toAbsolutePath().normalize().toUri().toString();
         String dstDir = "oss://yt-temp/temp/";

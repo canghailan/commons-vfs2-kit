@@ -33,7 +33,7 @@ public class PollingWatchService<P extends Path, F extends GenericFile<P, F>, V>
         for (PollingFileWatchKey<P, F> watchKey : watchKeys) {
             if (path.startsWith(watchKey.watchable().getPath())) {
                 F file = watchKey.watchable().getFileSystem().get(path);
-                watchKey.accept(new ImmutableFileEvent<>(kind, file));
+                watchKey.accept(new ImmutableFileEvent(kind, file));
             }
         }
     }

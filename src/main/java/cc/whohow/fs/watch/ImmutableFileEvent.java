@@ -2,12 +2,10 @@ package cc.whohow.fs.watch;
 
 import cc.whohow.fs.File;
 import cc.whohow.fs.FileEvent;
-import cc.whohow.fs.GenericFile;
-import cc.whohow.fs.Path;
 
 import java.util.Objects;
 
-public class ImmutableFileEvent<P extends Path, F extends GenericFile<P, F>> implements FileEvent {
+public class ImmutableFileEvent implements FileEvent {
     protected final Kind kind;
     protected final File file;
 
@@ -32,7 +30,7 @@ public class ImmutableFileEvent<P extends Path, F extends GenericFile<P, F>> imp
             return true;
         }
         if (o instanceof ImmutableFileEvent) {
-            ImmutableFileEvent<?, ?> that = (ImmutableFileEvent<?, ?>) o;
+            ImmutableFileEvent that = (ImmutableFileEvent) o;
             return kind == that.kind &&
                     file.equals(that.file);
         }
