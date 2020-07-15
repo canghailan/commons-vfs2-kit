@@ -42,7 +42,7 @@ public class Upload {
 ## 核心对象
 VFS核心参考对象存储，可以看做是一个URI为Key、文件对象为Value的KeyValue存储系统。
 在此基础上，通过URI地址模拟文件系统层级（文件树）。
-* VirtualFileSystem 虚拟文件系统，顶级对象，整合不同文件系统，提供统一的寻址入口
+* VirtualFileSystem 虚拟文件系统，顶级对象，整合不同文件系统，提供统一的入口
 * File 文件，轻量级对象，持有FileSystem、Path引用，代理了FileSystem中的各种操作，可对文件内容、属性进行读写，可进行文件树遍历
 * Path 路径，轻量级对象，已解析的URI字符串（针对不同的文件系统，解析出特定的字段供文件系统使用）
 * FileSystem 文件系统，重量级对象，KeyValue存储系统的客户端，可通过Path对进行各种操作
@@ -52,7 +52,7 @@ VFS核心参考对象存储，可以看做是一个URI为Key、文件对象为Va
 * FileAttributes 文件属性
 * ObjectFile 对象文件，轻量级对象，只提供最基础的文件内容、属性读写，不支持文件树遍历
 * ObjectFileManager 对象文件管理服务，重量级对象，KeyValue存储系统的客户端，只能通过URI获取对象文件
-* FileWatchService 文件监听服务，监听文件变更事件（FileWatchEvent）
+* FileWatchService 文件监听服务，监听文件变更事件（FileEvent）
 
 ### 核心对象关系
 * VirtualFileSystem （虚拟文件系统）
@@ -108,12 +108,12 @@ TODO
   * [x] OSSClient复用：同账号、同地域复用同一个OSSClient
   * [x] 文件复制优化：同账号、同地域文件使用copyObject，其他情况零拷贝流复制
   * [x] 批量删除使用deleteObjects
-  * [x] 流式写入使用缓冲区，缓冲区大小默认2MB
+  * [x] 流式写入使用缓冲区合并写入操作
 * 腾讯云COS
   * [x] COSClient复用：同账号、同地域复用同一个COSClient
   * [x] 文件复制优化：同账号、同地域文件使用copyObject，其他情况零拷贝流复制
   * [x] 批量删除使用deleteObjects
-  * [x] 流式写入使用缓冲区，缓冲区大小默认2MB
+  * [x] 流式写入使用缓冲区合并写入操作
 
 
 
