@@ -1,6 +1,6 @@
 # 虚拟文件系统
 
-## 快速上手
+## 示例
 ### [配置文件 vfs.yaml](vfs.yaml.md)
 ```markdown
 providers:
@@ -20,18 +20,17 @@ providers:
 public class Upload {
     public static void main(String[] args) throws Exception {
         JsonNode configuration = new YAMLMapper().readTree(new java.io.File("vfs.yaml"));
-        File<?, ?> metadata = new JsonConfigurationParser().parse(configuration).build();
+        File metadata = new JsonConfigurationParser().parse(configuration).build();
 
         String srcDir = Paths.get(".").toAbsolutePath().normalize().toUri().toString();
         String dstDir = "oss://xxx-temp/temp/";
 
         try (VirtualFileSystem vfs = new DefaultVirtualFileSystem(metadata)) {
-            File<?, ?> file = vfs.copyAsync(
+            File file = vfs.copyAsync(
                     vfs.get(srcDir + "pom.xml"),
                     vfs.get(dstDir + "backup-pom.xml")
             ).join();
             System.out.println(file);
-            // oss://xxx-temp/temp/backup-pom.xml
         }
     }
 }
