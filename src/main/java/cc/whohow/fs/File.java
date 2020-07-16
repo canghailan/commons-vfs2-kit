@@ -73,7 +73,8 @@ public interface File extends ObjectFile {
             try (Stream<? extends File> stream = tree().stream()) {
                 return stream
                         .filter(File::isRegularFile)
-                        .map(File::getLastModifiedTime)
+                        .map(File::readAttributes)
+                        .map(FileAttributes::lastModifiedTime)
                         .max(FileTime::compareTo)
                         .orElse(FileTimes.epoch());
             }
@@ -92,7 +93,8 @@ public interface File extends ObjectFile {
             try (Stream<? extends File> stream = tree().stream()) {
                 return stream
                         .filter(File::isRegularFile)
-                        .mapToLong(File::size)
+                        .map(File::readAttributes)
+                        .mapToLong(FileAttributes::size)
                         .sum();
             }
         } else {
