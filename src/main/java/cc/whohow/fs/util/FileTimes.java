@@ -3,15 +3,9 @@ package cc.whohow.fs.util;
 import java.nio.file.attribute.FileTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeFormatterBuilder;
-import java.time.format.ResolverStyle;
-import java.time.format.TextStyle;
+import java.time.format.*;
 import java.time.temporal.ChronoField;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class FileTimes {
     private static final FileTime EPOCH = FileTime.fromMillis(0);
@@ -116,6 +110,17 @@ public class FileTimes {
 
     public static FileTime epoch() {
         return EPOCH;
+    }
+
+    public static Optional<ZonedDateTime> tryParse(String dateTime) {
+        if (dateTime == null || dateTime.isEmpty()) {
+            return Optional.empty();
+        }
+        try {
+            return Optional.of(ZonedDateTime.parse(dateTime, FORMATTER));
+        } catch (DateTimeParseException ignore) {
+            return Optional.empty();
+        }
     }
 
     public static ZonedDateTime parse(String dateTime) {

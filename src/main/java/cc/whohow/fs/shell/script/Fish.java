@@ -15,10 +15,8 @@ import java.nio.charset.StandardCharsets;
 
 public class Fish {
     protected final ScriptEngine scriptEngine = new ScriptEngineManager().getEngineByName("groovy");
-    protected final FileShell fileShell;
 
     public Fish(FileShell fileShell) {
-        this.fileShell = fileShell;
         this.scriptEngine.setBindings(new FishContext(fileShell), ScriptContext.GLOBAL_SCOPE);
     }
 

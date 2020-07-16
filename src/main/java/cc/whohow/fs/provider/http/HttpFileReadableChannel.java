@@ -35,7 +35,7 @@ public class HttpFileReadableChannel extends FileReadableStream {
     }
 
     @Override
-    public ByteBuffer readAllBytes() throws IOException {
+    public ByteBuffer readAll() throws IOException {
         if (httpEntity.getContentLength() > Integer.MAX_VALUE) {
             throw new UnsupportedOperationException("file too large");
         }

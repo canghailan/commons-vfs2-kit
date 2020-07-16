@@ -48,7 +48,7 @@ public interface ObjectFile {
      */
     default ByteBuffer read() {
         try (FileReadableChannel readableChannel = newReadableChannel()) {
-            return readableChannel.readAllBytes();
+            return readableChannel.readAll();
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }

@@ -1,33 +1,26 @@
 package cc.whohow.fs.provider.aliyun.oss.command;
 
 import cc.whohow.fs.File;
-import cc.whohow.fs.VirtualFileSystem;
+import cc.whohow.fs.FileManager;
 import cc.whohow.fs.provider.aliyun.oss.AliyunOSSFile;
+import cc.whohow.fs.shell.Command;
 
-import java.util.concurrent.Callable;
-
-public class AliyunOSSProcess implements Callable<String> {
-    protected final File file;
-    protected final String process;
-
-    public AliyunOSSProcess(VirtualFileSystem vfs, String... args) {
+public class AliyunOSSProcess implements Command<String> {
+    @Override
+    public String call(FileManager fileManager, String... args) throws Exception {
         if (args.length < 2) {
             throw new IllegalArgumentException(String.join(" ", args));
         }
-        this.file = vfs.get(args[0]);
-        this.process = args[1];
-    }
-
-    public AliyunOSSProcess(File file, String process) {
-        this.file = file;
-        this.process = process;
-    }
-
-    @Override
-    public String call() throws Exception {
+        File file = fileManager.get(args[0]);
+        String process = args[1];
         if (file instanceof AliyunOSSFile) {
-            return file.getPublicUri() + "?x-oss-process=" + process;
+            return call((AliyunOSSFile) file, process);
+        } else {
+            throw new IllegalArgumentException(file + " is not oss file");
         }
-        throw new IllegalArgumentException(file + " is not oss file");
+    }
+
+    public String call(AliyunOSSFile file, String process) {
+        return file.getPublicUri() + "?x-oss-process=" + process;
     }
 }

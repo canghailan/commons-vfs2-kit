@@ -26,8 +26,11 @@ public class FileConfigurationSource extends AbstractConfiguration<ByteBuffer> i
     }
 
     @Override
-    public void close() throws Exception {
-        file.unwatch(this);
+    public synchronized void close() throws Exception {
+        if (listeners.isEmpty()) {
+            // 引用计数为0
+            file.unwatch(this);
+        }
     }
 
     @Override

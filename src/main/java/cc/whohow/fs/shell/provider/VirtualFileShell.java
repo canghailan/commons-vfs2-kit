@@ -19,8 +19,8 @@ import java.util.stream.Collectors;
 
 public class VirtualFileShell implements FileShell {
     private static final Logger log = LogManager.getLogger(VirtualFileShell.class);
-    protected final VirtualFileSystem vfs;
     protected final Map<String, Command<?>> commands = new ConcurrentHashMap<>();
+    protected final VirtualFileSystem vfs;
     protected volatile Runnable onClose;
 
     public VirtualFileShell(VirtualFileSystem vfs) {

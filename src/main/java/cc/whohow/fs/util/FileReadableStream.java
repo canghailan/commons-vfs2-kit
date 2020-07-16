@@ -87,7 +87,7 @@ public class FileReadableStream extends InputStream implements FileReadableChann
     }
 
     @Override
-    public ByteBuffer readAllBytes() throws IOException {
+    public ByteBuffer readAll() throws IOException {
         return IO.read(stream);
     }
 }

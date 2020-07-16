@@ -25,7 +25,7 @@ public class ByteBufferFileReadableChannel extends ByteBufferReadableChannel imp
     }
 
     @Override
-    public ByteBuffer readAllBytes() throws IOException {
+    public ByteBuffer readAll() throws IOException {
         return buffer;
     }
 

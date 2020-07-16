@@ -50,7 +50,7 @@ public class LocalFileReadableChannel implements FileReadableChannel {
     }
 
     @Override
-    public ByteBuffer readAllBytes() throws IOException {
+    public ByteBuffer readAll() throws IOException {
         long size = fileChannel.size();
 //        log.trace("FileChannel.map: {} - {}", 0, size);
 //        ByteBuffer buffer = fileChannel.map(FileChannel.MapMode.READ_ONLY, 0, size);

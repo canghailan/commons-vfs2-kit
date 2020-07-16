@@ -11,12 +11,10 @@ import java.util.Collections;
 
 public class LocalFileProvider implements FileSystemProvider<LocalPath, LocalFile> {
     private static final Logger log = LogManager.getLogger(LocalFileProvider.class);
-    private volatile VirtualFileSystem vfs;
     private volatile LocalFileSystem localFileSystem;
 
     @Override
     public void initialize(VirtualFileSystem vfs, File metadata) throws Exception {
-        this.vfs = vfs;
         log.debug("initialize LocalFileProvider: {}", metadata);
 
         localFileSystem = new LocalFileSystem(URI.create("file:/"));

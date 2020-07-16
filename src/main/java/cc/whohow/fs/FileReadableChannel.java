@@ -43,7 +43,7 @@ public interface FileReadableChannel extends ReadableByteChannel {
      *
      * @see Files#readAllBytes(java.nio.file.Path)
      */
-    default ByteBuffer readAllBytes() throws IOException {
+    default ByteBuffer readAll() throws IOException {
         return IO.read(stream());
     }
 
