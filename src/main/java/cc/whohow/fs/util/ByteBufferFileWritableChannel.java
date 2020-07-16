@@ -8,7 +8,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
-import java.util.function.Consumer;
 
 public class ByteBufferFileWritableChannel extends ByteBufferWritableChannel implements FileWritableChannel {
     public ByteBufferFileWritableChannel() {
@@ -20,18 +19,12 @@ public class ByteBufferFileWritableChannel extends ByteBufferWritableChannel imp
     }
 
     @Override
-    public ByteBufferFileWritableChannel onClose(Consumer<ByteBuffer> onClose) {
-        super.onClose(onClose);
-        return this;
-    }
-
-    @Override
     public OutputStream stream() {
         return this;
     }
 
     @Override
-    public void overwrite(ByteBuffer bytes) throws IOException {
+    public synchronized void overwrite(ByteBuffer bytes) throws IOException {
         this.buffer = bytes;
     }
 
@@ -52,7 +45,7 @@ public class ByteBufferFileWritableChannel extends ByteBufferWritableChannel imp
     }
 
     @Override
-    public long transferFrom(ReadableByteChannel channel) throws IOException {
+    public synchronized long transferFrom(ReadableByteChannel channel) throws IOException {
         long n = 0;
         while (true) {
             if (!buffer.hasRemaining()) {

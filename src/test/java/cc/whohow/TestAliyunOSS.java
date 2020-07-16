@@ -3,11 +3,11 @@ package cc.whohow;
 import cc.whohow.fs.File;
 import cc.whohow.fs.FileWritableChannel;
 import cc.whohow.fs.VirtualFileSystem;
-import cc.whohow.fs.command.provider.Checksum;
 import cc.whohow.fs.configuration.ConfigurationBuilder;
 import cc.whohow.fs.configuration.JsonConfigurationParser;
 import cc.whohow.fs.provider.DefaultVirtualFileSystem;
 import cc.whohow.fs.provider.file.LocalFileProvider;
+import cc.whohow.fs.shell.provider.checksum.Checksum;
 import cc.whohow.fs.util.IO;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import org.junit.AfterClass;
@@ -82,8 +82,8 @@ public class TestAliyunOSS {
         Assert.assertEquals(size, target.size());
         System.out.println("size: " + target.size());
 
-        String md5 = new Checksum("MD5", target).call();
-        Assert.assertEquals(new Checksum("MD5", source).call(), md5);
+        String md5 = new Checksum().call("MD5", target);
+        Assert.assertEquals(new Checksum().call("MD5", source), md5);
         System.out.println("md5: " + md5);
     }
 

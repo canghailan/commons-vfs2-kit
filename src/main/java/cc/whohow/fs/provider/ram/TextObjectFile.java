@@ -6,6 +6,7 @@ import cc.whohow.fs.FileWritableChannel;
 import cc.whohow.fs.util.ByteBufferFileReadableChannel;
 import cc.whohow.fs.util.ByteBufferFileWritableChannel;
 
+import java.io.IOException;
 import java.net.URI;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
@@ -55,7 +56,13 @@ class TextObjectFile implements RamObjectFile {
 
     @Override
     public FileWritableChannel newWritableChannel() {
-        return new ByteBufferFileWritableChannel().onClose(this::write);
+        return new ByteBufferFileWritableChannel() {
+            @Override
+            public void close() throws IOException {
+                super.close();
+                TextObjectFile.this.write(getByteBuffer());
+            }
+        };
     }
 
     @Override

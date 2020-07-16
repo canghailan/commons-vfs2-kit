@@ -1,13 +1,10 @@
 package cc.whohow.fs.util;
 
-import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.WritableByteChannel;
-import java.util.function.Consumer;
 
 public class ByteBufferWritableChannel extends OutputStream implements WritableByteChannel {
-    protected Consumer<ByteBuffer> onClose;
     protected ByteBuffer buffer;
 
     public ByteBufferWritableChannel() {
@@ -22,11 +19,6 @@ public class ByteBufferWritableChannel extends OutputStream implements WritableB
         ByteBuffer copy = buffer.duplicate();
         copy.flip();
         return copy;
-    }
-
-    public ByteBufferWritableChannel onClose(Consumer<ByteBuffer> onClose) {
-        this.onClose = onClose;
-        return this;
     }
 
     private synchronized void ensureCapacity(int n) {
@@ -61,12 +53,5 @@ public class ByteBufferWritableChannel extends OutputStream implements WritableB
     @Override
     public boolean isOpen() {
         return true;
-    }
-
-    @Override
-    public void close() throws IOException {
-        if (onClose != null) {
-            onClose.accept(getByteBuffer());
-        }
     }
 }

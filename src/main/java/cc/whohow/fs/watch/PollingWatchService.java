@@ -1,9 +1,6 @@
 package cc.whohow.fs.watch;
 
-import cc.whohow.fs.FileEvent;
-import cc.whohow.fs.FileWatchService;
-import cc.whohow.fs.GenericFile;
-import cc.whohow.fs.Path;
+import cc.whohow.fs.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -13,7 +10,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -48,7 +44,7 @@ public class PollingWatchService<P extends Path, F extends GenericFile<P, F>, V>
     }
 
     @Override
-    public synchronized void watch(F file, Consumer<FileEvent> listener) {
+    public synchronized void watch(F file, FileListener listener) {
         PollingFileWatchKey<P, F> watchKey = getWatchKey(file.getPath());
         if (watchKey == null) {
             watchKey = new PollingFileWatchKey<>(file);
@@ -58,7 +54,7 @@ public class PollingWatchService<P extends Path, F extends GenericFile<P, F>, V>
     }
 
     @Override
-    public synchronized void unwatch(F file, Consumer<FileEvent> listener) {
+    public synchronized void unwatch(F file, FileListener listener) {
         PollingFileWatchKey<P, F> watchKey = getWatchKey(file.getPath());
         if (watchKey == null) {
             throw new IllegalStateException();

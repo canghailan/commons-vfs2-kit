@@ -1,7 +1,7 @@
-package cc.whohow.fs.command.script;
+package cc.whohow.fs.shell.script;
 
 import cc.whohow.fs.UncheckedException;
-import cc.whohow.fs.command.FileShell;
+import cc.whohow.fs.shell.FileShell;
 
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
@@ -15,11 +15,11 @@ import java.nio.charset.StandardCharsets;
 
 public class Fish {
     protected final ScriptEngine scriptEngine = new ScriptEngineManager().getEngineByName("groovy");
-    protected final FileShell fish;
+    protected final FileShell fileShell;
 
-    public Fish(FileShell fish) {
-        this.fish = fish;
-        this.scriptEngine.setBindings(new FishContext(fish), ScriptContext.GLOBAL_SCOPE);
+    public Fish(FileShell fileShell) {
+        this.fileShell = fileShell;
+        this.scriptEngine.setBindings(new FishContext(fileShell), ScriptContext.GLOBAL_SCOPE);
     }
 
     public Object get(String key) {

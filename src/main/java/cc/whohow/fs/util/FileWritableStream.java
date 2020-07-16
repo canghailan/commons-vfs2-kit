@@ -8,16 +8,10 @@ import java.nio.ByteBuffer;
 
 public class FileWritableStream extends OutputStream implements FileWritableChannel {
     protected final OutputStream stream;
-    protected final Runnable onClose;
     protected volatile boolean open;
 
     public FileWritableStream(OutputStream stream) {
-        this(stream, null);
-    }
-
-    public FileWritableStream(OutputStream stream, Runnable onClose) {
         this.stream = stream;
-        this.onClose = onClose;
         this.open = true;
     }
 
@@ -60,12 +54,11 @@ public class FileWritableStream extends OutputStream implements FileWritableChan
 
     @Override
     public synchronized void close() throws IOException {
-        try {
-            stream.close();
-        } finally {
-            open = false;
-            if (onClose != null) {
-                onClose.run();
+        if (open) {
+            try {
+                stream.close();
+            } finally {
+                open = false;
             }
         }
     }

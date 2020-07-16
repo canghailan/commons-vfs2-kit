@@ -17,7 +17,6 @@ import org.apache.logging.log4j.Logger;
 import java.net.URI;
 import java.nio.file.DirectoryStream;
 import java.util.*;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class QcloudCOSFileSystem implements FileSystem<S3UriPath, QcloudCOSFile> {
@@ -180,24 +179,6 @@ public class QcloudCOSFileSystem implements FileSystem<S3UriPath, QcloudCOSFile>
     }
 
     @Override
-    public void watch(S3UriPath path, Consumer<FileEvent> listener) {
-        if (watchService != null) {
-            watchService.watch(get(path), listener);
-        } else {
-            throw new UnsupportedOperationException("watch");
-        }
-    }
-
-    @Override
-    public void unwatch(S3UriPath path, Consumer<FileEvent> listener) {
-        if (watchService != null) {
-            watchService.unwatch(get(path), listener);
-        } else {
-            throw new UnsupportedOperationException("unwatch");
-        }
-    }
-
-    @Override
     public FileStream<QcloudCOSFile> tree(S3UriPath path) {
         if (path.isDirectory()) {
             return new QcloudCOSFileTree(this, path, true);
@@ -226,6 +207,9 @@ public class QcloudCOSFileSystem implements FileSystem<S3UriPath, QcloudCOSFile>
 
     @Override
     public FileWatchService<S3UriPath, QcloudCOSFile> getWatchService() {
+        if (watchService == null) {
+            throw new UnsupportedOperationException("WatchService");
+        }
         return watchService;
     }
 

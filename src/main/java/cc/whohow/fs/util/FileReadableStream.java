@@ -8,16 +8,10 @@ import java.nio.ByteBuffer;
 
 public class FileReadableStream extends InputStream implements FileReadableChannel {
     protected final InputStream stream;
-    protected final Runnable onClose;
     protected volatile boolean open;
 
     public FileReadableStream(InputStream stream) {
-        this(stream, null);
-    }
-
-    public FileReadableStream(InputStream stream, Runnable onClose) {
         this.stream = stream;
-        this.onClose = onClose;
         this.open = true;
     }
 
@@ -52,13 +46,12 @@ public class FileReadableStream extends InputStream implements FileReadableChann
     }
 
     @Override
-    public void close() throws IOException {
-        try {
-            stream.close();
-        } finally {
-            open = false;
-            if (onClose != null) {
-                onClose.run();
+    public synchronized void close() throws IOException {
+        if (open) {
+            try {
+                stream.close();
+            } finally {
+                open = false;
             }
         }
     }

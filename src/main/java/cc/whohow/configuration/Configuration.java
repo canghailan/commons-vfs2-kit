@@ -1,27 +1,31 @@
 package cc.whohow.configuration;
 
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**
  * 配置
  */
-public interface Configuration<T> extends Supplier<T>, Consumer<T>, AutoCloseable {
+public interface Configuration<T> extends Supplier<T>, AutoCloseable {
+    /**
+     * 修改配置
+     */
+    void set(T value);
+
     /**
      * 添加监听
      */
-    void watch(Consumer<T> listener);
+    void watch(ConfigurationListener<T> listener);
 
     /**
      * 移除监听
      */
-    void unwatch(Consumer<T> listener);
+    void unwatch(ConfigurationListener<T> listener);
 
     /**
      * 读取并添加监听
      */
-    default void getAndWatch(Consumer<T> listener) {
+    default void getAndWatch(ConfigurationListener<T> listener) {
         watch(listener);
-        listener.accept(get());
+        listener.onChange(get());
     }
 }

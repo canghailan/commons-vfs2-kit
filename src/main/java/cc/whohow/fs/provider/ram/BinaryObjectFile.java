@@ -7,6 +7,7 @@ import cc.whohow.fs.util.ByteBufferFileReadableChannel;
 import cc.whohow.fs.util.ByteBufferFileWritableChannel;
 import cc.whohow.fs.util.ByteBuffers;
 
+import java.io.IOException;
 import java.net.URI;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
@@ -51,7 +52,13 @@ class BinaryObjectFile implements RamObjectFile {
 
     @Override
     public FileWritableChannel newWritableChannel() {
-        return new ByteBufferFileWritableChannel().onClose(this::write);
+        return new ByteBufferFileWritableChannel() {
+            @Override
+            public void close() throws IOException {
+                super.close();
+                BinaryObjectFile.this.write(getByteBuffer());
+            }
+        };
     }
 
     @Override

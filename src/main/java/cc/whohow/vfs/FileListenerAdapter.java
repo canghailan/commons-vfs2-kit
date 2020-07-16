@@ -5,9 +5,7 @@ import org.apache.commons.vfs2.FileChangeEvent;
 import org.apache.commons.vfs2.FileListener;
 import org.apache.commons.vfs2.FileObject;
 
-import java.util.function.Consumer;
-
-public class FileListenerAdapter implements Consumer<FileEvent> {
+public class FileListenerAdapter implements cc.whohow.fs.FileListener {
     protected final VirtualFileSystemAdapter vfs;
     protected final FileListener fileListener;
 
@@ -17,7 +15,7 @@ public class FileListenerAdapter implements Consumer<FileEvent> {
     }
 
     @Override
-    public void accept(FileEvent fileEvent) {
+    public void handleEvent(FileEvent fileEvent) {
         try {
             FileObject fileObject = new FileObjectAdapter(vfs, fileEvent.file());
             switch (fileEvent.kind()) {

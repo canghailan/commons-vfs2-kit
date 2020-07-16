@@ -4,7 +4,7 @@ package cc.whohow.fs;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.util.Collection;
-import java.util.function.Consumer;
+
 
 /**
  * 文件对象
@@ -60,14 +60,14 @@ public interface GenericFile<P extends Path, F extends GenericFile<P, F>> extend
     /**
      * 添加文件监听
      */
-    default void watch(Consumer<FileEvent> listener) {
+    default void watch(FileListener listener) {
         getFileSystem().watch(getPath(), listener);
     }
 
     /**
      * 移除文件监听
      */
-    default void unwatch(Consumer<FileEvent> listener) {
+    default void unwatch(FileListener listener) {
         getFileSystem().unwatch(getPath(), listener);
     }
 

@@ -1,6 +1,6 @@
-package cc.whohow.fs.command.script;
+package cc.whohow.fs.shell.script;
 
-import cc.whohow.fs.command.FileShell;
+import cc.whohow.fs.shell.FileShell;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -13,13 +13,13 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class FishContext implements Bindings {
     private static final Logger log = LogManager.getLogger(FishContext.class);
-    protected final FileShell fish;
+    protected final FileShell fileShell;
     protected final Map<String, Object> cache = new ConcurrentHashMap<>();
     protected final Map<String, Object> global = new ConcurrentHashMap<>();
 
-    public FishContext(FileShell fish) {
-        this.fish = fish;
-        this.global.put("VFS", fish.getVirtualFileSystem());
+    public FishContext(FileShell fileShell) {
+        this.fileShell = fileShell;
+        this.global.put("FISH", fileShell);
         this.global.put("PWD", Paths.get(".").toAbsolutePath().normalize().toUri().toString());
     }
 
@@ -72,10 +72,9 @@ public class FishContext implements Bindings {
     }
 
     @Override
-    @SuppressWarnings("SuspiciousMethodCalls")
     public boolean containsKey(Object key) {
         log.trace("containsKey({})", key);
-        return fish.getCommands().contains(key) || global.containsKey(key);
+        return fileShell.getCommands().containsKey(key) || global.containsKey(key);
     }
 
     @Override
@@ -88,7 +87,7 @@ public class FishContext implements Bindings {
     @SuppressWarnings("SuspiciousMethodCalls")
     public Object get(Object key) {
         log.trace("get({})", key);
-        if (fish.getCommands().contains(key)) {
+        if (fileShell.getCommands().containsKey(key)) {
             return cache.computeIfAbsent(key.toString(), this::newCommand);
         } else {
             return global.get(key);
@@ -101,7 +100,7 @@ public class FishContext implements Bindings {
         return global.remove(key);
     }
 
-    protected Object newCommand(String name) {
-        return new FishCommand(fish, name);
+    protected Object newCommand(String commandName) {
+        return new FishCommand(fileShell, commandName);
     }
 }

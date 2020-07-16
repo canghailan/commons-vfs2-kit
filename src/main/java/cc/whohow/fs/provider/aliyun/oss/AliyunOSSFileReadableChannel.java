@@ -14,11 +14,6 @@ public class AliyunOSSFileReadableChannel extends FileReadableStream {
         this.object = object;
     }
 
-    public AliyunOSSFileReadableChannel(OSSObject object, Runnable onClose) {
-        super(object.getObjectContent(), onClose);
-        this.object = object;
-    }
-
     @Override
     public long size() {
         return object.getObjectMetadata().getContentLength();

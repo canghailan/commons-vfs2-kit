@@ -1,6 +1,7 @@
 package cc.whohow.fs.watch;
 
 import cc.whohow.fs.FileEvent;
+import cc.whohow.fs.FileListener;
 import cc.whohow.fs.GenericFile;
 import cc.whohow.fs.Path;
 import org.apache.logging.log4j.LogManager;
@@ -13,7 +14,7 @@ import java.util.function.Consumer;
 public class PollingFileWatchKey<P extends Path, F extends GenericFile<P, F>> implements Consumer<FileEvent> {
     private static final Logger log = LogManager.getLogger(PollingFileWatchKey.class);
     protected final F watchable;
-    protected final Collection<Consumer<FileEvent>> listeners = new CopyOnWriteArraySet<>();
+    protected final Collection<FileListener> listeners = new CopyOnWriteArraySet<>();
 
     public PollingFileWatchKey(F watchable) {
         this.watchable = watchable;
@@ -27,21 +28,21 @@ public class PollingFileWatchKey<P extends Path, F extends GenericFile<P, F>> im
         return !listeners.isEmpty();
     }
 
-    public void addListener(Consumer<FileEvent> listener) {
+    public void addListener(FileListener listener) {
         listeners.add(listener);
     }
 
-    public void removeListener(Consumer<FileEvent> listener) {
+    public void removeListener(FileListener listener) {
         listeners.remove(listener);
     }
 
     @Override
     public void accept(FileEvent event) {
-        for (Consumer<? super FileEvent> listener : listeners) {
+        for (FileListener listener : listeners) {
             try {
-                listener.accept(event);
+                listener.handleEvent(event);
             } catch (Exception e) {
-                log.warn("process FileEvent error", e);
+                log.warn("handle FileEvent error", e);
             }
         }
     }

@@ -1,9 +1,9 @@
 println "READ test.groovy:"
 println READ(PWD + "test.groovy")
 
-INSTALL "cc.whohow.fs.command.provider.Checksum"
+INSTALL "cc.whohow.fs.shell.provider.checksum.Checksum"
 
-println "VFS: " + VFS
+println "FISH: " + FISH
 println "PWD: " + PWD
 println "Checksum MD5 test.groovy:"
 println Checksum("MD5", PWD + "test.groovy")

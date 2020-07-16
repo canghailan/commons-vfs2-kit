@@ -176,6 +176,11 @@ public class DefaultVirtualFileSystem implements VirtualFileSystem {
     }
 
     @Override
+    public Collection<MountPoint> getMountPoints() {
+        return Collections.unmodifiableCollection(vfs.values());
+    }
+
+    @Override
     public File get(CharSequence uri) {
         return cache.get(uri.toString(), this::doGet);
     }

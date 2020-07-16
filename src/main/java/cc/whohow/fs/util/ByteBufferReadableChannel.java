@@ -38,7 +38,7 @@ public class ByteBufferReadableChannel extends InputStream implements ReadableBy
     }
 
     @Override
-    public void mark(int limit) {
+    public synchronized void mark(int limit) {
         buffer.mark();
     }
 

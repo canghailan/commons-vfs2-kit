@@ -8,7 +8,6 @@ import java.nio.file.Files;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
-import java.util.function.Consumer;
 
 /**
  * KeyValue模型文件系统，以文件路径为Key，以文件对象为Value，仅包含文件系统运行最小必需接口
@@ -125,14 +124,14 @@ public interface FileSystem<P extends Path, F extends GenericFile<P, F>> extends
     /**
      * 添加文件监听
      */
-    default void watch(P path, Consumer<FileEvent> listener) {
+    default void watch(P path, FileListener listener) {
         getWatchService().watch(get(path), listener);
     }
 
     /**
      * 移除文件监听
      */
-    default void unwatch(P path, Consumer<FileEvent> listener) {
+    default void unwatch(P path, FileListener listener) {
         getWatchService().unwatch(get(path), listener);
     }
 

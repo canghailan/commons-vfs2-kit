@@ -1,21 +1,16 @@
 package cc.whohow.configuration.provider;
 
-import org.apache.commons.vfs2.FileObject;
+import cc.whohow.configuration.Configuration;
 
 import java.nio.ByteBuffer;
 
-public class FileConfiguration extends AbstractFileBasedConfiguration<ByteBuffer> {
-    public FileConfiguration(FileObject fileObject) {
-        super(fileObject);
+public class FileConfiguration extends CacheableConfiguration<ByteBuffer> {
+    public FileConfiguration(Configuration<ByteBuffer> source) {
+        super(source);
     }
 
     @Override
-    protected ByteBuffer serialize(ByteBuffer value) {
-        return value.duplicate();
-    }
-
-    @Override
-    protected ByteBuffer deserialize(ByteBuffer bytes) {
-        return bytes;
+    public ByteBuffer get() {
+        return super.get().duplicate();
     }
 }

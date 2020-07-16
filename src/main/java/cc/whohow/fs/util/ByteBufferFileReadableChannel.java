@@ -30,12 +30,12 @@ public class ByteBufferFileReadableChannel extends ByteBufferReadableChannel imp
     }
 
     @Override
-    public long transferTo(OutputStream stream) throws IOException {
+    public synchronized long transferTo(OutputStream stream) throws IOException {
         return IO.write(stream, buffer);
     }
 
     @Override
-    public long transferTo(WritableByteChannel channel) throws IOException {
+    public synchronized long transferTo(WritableByteChannel channel) throws IOException {
         return IO.write(channel, buffer);
     }
 

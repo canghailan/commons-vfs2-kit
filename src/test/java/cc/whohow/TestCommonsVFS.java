@@ -94,9 +94,9 @@ public class TestCommonsVFS {
         FileObject folder = VFS.getManager().resolveFile(Paths.get(".").toUri()).resolveFile("src/");
 
         List<FileObject> depthFirst = new ArrayList<>();
-        folder.findFiles(new PatternFileSelector(".*File.*.java"), true, depthFirst);
+        folder.findFiles(new PatternFileSelector(".*Configuration.*.java"), true, depthFirst);
         List<FileObject> breadthFirst = new ArrayList<>();
-        folder.findFiles(new PatternFileSelector(".*File.*.java"), false, breadthFirst);
+        folder.findFiles(new PatternFileSelector(".*Configuration.*.java"), false, breadthFirst);
 
         System.out.println("depthFirst: ");
         depthFirst.forEach(System.out::println);

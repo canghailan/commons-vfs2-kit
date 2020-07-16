@@ -7,7 +7,6 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.attribute.FileTime;
 import java.util.Collection;
-import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 /**
@@ -104,12 +103,12 @@ public interface File extends ObjectFile {
     /**
      * 添加文件监听
      */
-    void watch(Consumer<FileEvent> listener);
+    void watch(FileListener listener);
 
     /**
      * 移除文件监听
      */
-    void unwatch(Consumer<FileEvent> listener);
+    void unwatch(FileListener listener);
 
     /**
      * 父文件夹

@@ -14,11 +14,6 @@ public class QcloudCOSFileReadableChannel extends FileReadableStream {
         this.object = object;
     }
 
-    public QcloudCOSFileReadableChannel(COSObject object, Runnable onClose) {
-        super(object.getObjectContent(), onClose);
-        this.object = object;
-    }
-
     @Override
     public long size() {
         return object.getObjectMetadata().getContentLength();

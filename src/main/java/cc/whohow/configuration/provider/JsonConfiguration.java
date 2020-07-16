@@ -1,73 +1,48 @@
 package cc.whohow.configuration.provider;
 
-import cc.whohow.fs.util.ByteBufferReadableChannel;
+import cc.whohow.configuration.Configuration;
+import cc.whohow.configuration.provider.file.FileBasedJsonConfiguration;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import org.apache.commons.vfs2.FileObject;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 
 /**
  * JSON配置文件
  */
-public class JsonConfiguration<T> extends AbstractFileBasedConfiguration<T> {
-    protected static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-
-    static {
-        OBJECT_MAPPER.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, true);
-        OBJECT_MAPPER.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+public class JsonConfiguration<T> extends CacheableConfiguration<T> {
+    public JsonConfiguration(Configuration<ByteBuffer> source, Class<T> type) {
+        super(new FileBasedJsonConfiguration<T>(source, type));
     }
 
-    protected final JavaType type;
-    protected final ObjectMapper objectMapper;
-
-    public JsonConfiguration(FileObject fileObject, Class<T> type) {
-        this(fileObject, type, OBJECT_MAPPER);
+    public JsonConfiguration(Configuration<ByteBuffer> source, TypeReference<T> type) {
+        super(new FileBasedJsonConfiguration<T>(source, type));
     }
 
-    public JsonConfiguration(FileObject fileObject, TypeReference<T> type) {
-        this(fileObject, type, OBJECT_MAPPER);
+    public JsonConfiguration(Configuration<ByteBuffer> source, String type) {
+        super(new FileBasedJsonConfiguration<T>(source, type));
     }
 
-    public JsonConfiguration(FileObject fileObject, String type) {
-        this(fileObject, type, OBJECT_MAPPER);
+    public JsonConfiguration(Configuration<ByteBuffer> source, JavaType type) {
+        super(new FileBasedJsonConfiguration<T>(source, type));
     }
 
-    public JsonConfiguration(FileObject fileObject, JavaType type) {
-        this(fileObject, type, OBJECT_MAPPER);
-    }
-
-    public JsonConfiguration(FileObject fileObject, Class<T> type, ObjectMapper objectMapper) {
-        this(fileObject, objectMapper.getTypeFactory().constructType(type), objectMapper);
+    public JsonConfiguration(Configuration<ByteBuffer> source, Class<T> type, ObjectMapper objectMapper) {
+        super(new FileBasedJsonConfiguration<T>(source, type, objectMapper));
     }
 
 
-    public JsonConfiguration(FileObject fileObject, TypeReference<T> type, ObjectMapper objectMapper) {
-        this(fileObject, objectMapper.getTypeFactory().constructType(type), objectMapper);
+    public JsonConfiguration(Configuration<ByteBuffer> source, TypeReference<T> type, ObjectMapper objectMapper) {
+        super(new FileBasedJsonConfiguration<T>(source, type, objectMapper));
     }
 
 
-    public JsonConfiguration(FileObject fileObject, String type, ObjectMapper objectMapper) {
-        this(fileObject, objectMapper.getTypeFactory().constructFromCanonical(type), objectMapper);
+    public JsonConfiguration(Configuration<ByteBuffer> source, String type, ObjectMapper objectMapper) {
+        super(new FileBasedJsonConfiguration<T>(source, type, objectMapper));
     }
 
-    public JsonConfiguration(FileObject fileObject, JavaType type, ObjectMapper objectMapper) {
-        super(fileObject);
-        this.type = type;
-        this.objectMapper = objectMapper;
-    }
-
-    @Override
-    protected ByteBuffer serialize(T value) throws IOException {
-        return ByteBuffer.wrap(objectMapper.writeValueAsBytes(value));
-    }
-
-    @Override
-    protected T deserialize(ByteBuffer bytes) throws IOException {
-        return objectMapper.readValue(new ByteBufferReadableChannel(bytes), type);
+    public JsonConfiguration(Configuration<ByteBuffer> source, JavaType type, ObjectMapper objectMapper) {
+        super(new FileBasedJsonConfiguration<T>(source, type, objectMapper));
     }
 }

@@ -1,5 +1,6 @@
-package cc.whohow.configuration.provider;
+package cc.whohow.configuration.provider.vfs;
 
+import cc.whohow.configuration.Configuration;
 import cc.whohow.configuration.FileBasedConfigurationManager;
 import org.apache.commons.vfs2.FileChangeEvent;
 import org.apache.commons.vfs2.FileListener;
@@ -9,6 +10,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.UncheckedIOException;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -38,12 +40,12 @@ public class VfsConfigurationManager implements FileBasedConfigurationManager, F
     }
 
     @Override
-    public FileObject get(String key) {
+    public Configuration<ByteBuffer> get(String key) {
         if (key.startsWith("/") || key.endsWith("/")) {
             throw new IllegalArgumentException();
         }
         try {
-            return root.resolveFile(key);
+            return new VfsConfigurationSource(root.resolveFile(key));
         } catch (FileSystemException e) {
             throw new UncheckedIOException(e);
         }
@@ -73,5 +75,15 @@ public class VfsConfigurationManager implements FileBasedConfigurationManager, F
     @Override
     public void fileChanged(FileChangeEvent event) throws Exception {
         log.debug("fileChanged: {}", event.getFileObject());
+    }
+
+    @Override
+    public void close() throws Exception {
+        try {
+            // 移除监听
+            root.getFileSystem().removeListener(root, this);
+        } finally {
+            root.close();
+        }
     }
 }

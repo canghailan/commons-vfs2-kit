@@ -47,4 +47,9 @@ public interface VirtualFileSystem extends FileManager {
      * 卸载文件
      */
     void umount(String path);
+
+    /**
+     * 挂载点
+     */
+    Collection<MountPoint> getMountPoints();
 }
