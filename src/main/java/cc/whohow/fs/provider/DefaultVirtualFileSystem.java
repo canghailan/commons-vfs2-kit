@@ -202,7 +202,7 @@ public class DefaultVirtualFileSystem implements VirtualFileSystem {
     public CompletableFuture<? extends File> copyAsync(File source, File target) {
         FileSystemProvider sourceProvider = getProvider(source);
         FileSystemProvider targetProvider = getProvider(target);
-        if (Objects.equals(sourceProvider, targetProvider)) {
+        if (sourceProvider != null && sourceProvider.equals(targetProvider)) {
             return sourceProvider.copy((GenericFile) source, (GenericFile) target).callAsync(executor);
         } else {
             return new FileCopy(source, target).callAsync(executor);
@@ -214,7 +214,7 @@ public class DefaultVirtualFileSystem implements VirtualFileSystem {
     public CompletableFuture<? extends File> moveAsync(File source, File target) {
         FileSystemProvider sourceProvider = getProvider(source);
         FileSystemProvider targetProvider = getProvider(target);
-        if (Objects.equals(sourceProvider, targetProvider)) {
+        if (sourceProvider != null && sourceProvider.equals(targetProvider)) {
             return sourceProvider.move((GenericFile) source, (GenericFile) target).callAsync(executor);
         } else {
             return new CopyAndDelete<>(new FileCopy(source, target)).callAsync(executor);
