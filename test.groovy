@@ -10,8 +10,13 @@ println LIST(CWD + "src/")
 println "TREE src/:"
 println TREE(CWD + "src/")
 
-println "STAT test.groovy:"
-println STAT(CWD + "test.groovy")
+println "FILES src/:"
+FILES(TREE(CWD + "src/")).each { file ->
+    if (file.regularFile) {
+        println file
+        println STAT(file)
+    }
+}
 
 println "READ test.groovy:"
 println READ(CWD + "test.groovy")

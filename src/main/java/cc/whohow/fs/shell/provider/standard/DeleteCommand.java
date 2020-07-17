@@ -28,7 +28,7 @@ public class DeleteCommand implements Command<String> {
             throw new IllegalArgumentException();
         }
         String files = args.files.stream()
-                .map(File::getPublicUri)
+                .map(File::toString)
                 .collect(Collectors.joining("\n"));
         if (args.fileManager != null) {
             MapReduce<String, Void> mapReduce = new MapReduce<>(files);

@@ -28,6 +28,7 @@ public class VirtualFileShell implements FileShell {
         this.vfs = vfs;
         install("INSTALL", this::install);
         install("FILE", new FileCommand());
+        install("FILES", new FilesCommand());
         install("DELETE", new DeleteCommand());
         install("LIST", new ListCommand());
         install("TREE", new TreeCommand());

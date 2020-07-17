@@ -23,10 +23,10 @@ public class ListCommand implements Command<String> {
 
     public String call(Args args) {
         Objects.requireNonNull(args.file);
-        try (DirectoryStream<? extends File> stream = args.file.newDirectoryStream()) {
+        try (DirectoryStream<? extends File> list = args.file.newDirectoryStream()) {
             StringJoiner buffer = new StringJoiner("\n");
-            for (File f : stream) {
-                buffer.add(f.getPublicUri());
+            for (File file : list) {
+                buffer.add(file.toString());
             }
             return buffer.toString();
         } catch (IOException e) {

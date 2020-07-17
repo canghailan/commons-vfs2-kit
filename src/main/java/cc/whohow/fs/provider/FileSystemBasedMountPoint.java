@@ -53,6 +53,6 @@ public class FileSystemBasedMountPoint<P extends Path, F extends GenericFile<P, 
 
     @Override
     public String toString() {
-        return path + " -> " + fileSystem + base;
+        return path + " -> " + fileSystem + "#" + base;
     }
 }

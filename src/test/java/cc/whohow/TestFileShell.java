@@ -70,8 +70,7 @@ public class TestFileShell {
 
     @Test
     public void testScriptFile() throws Exception {
-        System.out.println(new Fish(shell).eval(
-                Paths.get("test.groovy").toUri().toURL()));
+        System.out.println(new Fish(shell).eval(vfs.get(base + "test.groovy")));
     }
 
     @Test

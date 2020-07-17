@@ -23,10 +23,10 @@ public class TreeCommand implements Command<String> {
 
     public String call(Args args) {
         Objects.requireNonNull(args.file);
-        try (FileStream<? extends File> stream = args.file.tree()) {
+        try (FileStream<? extends File> tree = args.file.tree()) {
             StringJoiner buffer = new StringJoiner("\n");
-            for (File f : stream) {
-                buffer.add(f.getPublicUri());
+            for (File file : tree) {
+                buffer.add(file.toString());
             }
             return buffer.toString();
         } catch (IOException e) {
