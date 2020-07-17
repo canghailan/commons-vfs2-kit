@@ -1,5 +1,11 @@
 # 虚拟文件系统
 
+VFS核心参考对象存储，可以看做是一个URI为Key、文件对象为Value的KeyValue存储系统。
+
+在此基础上，通过URI地址模拟文件系统层级（文件树）。
+
+
+
 ## 示例
 ### [配置文件 vfs.yaml](vfs.yaml.md)
 ```markdown
@@ -223,8 +229,7 @@ public class Examples {
 
 
 ## 核心对象
-VFS核心参考对象存储，可以看做是一个URI为Key、文件对象为Value的KeyValue存储系统。
-在此基础上，通过URI地址模拟文件系统层级（文件树）。
+
 * VirtualFileSystem 虚拟文件系统，顶级对象，提供根据URI获取文件接口
     * MountPoint 虚拟文件系统挂载点
 * File 文件，轻量级对象，持有FileSystem、Path引用，可对文件内容、属性进行读写，以及文件树遍历
@@ -239,7 +244,9 @@ VFS核心参考对象存储，可以看做是一个URI为Key、文件对象为Va
 * ObjectFileManager 对象文件管理服务，重量级对象，KeyValue存储系统的客户端，只能通过URI获取对象文件
 * FileWatchService 文件监听服务，监听文件变更事件（FileEvent）
 
+
 ### 核心对象关系
+
 * VirtualFileSystem （虚拟文件系统）
   * FileSystemProvider （文件系统SPI）
     * FileSystem （文件系统）
@@ -253,6 +260,8 @@ VFS核心参考对象存储，可以看做是一个URI为Key、文件对象为Va
     * FileWatchService （文件监听服务，一般同类型文件共用一个）
 * ObjectFileManager （对象文件管理服务）
   * ObjectFile （对象文件）
+
+
 
 ## 文件存储支持
 * 本地文件系统 - LocalFileSystem
@@ -280,8 +289,22 @@ TODO
 
 
 ## Fish脚本（FIleSHell）
-基于Groovy的脚本，已注入VFS等对象。
-待补充
+基于Groovy的脚本，内置一下对象、命令：
+* FISH 当前FileShell实例
+* CWD 当前工作目录
+* INSTALL 安装命令（参数为类全限定名）
+* FILE 将字符串转为文件对象
+* FILES 将字符串转为文件对象列表（每行一个文件）
+* DELETE 删除文件
+* LIST 读取下级文件列表（返回多行字符串，每行一个文件）
+* TREE 读取文件树（返回多行字符串，每行一个文件）
+* STAT 读取文件属性
+* READ 读取文本文件
+* WRITE 写入文本文件（文件, 文件内容）
+* COPY 复制文件（源文件, 目标文件）
+* MOVE 移动文件（源文件, 目标文件）
+
+[test.groovy](test.groovy)示例
 
 
 
