@@ -1,5 +1,6 @@
 package cc.whohow.fs.shell.script;
 
+import cc.whohow.fs.File;
 import cc.whohow.fs.UncheckedException;
 import cc.whohow.fs.shell.FileShell;
 
@@ -26,6 +27,10 @@ public class Fish {
 
     public void put(String key, String value) {
         scriptEngine.put(key, value);
+    }
+
+    public Object eval(File file) {
+        return eval(file.readUtf8());
     }
 
     public Object eval(String script) {

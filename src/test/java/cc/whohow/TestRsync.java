@@ -5,7 +5,10 @@ import cc.whohow.fs.configuration.ConfigurationBuilder;
 import cc.whohow.fs.provider.DefaultVirtualFileSystem;
 import cc.whohow.fs.provider.FileBasedMountPoint;
 import cc.whohow.fs.provider.file.LocalFileProvider;
+import cc.whohow.fs.shell.FileShell;
+import cc.whohow.fs.shell.provider.VirtualFileShell;
 import cc.whohow.fs.shell.provider.rsync.Rsync;
+import cc.whohow.fs.shell.script.Fish;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -21,6 +24,7 @@ public class TestRsync {
         base = Paths.get(".").toUri().normalize().toString();
         vfs = new DefaultVirtualFileSystem(new ConfigurationBuilder().build());
         vfs.load(new LocalFileProvider());
+        vfs.mount(new FileBasedMountPoint("/rsync/", vfs.get(base + "temp/rsync/")));
     }
 
     @AfterClass
@@ -30,15 +34,19 @@ public class TestRsync {
 
     @Test
     public void testRsync() throws Exception {
-        String rsync = base + "temp/rsync/";
         String source = base + "src/test/";
         String target = base + "temp/test/";
-
-        vfs.mount(new FileBasedMountPoint("/rsync/", vfs.get(rsync)));
 
         String context = new Rsync().call(vfs, source, target);
         System.out.println(context);
 
         System.out.println(vfs.get(context + "diff.txt").readUtf8());
+    }
+
+    @Test
+    public void testRsyncScript() throws Exception {
+        FileShell fileShell = new VirtualFileShell(vfs);
+        System.out.println(new Fish(fileShell).eval(
+                vfs.get(base + "rsync.groovy")));
     }
 }
