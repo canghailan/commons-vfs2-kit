@@ -6,9 +6,9 @@ import cc.whohow.fs.shell.Command;
 
 import java.util.Objects;
 
-public class MoveCommand implements Command<File> {
+public class MoveCommand implements Command<String> {
     @Override
-    public File call(FileManager fileManager, String... args) throws Exception {
+    public String call(FileManager fileManager, String... args) throws Exception {
         if (args.length != 2) {
             throw new IllegalArgumentException(String.join(" ", args));
         }
@@ -19,11 +19,11 @@ public class MoveCommand implements Command<File> {
         return call(arguments);
     }
 
-    public File call(Args args) {
+    public String call(Args args) {
         Objects.requireNonNull(args.fileManager);
         Objects.requireNonNull(args.source);
         Objects.requireNonNull(args.target);
-        return args.fileManager.moveAsync(args.source, args.target).join();
+        return args.fileManager.moveAsync(args.source, args.target).join().toString();
     }
 
     public static class Args {
