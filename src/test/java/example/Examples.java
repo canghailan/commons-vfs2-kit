@@ -4,7 +4,9 @@ import cc.whohow.fs.*;
 import cc.whohow.fs.configuration.JsonConfigurationParser;
 import cc.whohow.fs.provider.DefaultVirtualFileSystem;
 import cc.whohow.fs.provider.FileBasedMountPoint;
+import cc.whohow.fs.shell.provider.VirtualFileShell;
 import cc.whohow.fs.shell.provider.rsync.Rsync;
+import cc.whohow.fs.shell.script.Fish;
 import cc.whohow.fs.util.IO;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import org.junit.AfterClass;
@@ -184,5 +186,14 @@ public class Examples {
         String srcDir = cwd;
         String dstDir = "oss://yt-temp/temp/";
         new Rsync().call(vfs, srcDir + "src/", dstDir + "src/");
+    }
+
+    /**
+     * 执行fish脚本
+     */
+    @Test
+    public void fish() {
+        System.out.println(new Fish(new VirtualFileShell(vfs))
+                .eval(vfs.get(cwd + "test.groovy")));
     }
 }

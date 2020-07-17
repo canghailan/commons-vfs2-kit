@@ -1,8 +1,8 @@
-# 虚拟文件系统
+# 虚拟文件系统 VFS
 
-VFS核心参考对象存储，可以看做是一个URI为Key、文件对象为Value的KeyValue存储系统。
+虚拟文件系统核心参考对象存储，将文件系统看做是一个URI为Key、文件对象为Value的KeyValue存储系统。
 
-在此基础上，通过URI地址模拟文件系统层级（文件树）。
+在KeyValue对象存储系统基础上，通过URI模拟文件系统层级（文件树）。
 
 
 
@@ -21,7 +21,7 @@ providers:
 ```
 
 
-### [初始化](src/test/java/example/Examples.java#L21)
+### [初始化](src/test/java/example/Examples.java#L32)
 ```java
 public class Examples {
     // 当前目录 CurrentWorkingDirectory
@@ -51,10 +51,9 @@ public class Examples {
 ```
 
 
-### [文件上传](src/test/java/example/Examples.java#L52)
+### [文件上传](src/test/java/example/Examples.java#L54)
 ```java
 public class Examples {
-    @Test
     public void upload() {
         String srcDir = cwd;
         String dstDir = "oss://yt-temp/temp/";
@@ -68,10 +67,9 @@ public class Examples {
 ```
 
 
-### [文件下载](src/test/java/example/Examples.java#L66)
+### [文件下载](src/test/java/example/Examples.java#L68)
 ```java
 public class Examples {
-    @Test
     public void download() {
         String srcDir = "oss://yt-temp/temp/";
         String dstDir = cwd;
@@ -85,10 +83,9 @@ public class Examples {
 ```
 
 
-### [文件流式上传](src/test/java/example/Examples.java#L80)
+### [文件流式上传](src/test/java/example/Examples.java#L82)
 ```java
 public class Examples {
-    @Test
     public void streamUpload() throws Exception {
         String dstDir = "oss://yt-temp/temp/";
 
@@ -104,10 +101,9 @@ public class Examples {
 ```
 
 
-### [文件流式下载](src/test/java/example/Examples.java#L96)
+### [文件流式下载](src/test/java/example/Examples.java#L98)
 ```java
 public class Examples {
-    @Test
     public void streamDownload() throws Exception {
         String srcDir = "oss://yt-temp/temp/";
 
@@ -122,10 +118,9 @@ public class Examples {
 ```
 
 
-### [读取文本文件](src/test/java/example/Examples.java#L111)
+### [读取文本文件](src/test/java/example/Examples.java#L113)
 ```java
 public class Examples {
-    @Test
     public void read() {
         System.out.println(vfs.get("oss://yt-temp/temp/pom-upload.xml").readUtf8());
     }
@@ -133,10 +128,9 @@ public class Examples {
 ```
 
 
-### [写入文本文件](src/test/java/example/Examples.java#L119)
+### [写入文本文件](src/test/java/example/Examples.java#L121)
 ```java
 public class Examples {
-    @Test
     public void write() {
         vfs.get("oss://yt-temp/temp/test.txt").writeUtf8("hello world!");
     }
@@ -144,10 +138,9 @@ public class Examples {
 ```
 
 
-### [读取文件属性](src/test/java/example/Examples.java#L127)
+### [读取文件属性](src/test/java/example/Examples.java#L129)
 ```java
 public class Examples {
-    @Test
     public void readAttributes() {
         FileAttributes fileAttributes = vfs.get("oss://yt-temp/temp/pom-upload.xml").readAttributes();
         System.out.println(fileAttributes);
@@ -160,10 +153,9 @@ public class Examples {
 ```
 
 
-### [删除文件](src/test/java/example/Examples.java#L140)
+### [删除文件](src/test/java/example/Examples.java#L142)
 ```java
 public class Examples {
-    @Test
     public void delete() {
         vfs.get(cwd  + "pom-download.xml").delete();
     }
@@ -171,10 +163,9 @@ public class Examples {
 ```
 
 
-### [下级文件列表](src/test/java/example/Examples.java#L148)
+### [下级文件列表](src/test/java/example/Examples.java#L150)
 ```java
 public class Examples {
-    @Test
     public void list()  throws Exception {
         try (DirectoryStream<? extends File> list = vfs
                 .get("oss://yt-temp/temp/").newDirectoryStream()) {
@@ -187,10 +178,9 @@ public class Examples {
 ```
 
 
-### [文件树](src/test/java/example/Examples.java#L161)
+### [文件树](src/test/java/example/Examples.java#L163)
 ```java
 public class Examples {
-    @Test
     public void tree()  throws Exception {
         try (FileStream<? extends File> tree = vfs
                 .get("oss://yt-temp/temp/").tree()) {
@@ -201,10 +191,9 @@ public class Examples {
 ```
 
 
-### [文件夹大小](src/test/java/example/Examples.java#L172)
+### [文件夹大小](src/test/java/example/Examples.java#L174)
 ```java
 public class Examples {
-    @Test
     public void getDirectorySize()  {
         System.out.println(vfs.get("oss://yt-temp/temp/").size());
     }
@@ -212,7 +201,7 @@ public class Examples {
 ```
 
 
-### [增量同步文件（每次只会同步变化的文件）](src/test/java/example/Examples.java#L180)
+### [增量同步文件（每次只会同步变化的文件）](src/test/java/example/Examples.java#L182)
 ```java
 public class Examples {
     public void rsync() throws Exception {
@@ -304,7 +293,16 @@ TODO
 * COPY 复制文件（源文件, 目标文件）
 * MOVE 移动文件（源文件, 目标文件）
 
-[test.groovy](test.groovy)示例
+
+### [执行Fish脚本](src/test/java/example/Examples.java#L195) [test.groovy](test.groovy)示例
+```java
+public class Examples {
+    public void fish() {
+        System.out.println(new Fish(new VirtualFileShell(vfs))
+                .eval(vfs.get(cwd + "test.groovy")));
+    }
+}
+```
 
 
 
