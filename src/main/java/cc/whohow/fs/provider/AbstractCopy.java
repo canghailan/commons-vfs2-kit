@@ -143,8 +143,8 @@ public abstract class AbstractCopy<F1 extends File, F2 extends File> implements 
 
     protected CompletableFuture<F2> copyDirectoryAsync(ExecutorService executor) {
         MapReduce<F2, F2> mapReduce = new MapReduce<>(target);
-        mapReduce.begin();
         try (FileStream<? extends F1> sourceTree = tree(source)) {
+            mapReduce.begin();
             for (F1 file : sourceTree) {
                 if (file.isRegularFile()) {
                     // 异步并行拷贝，拆分成单文件拷贝子任务

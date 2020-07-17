@@ -32,11 +32,15 @@ public class DeleteCommand implements Command<String> {
                 .collect(Collectors.joining("\n"));
         if (args.fileManager != null) {
             MapReduce<String, Void> mapReduce = new MapReduce<>(files);
-            mapReduce.begin();
-            for (File file : args.files) {
-                mapReduce.map(args.fileManager.runAsync(file::delete));
+            try {
+                mapReduce.begin();
+                for (File file : args.files) {
+                    mapReduce.map(args.fileManager.runAsync(file::delete));
+                }
+                mapReduce.end();
+            } catch (Throwable e) {
+                mapReduce.completeExceptionally(e);
             }
-            mapReduce.end();
             return mapReduce.join();
         } else {
             for (File file : args.files) {

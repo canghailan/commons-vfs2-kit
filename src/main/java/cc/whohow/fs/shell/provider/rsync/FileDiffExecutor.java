@@ -28,26 +28,31 @@ public class FileDiffExecutor {
     }
 
     public boolean apply(FileDiff fileDiff) {
-        switch (fileDiff.getKind()) {
-            case FileDiff.CREATE:
-            case FileDiff.MODIFY: {
-                log.trace("apply {}", fileDiff);
-                mapReduce.map(copy(fileDiff.getFile()));
-                return true;
-            }
-            case FileDiff.DELETE: {
-                if (skipDelete) {
-                    log.trace("skip apply {}", fileDiff);
-                    return false;
-                } else {
+        try {
+            switch (fileDiff.getKind()) {
+                case FileDiff.CREATE:
+                case FileDiff.MODIFY: {
                     log.trace("apply {}", fileDiff);
-                    mapReduce.map(delete(fileDiff.getFile()));
+                    mapReduce.map(copy(fileDiff.getFile()));
                     return true;
                 }
+                case FileDiff.DELETE: {
+                    if (skipDelete) {
+                        log.trace("skip apply {}", fileDiff);
+                        return false;
+                    } else {
+                        log.trace("apply {}", fileDiff);
+                        mapReduce.map(delete(fileDiff.getFile()));
+                        return true;
+                    }
+                }
+                default: {
+                    return false;
+                }
             }
-            default: {
-                return false;
-            }
+        } catch (Throwable e) {
+            mapReduce.completeExceptionally(e);
+            throw e;
         }
     }
 
@@ -62,6 +67,7 @@ public class FileDiffExecutor {
     }
 
     protected CompletableFuture<File> delete(String file) {
+        deleteCount.increment();
         File f = target.resolve(file);
         return fileManager.runAsync(f::delete).thenApply((v) -> f);
     }
