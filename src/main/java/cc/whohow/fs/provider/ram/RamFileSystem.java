@@ -10,10 +10,7 @@ import java.io.FileNotFoundException;
 import java.io.UncheckedIOException;
 import java.net.URI;
 import java.nio.file.DirectoryStream;
-import java.util.List;
-import java.util.NavigableMap;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.stream.Collectors;
 
@@ -22,6 +19,10 @@ public class RamFileSystem implements FileSystem<KeyPath, RamFile> {
     protected final URI uri;
     protected final FileSystemAttributes attributes;
     protected final NavigableMap<String, RamFile> storage;
+
+    public RamFileSystem() {
+        this(URI.create("ram:/" + UUID.randomUUID() + "/"));
+    }
 
     public RamFileSystem(URI uri) {
         this(uri, Files.emptyFileSystemAttributes());

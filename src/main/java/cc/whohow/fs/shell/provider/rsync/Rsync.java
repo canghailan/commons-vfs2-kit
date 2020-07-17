@@ -37,13 +37,13 @@ public class Rsync implements Command<String> {
         log.trace("Rsync {} {}", args.source, args.target);
 
         // Step 1: stat source
-        log.trace("save source.csv:{} {}", args.sourceAttributes, args.source);
+        log.trace("save source.csv: {} {}", args.sourceAttributes, args.source);
         File sourceAttributes = args.context.resolve("source.csv");
         saveFileAttributes(args.source, args.sourceAttributes, sourceAttributes);
         log.trace("save source.csv OK: {}", sourceAttributes);
 
         // Step 2: stat target
-        log.trace("save target.csv:{} {}", args.targetAttributes, args.target);
+        log.trace("save target.csv: {} {}", args.targetAttributes, args.target);
         File targetAttributes = args.context.resolve("target.csv");
         saveFileAttributes(args.target, args.targetAttributes, targetAttributes);
         log.trace("save target.csv OK: {}", sourceAttributes);

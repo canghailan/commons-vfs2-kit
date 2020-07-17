@@ -13,6 +13,10 @@ public class UriPath implements Path {
     }
 
     public UriPath(URI uri) {
+//        if (!uri.isAbsolute() &&
+//                !(uri.getPath() != null && uri.getPath().startsWith("/"))) {
+//            throw new IllegalArgumentException(uri.toString());
+//        }
         this.uri = uri;
     }
 

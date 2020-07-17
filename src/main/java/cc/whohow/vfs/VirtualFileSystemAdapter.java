@@ -251,7 +251,7 @@ public class VirtualFileSystemAdapter implements FileSystemManager, org.apache.c
 
     @Override
     public Object getAttribute(String attrName) throws FileSystemException {
-        return Files.optional(vfs.get("meta:vfs:/").resolve(attrName))
+        return Files.optional(vfs.get("vfs:meta:/").resolve(attrName))
                 .map(cc.whohow.fs.File::readUtf8)
                 .orElse(null);
     }
@@ -483,7 +483,7 @@ public class VirtualFileSystemAdapter implements FileSystemManager, org.apache.c
 
     @Override
     public FileSystemOptions getFileSystemOptions() {
-        cc.whohow.fs.File metadata = vfs.get("meta:vfs:/");
+        cc.whohow.fs.File metadata = vfs.get("vfs:meta:/");
         try (FileStream<? extends cc.whohow.fs.File> tree = metadata.tree()) {
             FileSystemOptions fileSystemOptions = new FileSystemOptions();
             FileSystemAdapterConfigBuilder fileSystemAdapterConfigBuilder = new FileSystemAdapterConfigBuilder();

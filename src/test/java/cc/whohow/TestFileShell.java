@@ -6,6 +6,10 @@ import cc.whohow.fs.provider.DefaultVirtualFileSystem;
 import cc.whohow.fs.provider.file.LocalFileProvider;
 import cc.whohow.fs.shell.provider.VirtualFileShell;
 import cc.whohow.fs.shell.provider.checksum.Checksum;
+import cc.whohow.fs.shell.provider.gzip.Gunzip;
+import cc.whohow.fs.shell.provider.gzip.Gzip;
+import cc.whohow.fs.shell.provider.zip.Unzip;
+import cc.whohow.fs.shell.provider.zip.Zip;
 import cc.whohow.fs.shell.script.Fish;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -67,5 +71,25 @@ public class TestFileShell {
     public void testScriptFile() throws Exception {
         System.out.println(new Fish(shell).eval(
                 Paths.get("test.groovy").toUri().toURL()));
+    }
+
+    @Test
+    public void testZip() throws Exception {
+        shell.install(new Zip());
+        shell.install(new Unzip());
+
+        System.out.println((String) shell.exec("Zip", base + "temp.zip", base + "temp/"));
+        System.out.println((String) shell.exec("Zip", base + "test.zip", base + "test.txt"));
+        System.out.println((String) shell.exec("Unzip", base + "temp.zip", base + "unzip/"));
+        System.out.println((String) shell.exec("Unzip", base + "test.zip", base + "unzip/"));
+    }
+
+    @Test
+    public void testGzip() throws Exception {
+        shell.install(new Gzip());
+        shell.install(new Gunzip());
+
+        System.out.println((String) shell.exec("Gzip", base + "test.txt"));
+        System.out.println((String) shell.exec("Gunzip", base + "test.txt.gz", base + "test-gunzip.txt"));
     }
 }

@@ -41,13 +41,15 @@ public class Upload {
 ## 核心对象
 VFS核心参考对象存储，可以看做是一个URI为Key、文件对象为Value的KeyValue存储系统。
 在此基础上，通过URI地址模拟文件系统层级（文件树）。
-* VirtualFileSystem 虚拟文件系统，顶级对象，整合不同文件系统，提供统一的入口
-* File 文件，轻量级对象，持有FileSystem、Path引用，代理了FileSystem中的各种操作，可对文件内容、属性进行读写，可进行文件树遍历
+* VirtualFileSystem 虚拟文件系统，顶级对象，提供根据URI获取文件接口
+    * MountPoint 虚拟文件系统挂载点
+* File 文件，轻量级对象，持有FileSystem、Path引用，可对文件内容、属性进行读写，以及文件树遍历
+    * GenericFile 通用文件基类，实现了大部分代理方法，实现新的文件系统可复用此类
 * Path 路径，轻量级对象，已解析的URI字符串（针对不同的文件系统，解析出特定的字段供文件系统使用）
-* FileSystem 文件系统，重量级对象，KeyValue存储系统的客户端，可通过Path对进行各种操作
+* FileSystem 文件系统，重量级对象，KeyValue存储系统的客户端，可通过Path进行各种操作
 * FileSystemProvider 文件系统SPI，重量级对象，负责根据配置文件初始化FileSystem，同时提供同类型文件Copy、Move操作的实现
+* DirectoryStream、FileStream 文件列表、文件树，**不保证可重复遍历，使用完后需关闭**
 * FileReadableChannel、FileWritableChannel 文件读写通道，针对对象文件进行优化
-* DirectoryStream、FileStream 文件流（集合），**不保证可重复遍历，使用完后需关闭**
 * FileAttributes 文件属性
 * ObjectFile 对象文件，轻量级对象，只提供最基础的文件内容、属性读写，不支持文件树遍历
 * ObjectFileManager 对象文件管理服务，重量级对象，KeyValue存储系统的客户端，只能通过URI获取对象文件
@@ -69,11 +71,12 @@ VFS核心参考对象存储，可以看做是一个URI为Key、文件对象为Va
   * ObjectFile （对象文件）
 
 ## 文件存储支持
-* 本地文件系统
-* HTTP/HTTPS链接
-* 阿里云OSS
-* 腾讯云COS
-* 内存文件系统
+* 本地文件系统 - LocalFileSystem
+* HTTP/HTTPS - HttpFileSystem
+* 阿里云OSS - AliyunOSSFileSystem
+* 腾讯云COS - QcloudCOSFileSystem
+* 内存文件系统 - RamFileSystem
+* **TODO** AWS S3 - S3FileSystem
 
 
 
@@ -82,12 +85,12 @@ VFS核心参考对象存储，可以看做是一个URI为Key、文件对象为Va
 
 
 
-## Apache Commons VFS API兼容
+## Apache Commons VFS API 兼容
 待补充
 
 
 
-## Java NIO FileSystem API兼容
+## Java NIO FileSystem API 兼容
 TODO
 
 
@@ -101,7 +104,6 @@ TODO
 ## 优化
 * 通用
   * [x] 多线程文件拷贝
-  * [ ] TODO 大文件拷贝优化
 * 阿里云OSS
   * [x] 自动识别网络环境：内网Endpoint可使用时（同地域阿里云VPC、经典网络）自动使用内网
   * [x] OSSClient复用：同账号、同地域复用同一个OSSClient

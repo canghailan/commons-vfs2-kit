@@ -10,7 +10,7 @@ public class ConfigurationBuilder {
     protected StringBuilder vfs;
 
     public ConfigurationBuilder() {
-        this(URI.create("meta:vfs:/"));
+        this(new RamFileSystem().get(""));
     }
 
     public ConfigurationBuilder(URI uri) {

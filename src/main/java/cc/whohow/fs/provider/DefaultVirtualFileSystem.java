@@ -32,10 +32,10 @@ public class DefaultVirtualFileSystem implements VirtualFileSystem {
     }
 
     protected void initialize() {
-        log.debug("initialize vfs");
+        log.info("initialize vfs");
 
         try {
-            mount(new FileBasedMountPoint("meta:vfs:/", metadata.getFileMetadata()));
+            mount(new FileBasedMountPoint("vfs:meta:/", metadata.getFileMetadata()));
             initializeExecutor();
             initializeScheduledExecutor();
             initializeCache();
@@ -124,7 +124,8 @@ public class DefaultVirtualFileSystem implements VirtualFileSystem {
                 for (File configuration : stream) {
                     String className = configuration.resolve("className").readUtf8();
                     log.debug("loadProvider: {}", className);
-                    FileSystemProvider<?, ?> provider = (FileSystemProvider<?, ?>) Class.forName(className).newInstance();
+                    FileSystemProvider<?, ?> provider = (FileSystemProvider<?, ?>)
+                            Class.forName(className).getDeclaredConstructor().newInstance();
                     provider.initialize(this, configuration);
                     providers.put(provider.getScheme(), provider);
                 }
