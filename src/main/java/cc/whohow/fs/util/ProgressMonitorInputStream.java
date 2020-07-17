@@ -67,4 +67,9 @@ public class ProgressMonitorInputStream extends FilterInputStream {
     public long getPosition() {
         return position.get();
     }
+
+    @Override
+    public String toString() {
+        return "ProgressMonitorInputStream(" + in + ")";
+    }
 }

@@ -29,11 +29,11 @@ public class LocalFileMove implements Move<LocalFile, LocalFile> {
 
     @Override
     public LocalFile call() throws Exception {
-        log.debug("move: {} -> {}", source, target);
+        log.trace("move: {} -> {}", source, target);
         if (source.isDirectory()) {
             if (target.isDirectory()) {
                 target.createDirectories();
-                log.debug("Files.move: {} -> {}", source, target);
+                log.trace("Files.move: {} -> {}", source, target);
                 Files.move(source.getPath().getFilePath(), target.getPath().getFilePath(),
                         StandardCopyOption.REPLACE_EXISTING);
                 return target;
@@ -44,12 +44,12 @@ public class LocalFileMove implements Move<LocalFile, LocalFile> {
             target.createDirectories();
             if (target.isDirectory()) {
                 LocalFile file = target.resolve(source.getName());
-                log.debug("Files.move: {} -> {}", source, file);
+                log.trace("Files.move: {} -> {}", source, file);
                 Files.move(source.getPath().getFilePath(), file.getPath().getFilePath(),
                         StandardCopyOption.REPLACE_EXISTING);
                 return file;
             } else {
-                log.debug("Files.move: {} -> {}", source, target);
+                log.trace("Files.move: {} -> {}", source, target);
                 Files.move(source.getPath().getFilePath(), target.getPath().getFilePath(),
                         StandardCopyOption.REPLACE_EXISTING);
                 return target;
@@ -59,6 +59,6 @@ public class LocalFileMove implements Move<LocalFile, LocalFile> {
 
     @Override
     public String toString() {
-        return "mv " + source + " " + target;
+        return "LocalFileMove " + source + " " + target;
     }
 }

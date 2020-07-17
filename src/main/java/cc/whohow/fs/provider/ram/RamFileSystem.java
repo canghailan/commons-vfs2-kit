@@ -34,7 +34,7 @@ public class RamFileSystem implements FileSystem<KeyPath, RamFile> {
     public RamFileSystem(URI uri, FileSystemAttributes attributes, NavigableMap<String, RamFile> storage) {
         for (String key : storage.keySet()) {
             if (key.endsWith("/")) {
-                throw new IllegalStateException();
+                throw new IllegalArgumentException(key);
             }
         }
         this.uri = uri;
@@ -68,7 +68,7 @@ public class RamFileSystem implements FileSystem<KeyPath, RamFile> {
 
     @Override
     public KeyPath getParent(KeyPath path) {
-        return null;
+        return path.getParent();
     }
 
     @Override
@@ -88,7 +88,7 @@ public class RamFileSystem implements FileSystem<KeyPath, RamFile> {
             if (file != null) {
                 return file;
             }
-            log.debug("new file: {}", path);
+            log.trace("new {}", path);
             return new RamRegularFile(this, path,
                     new BinaryObjectFile(path.toUri(), Files.emptyFileAttributes(), ByteBuffers.empty()));
         }
@@ -96,7 +96,7 @@ public class RamFileSystem implements FileSystem<KeyPath, RamFile> {
 
     public void save(RamFile file) {
         if (file.isRegularFile()) {
-            log.debug("save file: {}", file);
+            log.trace("save {}", file);
             storage.put(file.getPath().getKey(), file);
         }
     }
@@ -159,6 +159,7 @@ public class RamFileSystem implements FileSystem<KeyPath, RamFile> {
 
     @Override
     public void delete(KeyPath path) {
+        log.trace("delete {}", path);
         if (path.isDirectory()) {
             storage.keySet().stream()
                     .filter(path::isAncestorKey)
@@ -171,7 +172,7 @@ public class RamFileSystem implements FileSystem<KeyPath, RamFile> {
 
     @Override
     public void close() throws Exception {
-
+        log.debug("close RamFileSystem: {}", this);
     }
 
     @Override

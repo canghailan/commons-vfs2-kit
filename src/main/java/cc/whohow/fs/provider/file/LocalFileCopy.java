@@ -21,7 +21,7 @@ public class LocalFileCopy extends GenericFileCopy<LocalFile, LocalFile> {
     protected LocalFile copyFile(LocalFile source, LocalFile target) {
         try {
             target.createDirectories();
-            log.debug("Files.copy: {} -> {}", source, target);
+            log.trace("Files.copy: {} -> {}", source, target);
             Files.copy(
                     source.getPath().getFilePath(),
                     target.getPath().getFilePath(),
@@ -39,6 +39,6 @@ public class LocalFileCopy extends GenericFileCopy<LocalFile, LocalFile> {
 
     @Override
     public String toString() {
-        return "cp " + source + " " + target;
+        return "LocalFileCopy " + source + " " + target;
     }
 }

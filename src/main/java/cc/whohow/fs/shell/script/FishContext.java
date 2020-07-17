@@ -20,7 +20,7 @@ public class FishContext implements Bindings {
     public FishContext(FileShell fileShell) {
         this.fileShell = fileShell;
         this.global.put("FISH", fileShell);
-        this.global.put("PWD", Paths.get(".").toAbsolutePath().normalize().toUri().toString());
+        this.global.put("CWD", Paths.get(".").toAbsolutePath().normalize().toUri().toString());
     }
 
     @Override

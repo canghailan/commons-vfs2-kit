@@ -17,4 +17,9 @@ public class UncheckedCloseable implements Runnable {
             throw UncheckedException.unchecked(e);
         }
     }
+
+    @Override
+    public String toString() {
+        return "UncheckedCloseable(" + closeable + ")";
+    }
 }

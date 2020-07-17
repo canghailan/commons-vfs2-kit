@@ -1,13 +1,12 @@
 package cc.whohow.fs.configuration;
 
 import cc.whohow.fs.File;
-import cc.whohow.fs.FileSystem;
 import cc.whohow.fs.provider.ram.RamFileSystem;
 
 import java.net.URI;
 
 public class ConfigurationBuilder {
-    protected FileSystem<?, ?> conf;
+    protected File conf;
     protected StringBuilder vfs;
 
     public ConfigurationBuilder() {
@@ -15,10 +14,13 @@ public class ConfigurationBuilder {
     }
 
     public ConfigurationBuilder(URI uri) {
-        this(new RamFileSystem(uri));
+        this(new RamFileSystem(uri).get(""));
     }
 
-    public ConfigurationBuilder(FileSystem<?, ?> conf) {
+    public ConfigurationBuilder(File conf) {
+        if (!conf.isDirectory()) {
+            throw new IllegalArgumentException(conf.toString());
+        }
         this.conf = conf;
         this.vfs = new StringBuilder();
     }
@@ -35,12 +37,12 @@ public class ConfigurationBuilder {
     }
 
     public ConfigurationBuilder configure(String path, String content) {
-        conf.get(path).writeUtf8(content);
+        conf.resolve(path).writeUtf8(content);
         return this;
     }
 
     public File build() {
-        conf.get("vfs").writeUtf8(vfs);
-        return conf.get("");
+        conf.resolve("vfs").writeUtf8(vfs);
+        return conf;
     }
 }

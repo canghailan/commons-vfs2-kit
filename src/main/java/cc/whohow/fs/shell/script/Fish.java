@@ -51,4 +51,9 @@ public class Fish {
             throw UncheckedException.unchecked(e);
         }
     }
+
+    @Override
+    public String toString() {
+        return "Fish";
+    }
 }

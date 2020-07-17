@@ -32,7 +32,7 @@ class TextObjectFile implements RamObjectFile {
 
     @Override
     public RamObjectFile asTextObjectFile(Charset charset) {
-        if (charset == this.charset || charset.equals(this.charset)) {
+        if (Objects.equals(this.charset, charset)) {
             return this;
         } else {
             return new TextObjectFile(uri, charset, attributes, content);

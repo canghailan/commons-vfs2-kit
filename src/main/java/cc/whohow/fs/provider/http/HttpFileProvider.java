@@ -20,7 +20,7 @@ public class HttpFileProvider implements FileSystemProvider<UriPath, HttpFile> {
     public void initialize(VirtualFileSystem vfs, File metadata) throws Exception {
         log.debug("initialize HttpFileProvider: {}", metadata);
 
-        httpFileSystem = new HttpFileSystem(URI.create("http:/"));
+        this.httpFileSystem = new HttpFileSystem(URI.create("http:/"));
 
         vfs.mount(new HttpMountPoint("http://", httpFileSystem, "http://"));
         vfs.mount(new HttpMountPoint("https://", httpFileSystem, "https://"));

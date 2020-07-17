@@ -29,6 +29,7 @@ public class VfsConfigurationManager implements FileBasedConfigurationManager, F
         this.root = root;
         // 提前建立根目录监听
         this.root.getFileSystem().addListener(this.root, this);
+        log.debug("watch {}", root);
     }
 
     protected String getKey(FileObject fileObject) {
@@ -42,7 +43,7 @@ public class VfsConfigurationManager implements FileBasedConfigurationManager, F
     @Override
     public Configuration<ByteBuffer> get(String key) {
         if (key.startsWith("/") || key.endsWith("/")) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException(key);
         }
         try {
             return new VfsConfigurationSource(root.resolveFile(key));
@@ -64,17 +65,17 @@ public class VfsConfigurationManager implements FileBasedConfigurationManager, F
 
     @Override
     public void fileCreated(FileChangeEvent event) throws Exception {
-        log.debug("fileCreated: {}", event.getFileObject());
+        log.debug("configuration changed: + {}", event.getFileObject());
     }
 
     @Override
     public void fileDeleted(FileChangeEvent event) throws Exception {
-        log.debug("fileDeleted: {}", event.getFileObject());
+        log.debug("configuration changed: - {}", event.getFileObject());
     }
 
     @Override
     public void fileChanged(FileChangeEvent event) throws Exception {
-        log.debug("fileChanged: {}", event.getFileObject());
+        log.debug("configuration changed: * {}", event.getFileObject());
     }
 
     @Override
@@ -82,6 +83,7 @@ public class VfsConfigurationManager implements FileBasedConfigurationManager, F
         try {
             // 移除监听
             root.getFileSystem().removeListener(root, this);
+            log.debug("unwatch {}", root);
         } finally {
             root.close();
         }

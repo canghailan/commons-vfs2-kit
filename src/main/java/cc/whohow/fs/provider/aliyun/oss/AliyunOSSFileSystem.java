@@ -265,7 +265,7 @@ public class AliyunOSSFileSystem implements FileSystem<S3UriPath, AliyunOSSFile>
 
     @Override
     public void close() throws Exception {
-        log.debug("close AliyunOSSFileSystem: {}", uri);
+        log.debug("close AliyunOSSFileSystem: {}", this);
     }
 
     @Override

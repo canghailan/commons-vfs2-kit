@@ -93,7 +93,7 @@ public class QcloudCOSFileProvider implements FileSystemProvider<S3UriPath, Qclo
             try {
                 List<Bucket> bucketList = cos.listBuckets();
                 for (Bucket bucket : bucketList) {
-                    log.trace("scan: {}", bucket.getName());
+                    log.debug("scan: {}", bucket.getName());
                     buckets.put(bucket.getName(), bucket);
                     bucketCredentials.put(bucket.getName(), credentials);
                 }

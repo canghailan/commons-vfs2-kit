@@ -126,7 +126,7 @@ public class AliyunOSSFileProvider implements FileSystemProvider<S3UriPath, Aliy
             try {
                 List<Bucket> bucketList = oss.listBuckets();
                 for (Bucket bucket : bucketList) {
-                    log.trace("scan: {}", bucket.getName());
+                    log.debug("scan: {}", bucket.getName());
                     buckets.put(bucket.getName(), bucket);
                     bucketCredentials.put(bucket.getName(), credentials);
                 }
@@ -278,7 +278,7 @@ public class AliyunOSSFileProvider implements FileSystemProvider<S3UriPath, Aliy
             try {
                 watchService.close();
             } catch (Throwable e) {
-                log.debug("close WatchService error", e);
+                log.warn("close WatchService error", e);
             }
         }
         for (AliyunOSSFileSystem fileSystem : fileSystems.values()) {

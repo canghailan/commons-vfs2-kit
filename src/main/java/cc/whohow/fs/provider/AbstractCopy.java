@@ -181,6 +181,6 @@ public abstract class AbstractCopy<F1 extends File, F2 extends File> implements 
 
     @Override
     public String toString() {
-        return "copy " + getSource() + " -> " + getTarget();
+        return "Copy " + getSource() + " " + getTarget();
     }
 }

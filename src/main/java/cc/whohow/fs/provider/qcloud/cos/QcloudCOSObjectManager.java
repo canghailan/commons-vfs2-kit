@@ -37,7 +37,7 @@ public class QcloudCOSObjectManager implements ObjectFileManager {
         Objects.requireNonNull(uri.getAccessKeyId());
         Objects.requireNonNull(uri.getSecretAccessKey());
         Objects.requireNonNull(uri.getEndpoint());
-        log.debug("getCOS: {}", uri.getEndpoint());
+        log.trace("getCOS: {}", uri.getEndpoint());
         return pool.computeIfAbsent(new S3Uri(null, uri.getAccessKeyId(), uri.getSecretAccessKey(), null, null, null), this::newCOS);
     }
 

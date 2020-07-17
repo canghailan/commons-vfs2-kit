@@ -2,8 +2,11 @@ package cc.whohow.configuration.provider;
 
 import cc.whohow.configuration.Configuration;
 import cc.whohow.configuration.ConfigurationListener;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class CacheableConfiguration<T> extends AbstractConfiguration<T> implements ConfigurationListener<T> {
+    private static final Logger log = LogManager.getLogger(CacheableConfiguration.class);
     protected final Configuration<T> configuration;
     protected volatile T cached;
 
@@ -44,6 +47,9 @@ public class CacheableConfiguration<T> extends AbstractConfiguration<T> implemen
         } finally {
             configuration.close();
         }
+        if (!listeners.isEmpty()) {
+            log.warn("close with listeners({})", listeners.size());
+        }
     }
 
     @Override
@@ -65,6 +71,6 @@ public class CacheableConfiguration<T> extends AbstractConfiguration<T> implemen
 
     @Override
     public String toString() {
-        return "[cached] " + configuration.toString();
+        return "CacheableConfiguration(" + configuration + ")";
     }
 }

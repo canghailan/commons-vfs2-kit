@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.StringJoiner;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class VirtualFileShell implements FileShell {
@@ -76,13 +77,23 @@ public class VirtualFileShell implements FileShell {
     }
 
     @Override
-    public CompletableFuture<? extends File> copyAsync(File source, File target) {
+    public CompletableFuture<File> copyAsync(File source, File target) {
         return vfs.copyAsync(source, target);
     }
 
     @Override
-    public CompletableFuture<? extends File> moveAsync(File source, File target) {
+    public CompletableFuture<File> moveAsync(File source, File target) {
         return vfs.moveAsync(source, target);
+    }
+
+    @Override
+    public CompletableFuture<Void> runAsync(Runnable runnable) {
+        return vfs.runAsync(runnable);
+    }
+
+    @Override
+    public <T> CompletableFuture<T> runAsync(Supplier<T> runnable) {
+        return vfs.runAsync(runnable);
     }
 
     @Override
@@ -124,14 +135,14 @@ public class VirtualFileShell implements FileShell {
     }
 
     protected File file(FileManager fileManager, String... args) {
-        if (args.length < 1) {
+        if (args.length != 1) {
             throw new IllegalArgumentException(String.join(" ", args));
         }
         return fileManager.get(args[0]);
     }
 
     protected String list(FileManager fileManager, String... args) {
-        if (args.length < 1) {
+        if (args.length != 1) {
             throw new IllegalArgumentException(String.join(" ", args));
         }
         File file = fileManager.get(args[0]);
@@ -147,7 +158,7 @@ public class VirtualFileShell implements FileShell {
     }
 
     protected String tree(FileManager fileManager, String... args) {
-        if (args.length < 1) {
+        if (args.length != 1) {
             throw new IllegalArgumentException(String.join(" ", args));
         }
         File file = fileManager.get(args[0]);
@@ -163,7 +174,7 @@ public class VirtualFileShell implements FileShell {
     }
 
     protected File copy(FileManager fileManager, String... args) {
-        if (args.length < 2) {
+        if (args.length != 2) {
             throw new IllegalArgumentException(String.join(" ", args));
         }
         File source = fileManager.get(args[0]);
@@ -172,7 +183,7 @@ public class VirtualFileShell implements FileShell {
     }
 
     protected File move(FileManager fileManager, String... args) {
-        if (args.length < 2) {
+        if (args.length != 2) {
             throw new IllegalArgumentException(String.join(" ", args));
         }
         File source = fileManager.get(args[0]);
@@ -181,7 +192,7 @@ public class VirtualFileShell implements FileShell {
     }
 
     protected String delete(FileManager fileManager, String... args) {
-        if (args.length < 2) {
+        if (args.length != 2) {
             throw new IllegalArgumentException(String.join(" ", args));
         }
         return Arrays.stream(args)
@@ -192,7 +203,7 @@ public class VirtualFileShell implements FileShell {
     }
 
     protected String read(FileManager fileManager, String... args) {
-        if (args.length < 1) {
+        if (args.length != 1) {
             throw new IllegalArgumentException(String.join(" ", args));
         }
         File file = fileManager.get(args[0]);

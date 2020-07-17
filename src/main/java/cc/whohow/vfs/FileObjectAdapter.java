@@ -177,13 +177,12 @@ public class FileObjectAdapter implements FileObject, FileContent {
 
     @Override
     public long write(OutputStream output) throws IOException {
-        log.trace("write: <- {}", this);
         return write(output, IO.BUFFER_SIZE);
     }
 
     @Override
     public long write(OutputStream output, int bufferSize) throws IOException {
-        log.trace("write: <- {}", this);
+        log.trace("write: OutputStream <- {}", this);
         try (FileReadableChannel channel = file.newReadableChannel()) {
             return channel.transferTo(output);
         }
@@ -224,14 +223,14 @@ public class FileObjectAdapter implements FileObject, FileContent {
                         try {
                             iterator.next().getFile().close();
                         } catch (Exception ex) {
-                            log.trace("close error", ex);
+                            e.addSuppressed(ex);
+                            log.warn("close error", ex);
                         }
                     }
-                    log.trace("copyFrom error", e);
                     throw FileSystemExceptions.rethrow(e);
                 }
             } else {
-                log.trace("copyFrom[folder->file]({}): -> {}", srcFile, this);
+                log.warn("copyFrom[folder->file]({}): -> {}", srcFile, this);
                 throw new FileSystemException("vfs.provider/copy-file.error", srcFile, this);
             }
         } else {
@@ -256,7 +255,6 @@ public class FileObjectAdapter implements FileObject, FileContent {
                     }
                 }
             } catch (Exception e) {
-                log.trace("copyFrom error", e);
                 throw FileSystemExceptions.rethrow(e);
             }
         }
@@ -275,8 +273,10 @@ public class FileObjectAdapter implements FileObject, FileContent {
     public synchronized void createFolder() throws FileSystemException {
         if (file.isRegularFile()) {
             file = vfs.getVfsFile(file.getUri() + "/");
+            log.warn("createFolder: {}", this);
+        } else {
+            log.trace("createFolder: {}", this);
         }
-        log.trace("createFolder: {}", this);
     }
 
     @Override
@@ -332,17 +332,18 @@ public class FileObjectAdapter implements FileObject, FileContent {
                     try {
                         iterator.next().getFile().close();
                     } catch (Exception ex) {
-                        log.trace("close error", ex);
+                        e.addSuppressed(ex);
+                        log.warn("close error", ex);
                     }
                 }
                 while (!folders.isEmpty()) {
                     try {
                         folders.removeLast().close();
                     } catch (Exception ex) {
-                        log.trace("close error", ex);
+                        e.addSuppressed(ex);
+                        log.warn("close error", ex);
                     }
                 }
-                log.trace("delete error", e);
                 throw FileSystemExceptions.rethrow(e);
             }
         } else {
@@ -354,7 +355,6 @@ public class FileObjectAdapter implements FileObject, FileContent {
                     return 0;
                 }
             } catch (Exception e) {
-                log.trace("delete error", e);
                 throw FileSystemExceptions.rethrow(e);
             }
         }

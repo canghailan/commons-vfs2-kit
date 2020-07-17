@@ -35,6 +35,6 @@ public class AliyunOSSCopy extends GenericFileCopy<AliyunOSSFile, AliyunOSSFile>
 
     @Override
     public String toString() {
-        return "aliyun-oss-copy " + source + " " + target;
+        return "AliyunOSSCopy " + source + " " + target;
     }
 }

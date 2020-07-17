@@ -14,6 +14,7 @@ import java.nio.file.DirectoryStream;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.function.Supplier;
 
 public class DefaultVirtualFileSystem implements VirtualFileSystem {
     private static final Logger log = LogManager.getLogger(DefaultVirtualFileSystem.class);
@@ -55,12 +56,19 @@ public class DefaultVirtualFileSystem implements VirtualFileSystem {
 
         int corePoolSize = metadata.getInteger("executor/corePoolSize")
                 .orElse(Runtime.getRuntime().availableProcessors());
+        log.debug("executor/corePoolSize: {}", corePoolSize);
+
         int maximumPoolSize = metadata.getInteger("executor/maximumPoolSize")
                 .orElse(corePoolSize * 8);
+        log.debug("executor/maximumPoolSize: {}", maximumPoolSize);
+
         Duration keepAliveTime = metadata.getDuration("executor/keepAliveTime")
                 .orElse(Duration.ofMinutes(1));
+        log.debug("executor/keepAliveTime: {}", keepAliveTime);
+
         int maximumQueueSize = metadata.getInteger("executor/maximumQueueSize")
                 .orElse(maximumPoolSize * 8);
+        log.debug("executor/maximumQueueSize: {}", maximumQueueSize);
 
         this.executor = new ThreadPoolExecutor(
                 corePoolSize,
@@ -80,6 +88,7 @@ public class DefaultVirtualFileSystem implements VirtualFileSystem {
 
         int corePoolSize = metadata.getInteger("scheduler/corePoolSize")
                 .orElse(1);
+        log.debug("scheduler/corePoolSize: {}", corePoolSize);
 
         this.scheduledExecutor = new ScheduledThreadPoolExecutor(
                 corePoolSize,
@@ -92,10 +101,15 @@ public class DefaultVirtualFileSystem implements VirtualFileSystem {
         if (cache != null) {
             throw new IllegalStateException();
         }
+
         Duration ttl = metadata.getDuration("cache/ttl")
                 .orElse(Duration.ofMinutes(15));
+        log.debug("cache/ttl: {}", ttl);
+
         int maximumSize = metadata.getInteger("cache/maximumSize")
                 .orElse(4096);
+        log.debug("cache/maximumSize: {}", maximumSize);
+
         this.cache = Caffeine.newBuilder()
                 .expireAfterWrite(ttl)
                 .maximumSize(maximumSize)
@@ -190,7 +204,7 @@ public class DefaultVirtualFileSystem implements VirtualFileSystem {
         for (MountPoint mountPoint : vfs.values()) {
             Optional<? extends File> file = mountPoint.resolve(normalizedUri);
             if (file.isPresent()) {
-                log.trace("{} -> {}", uri, file.get());
+                log.trace("resolve: {} -> {}", uri, file.get());
                 return file.get();
             }
         }
@@ -199,7 +213,7 @@ public class DefaultVirtualFileSystem implements VirtualFileSystem {
 
     @Override
     @SuppressWarnings({"rawtypes", "unchecked"})
-    public CompletableFuture<? extends File> copyAsync(File source, File target) {
+    public CompletableFuture<File> copyAsync(File source, File target) {
         FileSystemProvider sourceProvider = getProvider(source);
         FileSystemProvider targetProvider = getProvider(target);
         if (sourceProvider != null && sourceProvider.equals(targetProvider)) {
@@ -211,7 +225,7 @@ public class DefaultVirtualFileSystem implements VirtualFileSystem {
 
     @Override
     @SuppressWarnings({"rawtypes", "unchecked"})
-    public CompletableFuture<? extends File> moveAsync(File source, File target) {
+    public CompletableFuture<File> moveAsync(File source, File target) {
         FileSystemProvider sourceProvider = getProvider(source);
         FileSystemProvider targetProvider = getProvider(target);
         if (sourceProvider != null && sourceProvider.equals(targetProvider)) {
@@ -219,6 +233,16 @@ public class DefaultVirtualFileSystem implements VirtualFileSystem {
         } else {
             return new CopyAndDelete<>(new FileCopy(source, target)).callAsync(executor);
         }
+    }
+
+    @Override
+    public CompletableFuture<Void> runAsync(Runnable runnable) {
+        return CompletableFuture.runAsync(runnable, executor);
+    }
+
+    @Override
+    public <T> CompletableFuture<T> runAsync(Supplier<T> runnable) {
+        return CompletableFuture.supplyAsync(runnable, executor);
     }
 
     protected FileSystemProvider<?, ?> getProvider(File file) {
@@ -235,8 +259,16 @@ public class DefaultVirtualFileSystem implements VirtualFileSystem {
                 log.warn("close Provider error", e);
             }
         }
-        shutdown(scheduledExecutor);
-        shutdown(executor);
+        try {
+            shutdown(scheduledExecutor);
+        } catch (Exception e) {
+            log.warn("close ScheduledExecutor error", e);
+        }
+        try {
+            shutdown(executor);
+        } catch (Exception e) {
+            log.warn("close Executor error", e);
+        }
         log.debug("cleanUp cache");
         cache.cleanUp();
     }
@@ -252,8 +284,9 @@ public class DefaultVirtualFileSystem implements VirtualFileSystem {
             if (!executor.awaitTermination(60, TimeUnit.SECONDS)) {
                 executor.shutdownNow(); // Cancel currently executing tasks
                 // Wait a while for tasks to respond to being cancelled
-                if (!executor.awaitTermination(60, TimeUnit.SECONDS))
+                if (!executor.awaitTermination(60, TimeUnit.SECONDS)) {
                     log.warn("terminate timeout: {}", executor);
+                }
             }
         } catch (InterruptedException ie) {
             // (Re-)Cancel if current thread also interrupted
@@ -265,6 +298,6 @@ public class DefaultVirtualFileSystem implements VirtualFileSystem {
 
     @Override
     public String toString() {
-        return "vfs: " + vfs.keySet().toString();
+        return "VFS(" + vfs.size() + ")";
     }
 }

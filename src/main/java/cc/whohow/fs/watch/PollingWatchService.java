@@ -11,7 +11,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 public class PollingWatchService<P extends Path, F extends GenericFile<P, F>, V> implements FileWatchService<P, F> {
     private static final Logger log = LogManager.getLogger(PollingWatchService.class);
@@ -45,6 +44,7 @@ public class PollingWatchService<P extends Path, F extends GenericFile<P, F>, V>
 
     @Override
     public synchronized void watch(F file, FileListener listener) {
+        log.trace("watch {} {}", file, listener);
         PollingFileWatchKey<P, F> watchKey = getWatchKey(file.getPath());
         if (watchKey == null) {
             watchKey = new PollingFileWatchKey<>(file);
@@ -55,6 +55,7 @@ public class PollingWatchService<P extends Path, F extends GenericFile<P, F>, V>
 
     @Override
     public synchronized void unwatch(F file, FileListener listener) {
+        log.trace("unwatch {} {}", file, listener);
         PollingFileWatchKey<P, F> watchKey = getWatchKey(file.getPath());
         if (watchKey == null) {
             throw new IllegalStateException();
@@ -78,8 +79,6 @@ public class PollingWatchService<P extends Path, F extends GenericFile<P, F>, V>
 
     @Override
     public String toString() {
-        return watchKeys.stream()
-                .map(PollingFileWatchKey::toString)
-                .collect(Collectors.joining("\n"));
+        return "PollingWatchService(" + watchKeys.size() + ")";
     }
 }

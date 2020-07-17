@@ -98,6 +98,7 @@ public class HttpFileSystem implements FileSystem<UriPath, HttpFile> {
                     httpResponse.close();
                 }
             } catch (Exception ex) {
+                e.addSuppressed(ex);
                 log.warn("close HttpResponse error", ex);
             }
             throw UncheckedException.unchecked(e);
@@ -121,7 +122,7 @@ public class HttpFileSystem implements FileSystem<UriPath, HttpFile> {
 
     @Override
     public void close() throws Exception {
-        log.debug("close HttpFileSystem: {}", uri);
+        log.debug("close HttpFileSystem: {}", this);
         log.debug("close httpClient");
         httpClient.close();
     }

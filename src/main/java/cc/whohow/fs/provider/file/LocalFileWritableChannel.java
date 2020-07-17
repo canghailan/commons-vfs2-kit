@@ -35,7 +35,7 @@ public class LocalFileWritableChannel implements FileWritableChannel {
         }
         long position = 0;
         while (position < size) {
-            log.trace("FileChannel.transferFrom: {} {}", position, size - position);
+            log.trace("FileChannel.transferFrom({}, {})", position, size - position);
             position += fileChannel.transferFrom(channel, position, size - position);
         }
         fileChannel.position(position);

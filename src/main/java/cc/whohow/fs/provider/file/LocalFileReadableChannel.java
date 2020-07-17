@@ -78,7 +78,7 @@ public class LocalFileReadableChannel implements FileReadableChannel {
         long size = fileChannel.size();
         long position = 0;
         while (position < size) {
-            log.trace("FileChannel.transferTo: {} {}", position, size - position);
+            log.trace("FileChannel.transferTo({}, {})", position, size - position);
             position += fileChannel.transferTo(position, size - position, channel);
         }
         fileChannel.position(position);

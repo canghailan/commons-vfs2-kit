@@ -25,4 +25,9 @@ public class FileCopy extends AbstractCopy<File, File> {
     protected CompletableFuture<File> copyFileAsync(File source, File target, ExecutorService executor) {
         return new FileCopy(source, target).copyFileAsync(executor);
     }
+
+    @Override
+    public String toString() {
+        return "FileCopy " + source + " " + target;
+    }
 }

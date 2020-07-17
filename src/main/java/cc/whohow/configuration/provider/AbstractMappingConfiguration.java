@@ -2,8 +2,11 @@ package cc.whohow.configuration.provider;
 
 import cc.whohow.configuration.Configuration;
 import cc.whohow.configuration.ConfigurationListener;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public abstract class AbstractMappingConfiguration<S, T> extends AbstractConfiguration<T> implements ConfigurationListener<S> {
+    private static final Logger log = LogManager.getLogger(AbstractMappingConfiguration.class);
     protected final Configuration<S> source;
 
     public AbstractMappingConfiguration(Configuration<S> source) {
@@ -17,6 +20,9 @@ public abstract class AbstractMappingConfiguration<S, T> extends AbstractConfigu
             source.unwatch(this);
         } finally {
             source.close();
+        }
+        if (!listeners.isEmpty()) {
+            log.warn("close with listeners({})", listeners.size());
         }
     }
 

@@ -5,7 +5,6 @@ import cc.whohow.fs.FileAttributes;
 import cc.whohow.fs.util.FileTimes;
 
 import java.nio.file.attribute.FileTime;
-import java.util.Iterator;
 import java.util.Map;
 
 public class FileAttributesMap extends AttributesMap implements FileAttributes {
@@ -19,26 +18,21 @@ public class FileAttributesMap extends AttributesMap implements FileAttributes {
 
     @Override
     public FileTime lastModifiedTime() {
-        return getAsFileTime("lastModifiedTime").orElse(FileTimes.epoch());
+        return getAsFileTime(LAST_MODIFIED_TIME).orElse(FileTimes.epoch());
     }
 
     @Override
     public FileTime lastAccessTime() {
-        return getAsFileTime("lastAccessTime").orElse(FileTimes.epoch());
+        return getAsFileTime(LAST_ACCESS_TIME).orElse(FileTimes.epoch());
     }
 
     @Override
     public FileTime creationTime() {
-        return getAsFileTime("creationTime").orElse(FileTimes.epoch());
+        return getAsFileTime(CREATION_TIME).orElse(FileTimes.epoch());
     }
 
     @Override
     public long size() {
-        return getAsLong("size").orElse(0L);
-    }
-
-    @Override
-    public Iterator<Attribute<?>> iterator() {
-        return super.iterator();
+        return getAsLong(SIZE).orElse(0L);
     }
 }

@@ -177,7 +177,7 @@ public class LocalFileSystem implements FileSystem<LocalPath, LocalFile> {
 
     @Override
     public void close() throws Exception {
-        log.debug("close LocalFileSystem: {}", uri);
+        log.debug("close LocalFileSystem: {}", this);
     }
 
     @Override

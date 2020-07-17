@@ -45,12 +45,12 @@ public class AliyunOSSObjectListingIterator implements Iterator<ObjectListing> {
     @Override
     public boolean hasNext() {
         if (objectListing == null) {
-            log.trace("listObjects: oss://{}/{} {}", listObjectsRequest.getBucketName(), listObjectsRequest.getPrefix(), listObjectsRequest.getMarker());
+            log.trace("listObjects: oss://{}/{}?marker={}", listObjectsRequest.getBucketName(), listObjectsRequest.getPrefix(), listObjectsRequest.getMarker());
             objectListing = oss.listObjects(listObjectsRequest);
             return true;
         }
         if (objectListing.isTruncated()) {
-            log.trace("listObjects: oss://{}/{} {}", listObjectsRequest.getBucketName(), listObjectsRequest.getPrefix(), objectListing.getNextMarker());
+            log.trace("listObjects: oss://{}/{}?marker={}", listObjectsRequest.getBucketName(), listObjectsRequest.getPrefix(), objectListing.getNextMarker());
             objectListing = oss.listObjects(listObjectsRequest.withMarker(objectListing.getNextMarker()));
             return true;
         }
@@ -64,6 +64,6 @@ public class AliyunOSSObjectListingIterator implements Iterator<ObjectListing> {
 
     @Override
     public String toString() {
-        return "list oss://" + getBucketName() + "/" + getPrefix();
+        return "listObjects oss://" + getBucketName() + "/" + getPrefix();
     }
 }

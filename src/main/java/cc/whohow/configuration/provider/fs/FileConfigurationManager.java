@@ -25,6 +25,7 @@ public class FileConfigurationManager implements FileBasedConfigurationManager, 
     public FileConfigurationManager(File root) {
         this.root = root;
         this.root.watch(this);
+        log.debug("watch {}", root);
     }
 
     protected String getKey(File file) {
@@ -46,16 +47,20 @@ public class FileConfigurationManager implements FileBasedConfigurationManager, 
 
     @Override
     public Configuration<ByteBuffer> get(String key) {
+        if (key.startsWith("/") || key.endsWith("/")) {
+            throw new IllegalArgumentException(key);
+        }
         return new FileConfigurationSource(root.resolve(key));
     }
 
     @Override
     public void close() throws Exception {
         root.unwatch(this);
+        log.debug("unwatch {}", root);
     }
 
     @Override
     public void handleEvent(FileEvent event) throws Exception {
-        log.debug("configuration changed: {}", event);
+        log.debug("configuration changed: {} {}", event.kind(), event.file());
     }
 }

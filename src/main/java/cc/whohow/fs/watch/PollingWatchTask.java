@@ -77,6 +77,7 @@ public class PollingWatchTask<P extends Path, F extends GenericFile<P, F>, V> im
                 onWatchEvent.accept(FileEvent.Kind.DELETE, e.getKey());
             }
         } else {
+            log.debug("watch root changed: {} -> {}", oldRoot, newRoot);
             // 分组索引改变，需注意监听范围扩大、缩小导致的新增、删除事件误报
             for (Map.Entry<P, V> e : newIndex.entrySet()) {
                 V newValue = e.getValue();
@@ -85,6 +86,8 @@ public class PollingWatchTask<P extends Path, F extends GenericFile<P, F>, V> im
                     if (startsWithAny(e.getKey(), oldRoot.keySet())) {
                         // 文件在原监听范围内，非误报
                         onWatchEvent.accept(FileEvent.Kind.CREATE, e.getKey());
+                    } else {
+                        log.trace("ignore watch event: {} {}", FileEvent.Kind.CREATE, e.getKey());
                     }
                 } else if (!Objects.equals(newValue, oldValue)) {
                     onWatchEvent.accept(FileEvent.Kind.MODIFY, e.getKey());
@@ -94,6 +97,8 @@ public class PollingWatchTask<P extends Path, F extends GenericFile<P, F>, V> im
                 if (startsWithAny(e.getKey(), newRoot.keySet())) {
                     // 文件在新监听范围内，非误报
                     onWatchEvent.accept(FileEvent.Kind.DELETE, e.getKey());
+                } else {
+                    log.trace("ignore watch event: {} {}", FileEvent.Kind.DELETE, e.getKey());
                 }
             }
         }
@@ -141,7 +146,7 @@ public class PollingWatchTask<P extends Path, F extends GenericFile<P, F>, V> im
                     }
                 }
             } catch (Exception e) {
-                log.warn("watch ERROR", e);
+                log.warn("watch error", e);
                 throw UncheckedException.unchecked(e);
             }
         }

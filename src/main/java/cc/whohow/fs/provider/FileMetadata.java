@@ -47,4 +47,9 @@ public class FileMetadata {
         return getString(key)
                 .map(Duration::parse);
     }
+
+    @Override
+    public String toString() {
+        return "FileMetadata(" + metadata.toString() + ")";
+    }
 }

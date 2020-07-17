@@ -59,7 +59,8 @@ public class BreadthFirstFileTreeIterator implements Iterator<FileSelectInfo> {
                     try {
                         iterator.next().getFile().close();
                     } catch (Exception ex) {
-                        log.trace("close error", ex);
+                        e.addSuppressed(ex);
+                        log.warn("close error", ex);
                     }
                 }
             }

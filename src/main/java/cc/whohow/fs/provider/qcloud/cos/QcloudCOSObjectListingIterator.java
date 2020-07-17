@@ -45,12 +45,12 @@ public class QcloudCOSObjectListingIterator implements Iterator<ObjectListing> {
     @Override
     public boolean hasNext() {
         if (objectListing == null) {
-            log.trace("listObjects: cos://{}/{} {}", listObjectsRequest.getBucketName(), listObjectsRequest.getPrefix(), listObjectsRequest.getMarker());
+            log.trace("listObjects: cos://{}/{}?marker={}", listObjectsRequest.getBucketName(), listObjectsRequest.getPrefix(), listObjectsRequest.getMarker());
             objectListing = cos.listObjects(listObjectsRequest);
             return true;
         }
         if (objectListing.isTruncated()) {
-            log.trace("listNextBatchOfObjects: cos://{}/{} {}", objectListing.getBucketName(), objectListing.getPrefix(), objectListing.getNextMarker());
+            log.trace("listNextBatchOfObjects: cos://{}/{}?marker={}", objectListing.getBucketName(), objectListing.getPrefix(), objectListing.getNextMarker());
             objectListing = cos.listNextBatchOfObjects(objectListing);
             return true;
         }
@@ -64,6 +64,6 @@ public class QcloudCOSObjectListingIterator implements Iterator<ObjectListing> {
 
     @Override
     public String toString() {
-        return "list cos://" + getBucketName() + "/" + getPrefix();
+        return "listObjects cos://" + getBucketName() + "/" + getPrefix();
     }
 }

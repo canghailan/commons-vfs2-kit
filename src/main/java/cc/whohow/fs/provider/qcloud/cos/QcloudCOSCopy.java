@@ -35,6 +35,6 @@ public class QcloudCOSCopy extends GenericFileCopy<QcloudCOSFile, QcloudCOSFile>
 
     @Override
     public String toString() {
-        return "qcloud-cos-copy " + source + " " + target;
+        return "QcloudCOSCopy " + source + " " + target;
     }
 }

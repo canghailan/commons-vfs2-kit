@@ -71,6 +71,7 @@ public class VirtualFileSystemAdapter implements FileSystemManager, org.apache.c
 
     @Override
     public void close() {
+        log.debug("close VirtualFileSystemAdapter");
         if (defaultFileReplicator != null) {
             defaultFileReplicator.close();
         }
@@ -78,7 +79,7 @@ public class VirtualFileSystemAdapter implements FileSystemManager, org.apache.c
 
     @Override
     public void closeFileSystem(org.apache.commons.vfs2.FileSystem fileSystem) {
-        log.trace("closeFileSystem({})", fileSystem);
+        log.debug("closeFileSystem: {}", fileSystem);
         if (fileSystem instanceof VfsComponent) {
             VfsComponent vfsComponent = (VfsComponent) fileSystem;
             vfsComponent.close();
@@ -428,6 +429,7 @@ public class VirtualFileSystemAdapter implements FileSystemManager, org.apache.c
 
     @Override
     public FileObject resolveFile(String name, NameScope scope) throws FileSystemException {
+        log.trace("resolveFile: {}", name);
         if (scope == NameScope.FILE_SYSTEM) {
             return new FileObjectAdapter(this, vfs.get(name));
         } else {
@@ -452,21 +454,25 @@ public class VirtualFileSystemAdapter implements FileSystemManager, org.apache.c
 
     @Override
     public void addListener(FileObject file, FileListener listener) {
+        log.trace("addListener: {} {}", file, listener);
         vfs.get(file.getName().getURI()).watch(new FileListenerAdapter(this, listener));
     }
 
     @Override
     public void removeListener(FileObject file, FileListener listener) {
+        log.trace("removeListener: {} {}", file, listener);
         vfs.get(file.getName().getURI()).unwatch(new FileListenerAdapter(this, listener));
     }
 
     @Override
     public void addJunction(String junctionPoint, FileObject targetFile) {
+        log.trace("addJunction: {} {}", junctionPoint, targetFile);
         vfs.mount(new FileBasedMountPoint(junctionPoint, vfs.get(targetFile.getName().getURI())));
     }
 
     @Override
     public void removeJunction(String junctionPoint) {
+        log.trace("removeJunction: {}", junctionPoint);
         vfs.umount(junctionPoint);
     }
 
@@ -578,6 +584,7 @@ public class VirtualFileSystemAdapter implements FileSystemManager, org.apache.c
 
     @Override
     public FileName resolveURI(String uri) throws FileSystemException {
+        log.trace("resolveURI: {}", uri);
         return new FileNameAdapter(vfs.get(uri));
     }
 
@@ -614,6 +621,6 @@ public class VirtualFileSystemAdapter implements FileSystemManager, org.apache.c
 
     @Override
     public String toString() {
-        return ROOT.toString();
+        return "VirtualFileSystemAdapter(" + vfs + ")";
     }
 }

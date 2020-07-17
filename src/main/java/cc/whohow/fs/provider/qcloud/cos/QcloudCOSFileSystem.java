@@ -222,7 +222,7 @@ public class QcloudCOSFileSystem implements FileSystem<S3UriPath, QcloudCOSFile>
 
     @Override
     public void close() throws Exception {
-        log.debug("close QcloudCOSFileSystem: {}", uri);
+        log.debug("close QcloudCOSFileSystem: {}", this);
     }
 
     @Override

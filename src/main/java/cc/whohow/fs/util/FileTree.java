@@ -39,6 +39,6 @@ public class FileTree<P extends Path, F extends GenericFile<P, F>> implements Fi
 
     @Override
     public String toString() {
-        return "tree " + path;
+        return "FileTree " + path;
     }
 }

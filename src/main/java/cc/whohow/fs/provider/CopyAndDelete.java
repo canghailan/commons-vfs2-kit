@@ -56,6 +56,6 @@ public class CopyAndDelete<F1 extends File, F2 extends File> implements Move<F1,
 
     @Override
     public String toString() {
-        return "move " + getSource() + " -> " + getTarget();
+        return "CopyAndDelete " + getSource() + " " + getTarget();
     }
 }

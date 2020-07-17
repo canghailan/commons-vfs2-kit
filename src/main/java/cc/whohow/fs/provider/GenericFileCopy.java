@@ -25,4 +25,9 @@ public class GenericFileCopy<F1 extends GenericFile<?, F1>, F2 extends GenericFi
     protected CompletableFuture<F2> copyFileAsync(F1 source, F2 target, ExecutorService executor) {
         return new GenericFileCopy<>(source, target).copyFileAsync(executor);
     }
+
+    @Override
+    public String toString() {
+        return "GenericFileCopy " + source + " " + target;
+    }
 }

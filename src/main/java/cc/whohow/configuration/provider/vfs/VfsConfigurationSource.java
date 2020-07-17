@@ -6,6 +6,8 @@ import org.apache.commons.vfs2.FileChangeEvent;
 import org.apache.commons.vfs2.FileContent;
 import org.apache.commons.vfs2.FileListener;
 import org.apache.commons.vfs2.FileObject;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -13,6 +15,7 @@ import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
 
 public class VfsConfigurationSource extends AbstractConfiguration<ByteBuffer> implements FileListener {
+    private static final Logger log = LogManager.getLogger(VfsConfigurationSource.class);
     protected final FileObject fileObject;
 
     public VfsConfigurationSource(FileObject fileObject) {
@@ -48,6 +51,8 @@ public class VfsConfigurationSource extends AbstractConfiguration<ByteBuffer> im
             } finally {
                 fileObject.close();
             }
+        } else {
+            log.debug("close with listeners({})", listeners.size());
         }
     }
 

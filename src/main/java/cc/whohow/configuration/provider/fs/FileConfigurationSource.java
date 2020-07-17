@@ -4,10 +4,13 @@ import cc.whohow.configuration.provider.AbstractConfiguration;
 import cc.whohow.fs.File;
 import cc.whohow.fs.FileEvent;
 import cc.whohow.fs.FileListener;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.nio.ByteBuffer;
 
 public class FileConfigurationSource extends AbstractConfiguration<ByteBuffer> implements FileListener {
+    private static final Logger log = LogManager.getLogger(FileConfigurationSource.class);
     protected final File file;
 
     public FileConfigurationSource(File file) {
@@ -30,6 +33,8 @@ public class FileConfigurationSource extends AbstractConfiguration<ByteBuffer> i
         if (listeners.isEmpty()) {
             // 引用计数为0
             file.unwatch(this);
+        } else {
+            log.debug("close with listeners({})", listeners.size());
         }
     }
 

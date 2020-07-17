@@ -17,4 +17,9 @@ public class FileSystemThreadFactory implements ThreadFactory {
         Objects.requireNonNull(task);
         return new Thread(null, task, threadNamePrefix + nextId.getAndIncrement());
     }
+
+    @Override
+    public String toString() {
+        return threadNamePrefix;
+    }
 }
