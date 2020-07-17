@@ -8,11 +8,11 @@ import java.net.URI;
 public class TestURI {
     @Test
     public void test() {
-        System.out.println(URI.create("meta:vfs:/"));
-        Assert.assertEquals("meta", URI.create("meta:vfs:/").getScheme());
-        System.out.println(URI.create("meta:vfs:/").getScheme());
-        Assert.assertNull(URI.create("meta:vfs:/").getHost());
-        System.out.println(URI.create("meta:vfs:/").getHost());
+        System.out.println(URI.create("vfs:meta:/"));
+        Assert.assertEquals("vfs", URI.create("vfs:meta:/").getScheme());
+        System.out.println(URI.create("vfs:meta:/").getScheme());
+        Assert.assertNull(URI.create("vfs:meta:/").getHost());
+        System.out.println(URI.create("vfs:meta:/").getHost());
         System.out.println(URI.create("http:/"));
         Assert.assertEquals("http", URI.create("http:/").getScheme());
         System.out.println(URI.create("http:/").getScheme());
