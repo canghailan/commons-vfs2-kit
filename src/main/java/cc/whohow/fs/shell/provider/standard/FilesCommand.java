@@ -6,6 +6,7 @@ import cc.whohow.fs.shell.Command;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -15,7 +16,10 @@ public class FilesCommand implements Command<List<File>> {
     @Override
     public List<File> call(FileManager fileManager, String... args) throws Exception {
         return Arrays.stream(args)
+                .filter(Objects::nonNull)
                 .flatMap(NEW_LINE::splitAsStream)
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
                 .map(fileManager::get)
                 .collect(Collectors.toList());
     }
