@@ -4,15 +4,16 @@ import java.nio.file.attribute.FileTime;
 import java.util.Date;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.StringJoiner;
 
 /**
  * 属性集
  */
 public interface Attributes extends Iterable<Attribute<?>> {
     static String toString(Attributes attributes) {
-        StringBuilder buffer = new StringBuilder();
+        StringJoiner buffer = new StringJoiner("\n");
         for (Attribute<?> attribute : attributes) {
-            buffer.append(attribute.name()).append(": ").append(attribute.getAsString()).append("\n");
+            buffer.add(attribute.toString());
         }
         return buffer.toString();
     }
