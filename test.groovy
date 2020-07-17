@@ -46,7 +46,7 @@ println MOVE(CWD + "test-copy.txt", CWD + "test-move.txt")
 println "DELETE test-move.txt: "
 println DELETE(CWD + "test-move.txt")
 
-// 按照校验和工具命令
+// 安装校验和工具命令
 INSTALL "cc.whohow.fs.shell.provider.checksum.Checksum"
 // 计算文件MD5值
 println "MD5 test.groovy: " + Checksum("MD5", CWD + "test.groovy")

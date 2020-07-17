@@ -278,7 +278,7 @@ TODO
 
 
 ## Fish脚本（FIleSHell）
-基于Groovy的脚本，内置一下对象、命令：
+基于Groovy的脚本，内置以下对象、命令：
 * FISH 当前FileShell实例
 * CWD 当前工作目录
 * INSTALL 安装命令（参数为类全限定名）
