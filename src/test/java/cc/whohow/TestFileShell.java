@@ -6,6 +6,7 @@ import cc.whohow.fs.provider.DefaultVirtualFileSystem;
 import cc.whohow.fs.provider.file.LocalFileProvider;
 import cc.whohow.fs.shell.provider.VirtualFileShell;
 import cc.whohow.fs.shell.provider.checksum.Checksum;
+import cc.whohow.fs.shell.provider.find.Find;
 import cc.whohow.fs.shell.provider.gzip.Gunzip;
 import cc.whohow.fs.shell.provider.gzip.Gzip;
 import cc.whohow.fs.shell.provider.zip.Unzip;
@@ -71,6 +72,13 @@ public class TestFileShell {
     public void testScriptFile() throws Exception {
         System.out.println(new Fish(shell).eval(
                 Paths.get("test.groovy").toUri().toURL()));
+    }
+
+    @Test
+    public void testFind() throws Exception {
+        shell.install(new Find());
+
+        System.out.println((String) shell.exec("Find", base + "src/", "-name", ".*Configuration.*"));
     }
 
     @Test
