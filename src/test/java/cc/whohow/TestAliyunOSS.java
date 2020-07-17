@@ -6,8 +6,10 @@ import cc.whohow.fs.VirtualFileSystem;
 import cc.whohow.fs.configuration.ConfigurationBuilder;
 import cc.whohow.fs.configuration.JsonConfigurationParser;
 import cc.whohow.fs.provider.DefaultVirtualFileSystem;
+import cc.whohow.fs.provider.FileBasedMountPoint;
 import cc.whohow.fs.provider.file.LocalFileProvider;
 import cc.whohow.fs.shell.provider.checksum.Checksum;
+import cc.whohow.fs.shell.provider.rsync.Rsync;
 import cc.whohow.fs.util.IO;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import org.junit.AfterClass;
@@ -103,6 +105,19 @@ public class TestAliyunOSS {
         System.out.println(TestFiles.list(target.resolve("main/java/cc/whohow/fs/")));
 
         Assert.assertEquals(TestFiles.treeFile(source), TestFiles.treeFile(target));
+        System.out.println(TestFiles.treeFile(target));
+    }
+
+    @Test
+    public void testRsyncToAliyun() throws Exception {
+        vfs.mount(new FileBasedMountPoint("/rsync/", vfs.get(base + "temp/rsync/")));
+
+        File source = vfs.get(base + "/src/");
+        File target = vfs.get("/temp-oss/temp/src/");
+
+        System.out.println(new Rsync().call(vfs, source.toString(), target.toString()));
+
+        System.out.println(TestFiles.treeFile(source));
         System.out.println(TestFiles.treeFile(target));
     }
 

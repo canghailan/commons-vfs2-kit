@@ -78,7 +78,7 @@ public class TestFileShell {
     public void testFind() throws Exception {
         shell.install(new Find());
 
-        System.out.println((String) shell.exec("Find", base + "src/", "-name", ".*Configuration.*"));
+        System.out.println((String) shell.exec("Find", base + "src/", "-name", ".*Path.*"));
     }
 
     @Test

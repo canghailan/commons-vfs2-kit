@@ -31,7 +31,7 @@ public class Zip implements Command<String> {
         if (!zip.isRegularFile()) {
             throw new IllegalArgumentException(zip.toString());
         }
-        String base = source.getName() + (source.isDirectory() ? "/" : "");
+        String base = source.isDirectory() ? source.getName() + "/" : source.getName();
         try (FileStream<? extends File> tree = source.tree()) {
             try (ZipOutputStream stream = new ZipOutputStream(zip.newWritableChannel().stream())) {
                 StringJoiner files = new StringJoiner("\n");
