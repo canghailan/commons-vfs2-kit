@@ -6,6 +6,8 @@ import java.io.Closeable;
 import java.nio.file.DirectoryStream;
 import java.util.Iterator;
 import java.util.Optional;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 public class Files {
     public static <F extends File> Optional<F> optional(F file) {
@@ -66,5 +68,9 @@ public class Files {
 
     public static <F> DirectoryStream<F> newDirectoryStream(Iterable<F> iterable, Closeable closeable) {
         return new DirectoryStreamAdapter<>(iterable, closeable);
+    }
+
+    public static <F> Stream<F> stream(DirectoryStream<F> directoryStream) {
+        return StreamSupport.stream(directoryStream.spliterator(), false);
     }
 }
