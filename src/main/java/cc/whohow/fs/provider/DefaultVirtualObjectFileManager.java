@@ -15,17 +15,17 @@ public class DefaultVirtualObjectFileManager implements ObjectFileManager {
 
     protected final Map<String, ObjectFileManager> objectFileManagers = new ConcurrentHashMap<>();
 
-    public void addObjectFileManager(ObjectFileManager objectFileManager) {
+    public void loadProvider(ObjectFileManager objectFileManager) {
         objectFileManagers.put(objectFileManager.getScheme(), objectFileManager);
     }
 
-    public Map<String, ObjectFileManager> getObjectFileManagers() {
+    public Map<String, ObjectFileManager> getProviders() {
         return Collections.unmodifiableMap(objectFileManagers);
     }
 
     @Override
     public String getScheme() {
-        return "";
+        return "vos"; // VirtualObjectStorage
     }
 
     @Override
