@@ -28,6 +28,11 @@ public class QcloudCOSObjectManager implements ObjectFileManager {
     }
 
     @Override
+    public String getScheme() {
+        return "cos";
+    }
+
+    @Override
     public ObjectFile get(CharSequence uri) {
         S3Uri s3Uri = new S3Uri(uri.toString());
         return new QcloudCOSObjectFile(getCOS(s3Uri), s3Uri);

@@ -29,6 +29,11 @@ public class AliyunOSSObjectManager implements ObjectFileManager {
     }
 
     @Override
+    public String getScheme() {
+        return "oss";
+    }
+
+    @Override
     public ObjectFile get(CharSequence uri) {
         S3Uri s3Uri = new S3Uri(uri.toString());
         return new AliyunOSSObjectFile(getOSS(s3Uri), s3Uri);

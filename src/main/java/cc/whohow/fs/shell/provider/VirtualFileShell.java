@@ -74,6 +74,11 @@ public class VirtualFileShell implements FileShell {
     }
 
     @Override
+    public String getScheme() {
+        return vfs.getScheme();
+    }
+
+    @Override
     public File get(CharSequence uri) {
         return vfs.get(uri);
     }

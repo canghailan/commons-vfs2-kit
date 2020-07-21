@@ -196,6 +196,11 @@ public class DefaultVirtualFileSystem implements VirtualFileSystem {
     }
 
     @Override
+    public String getScheme() {
+        return "vfs";
+    }
+
+    @Override
     public File get(CharSequence uri) {
         return cache.get(uri.toString(), this::doGet);
     }
