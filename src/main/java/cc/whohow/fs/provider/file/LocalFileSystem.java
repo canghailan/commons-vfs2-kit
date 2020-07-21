@@ -23,6 +23,10 @@ public class LocalFileSystem implements FileSystem<LocalPath, LocalFile> {
     protected final URI uri;
     protected final FileSystemAttributes attributes;
 
+    public LocalFileSystem() {
+        this(URI.create("file:/"));
+    }
+
     public LocalFileSystem(URI uri) {
         this(uri, Files.emptyFileSystemAttributes());
     }

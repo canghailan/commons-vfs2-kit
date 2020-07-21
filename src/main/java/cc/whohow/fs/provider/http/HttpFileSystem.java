@@ -23,6 +23,10 @@ public class HttpFileSystem implements FileSystem<UriPath, HttpFile> {
     protected final FileSystemAttributes attributes;
     protected final CloseableHttpClient httpClient;
 
+    public HttpFileSystem() {
+        this(URI.create("http:/"));
+    }
+
     public HttpFileSystem(URI uri) {
         this(uri, Files.emptyFileSystemAttributes());
     }

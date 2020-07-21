@@ -17,7 +17,7 @@ public class LocalFileProvider implements FileSystemProvider<LocalPath, LocalFil
     public void initialize(VirtualFileSystem vfs, File metadata) throws Exception {
         log.debug("initialize LocalFileProvider: {}", metadata);
 
-        localFileSystem = new LocalFileSystem(URI.create("file:/"));
+        localFileSystem = new LocalFileSystem();
 
         vfs.mount(new FileSystemBasedMountPoint<>("file:/", localFileSystem, "file:/"));
     }
