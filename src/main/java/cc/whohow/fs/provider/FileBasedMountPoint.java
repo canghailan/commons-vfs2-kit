@@ -27,7 +27,7 @@ public class FileBasedMountPoint implements MountPoint {
     }
 
     @Override
-    public Optional<? extends File> resolve(URI uri) {
+    public Optional<File> resolve(URI uri) {
         String absolute = uri.toString();
         if (absolute.startsWith(path)) {
             return Optional.of(file.resolve(absolute.substring(path.length())));

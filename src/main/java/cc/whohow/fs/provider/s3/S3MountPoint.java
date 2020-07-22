@@ -19,7 +19,7 @@ public class S3MountPoint<P extends Path, F extends GenericFile<P, F>> extends F
     }
 
     @Override
-    public Optional<? extends File> resolve(URI uri) {
+    public Optional<File> resolve(URI uri) {
         // 不支持Query及Fragment
         if (uri.getRawQuery() != null || uri.getRawFragment() != null) {
             return Optional.empty();

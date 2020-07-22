@@ -7,10 +7,10 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.FileNotFoundException;
 import java.io.UncheckedIOException;
 import java.net.URI;
 import java.nio.file.DirectoryStream;
+import java.nio.file.NoSuchFileException;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.*;
@@ -202,19 +202,32 @@ public class DefaultVirtualFileSystem implements VirtualFileSystem {
 
     @Override
     public File get(CharSequence uri) {
-        return cache.get(uri.toString(), this::doGet);
+        File file = getCacheResult(uri.toString());
+        if (file != null) {
+            return file;
+        }
+        throw new UncheckedIOException(new NoSuchFileException(uri.toString()));
+    }
+
+    @Override
+    public Optional<File> tryGet(CharSequence uri) {
+        return Optional.ofNullable(getCacheResult(uri.toString()));
+    }
+
+    protected File getCacheResult(String uri) {
+        return cache.get(uri, this::doGet);
     }
 
     protected File doGet(String uri) {
         URI normalizedUri = URI.create(uri).normalize();
         for (MountPoint mountPoint : vfs.values()) {
-            Optional<? extends File> file = mountPoint.resolve(normalizedUri);
+            Optional<File> file = mountPoint.resolve(normalizedUri);
             if (file.isPresent()) {
                 log.trace("resolve: {} -> {}", uri, file.get());
                 return file.get();
             }
         }
-        throw new UncheckedIOException(new FileNotFoundException(uri));
+        return null;
     }
 
     @Override

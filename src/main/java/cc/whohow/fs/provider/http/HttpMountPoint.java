@@ -18,7 +18,7 @@ public class HttpMountPoint extends FileSystemBasedMountPoint<UriPath, HttpFile>
     }
 
     @Override
-    public Optional<? extends File> resolve(URI uri) {
+    public Optional<File> resolve(URI uri) {
         String absolute = uri.toString();
         if (accept(absolute)) {
             if ("http".equals(uri.getScheme()) || "https".equals(uri.getScheme())) {

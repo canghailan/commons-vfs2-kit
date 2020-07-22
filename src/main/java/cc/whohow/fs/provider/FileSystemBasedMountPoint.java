@@ -43,7 +43,7 @@ public class FileSystemBasedMountPoint<P extends Path, F extends GenericFile<P, 
     }
 
     @Override
-    public Optional<? extends File> resolve(URI uri) {
+    public Optional<File> resolve(URI uri) {
         String absolute = uri.toString();
         if (accept(absolute)) {
             return Optional.of(fileSystem.get(rebase(absolute)));

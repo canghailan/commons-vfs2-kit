@@ -13,6 +13,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -81,6 +82,11 @@ public class VirtualFileShell implements FileShell {
     @Override
     public File get(CharSequence uri) {
         return vfs.get(uri);
+    }
+
+    @Override
+    public Optional<File> tryGet(CharSequence uri) {
+        return vfs.tryGet(uri);
     }
 
     @Override
