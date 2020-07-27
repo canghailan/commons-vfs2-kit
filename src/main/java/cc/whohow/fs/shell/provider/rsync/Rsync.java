@@ -161,7 +161,7 @@ public class Rsync implements Command<String> {
      */
     protected String getRsyncContextPath() {
         String dateTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmm"));
-        return "/rsync/" + dateTime + "-" + UUID.randomUUID() + "/";
+        return "/." + getName() + "/" + dateTime + "-" + UUID.randomUUID() + "/";
     }
 
     /**

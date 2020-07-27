@@ -24,7 +24,7 @@ public class TestRsync {
         base = Paths.get(".").toUri().normalize().toString();
         vfs = new DefaultVirtualFileSystem(new ConfigurationBuilder().build());
         vfs.load(new LocalFileProvider());
-        vfs.mount(new FileBasedMountPoint("/rsync/", vfs.get(base + "temp/rsync/")));
+        vfs.mount(new FileBasedMountPoint("/.Rsync/", vfs.get(base + "temp/rsync/")));
     }
 
     @AfterClass
