@@ -172,6 +172,14 @@ public class TestAliyunOSS {
     }
 
     @Test
+    public void testFileSystem() {
+        System.out.println(vfs.get("/temp-oss/temp/src/main/java/cc/whohow/fs/File.java").getFileSystem());
+        System.out.println(vfs.get("/temp-oss/temp/src/main/java/cc/whohow/fs/File.java").getFileSystem().getUri());
+        System.out.println(vfs.get("/temp-oss/temp/src/main/java/cc/whohow/fs/File.java").getFileSystem().getUris());
+        System.out.println(vfs.get("/temp-oss/temp/src/main/java/cc/whohow/fs/File.java").getFileSystem().readAttributes());
+    }
+
+    @Test
     public void testDelete() {
         vfs.get("/temp-oss/not-exists.txt").delete();
     }

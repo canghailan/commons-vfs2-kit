@@ -14,6 +14,11 @@ import java.util.stream.Stream;
  */
 public interface File extends ObjectFile {
     /**
+     * 文件系统
+     */
+    FileSystem<? extends Path, ? extends File> getFileSystem();
+
+    /**
      * 文件路径
      */
     Path getPath();
