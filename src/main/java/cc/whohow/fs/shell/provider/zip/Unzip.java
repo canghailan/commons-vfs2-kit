@@ -40,6 +40,9 @@ public class Unzip implements Command<String> {
                 if (zipEntry == null) {
                     break;
                 }
+                if (zipEntry.isDirectory()) {
+                    continue;
+                }
                 try (FileWritableChannel channel = target.resolve(zipEntry.getName()).newWritableChannel()) {
                     channel.transferFrom(new FilterInputStream(stream) {
                         @Override
