@@ -5,6 +5,7 @@ import cc.whohow.fs.FileManager;
 import cc.whohow.fs.FileWritableChannel;
 import cc.whohow.fs.shell.Command;
 
+import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.Objects;
@@ -40,7 +41,12 @@ public class Unzip implements Command<String> {
                     break;
                 }
                 try (FileWritableChannel channel = target.resolve(zipEntry.getName()).newWritableChannel()) {
-                    channel.transferFrom(stream);
+                    channel.transferFrom(new FilterInputStream(stream) {
+                        @Override
+                        public void close() throws IOException {
+                            // ignore
+                        }
+                    });
                 }
                 files.add(zipEntry.getName());
                 stream.closeEntry();
