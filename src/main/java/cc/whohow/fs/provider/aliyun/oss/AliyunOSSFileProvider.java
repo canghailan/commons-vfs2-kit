@@ -74,6 +74,8 @@ public class AliyunOSSFileProvider implements FileSystemProvider<S3UriPath, Aliy
         log.debug("watch/interval: {}", watchInterval);
 
         clientConfiguration = new ClientConfiguration();
+        clientConfiguration.setSocketTimeout(this.metadata.getInteger("clientConfiguration/socketTimeout")
+                .orElse(ClientConfiguration.DEFAULT_SOCKET_TIMEOUT));
 
         credentialsConfiguration = new ArrayList<>();
         File profilesConfigurations = metadata.getFileMetadata().resolve("profiles/");

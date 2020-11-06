@@ -7,7 +7,7 @@ import java.util.Collection;
 
 
 /**
- * 文件对象
+ * 通用文件对象
  *
  * @param <P> 文件路径
  * @param <F> 文件对象（本身）
