@@ -223,15 +223,22 @@ public class AliyunOSSFileWritableChannel extends OutputStream implements FileWr
 
     protected synchronized void flush(byte[] buf, int off, int len) {
         log.trace("appendObject: oss://{}/{}?position={}&length={}", bucketName, key, position, len);
-        position = oss.appendObject(
-                new AppendObjectRequest(bucketName, key, new ByteArrayInputStream(buf, off, len))
-                        .withPosition(position)).getNextPosition();
+        flush(new ByteArrayInputStream(buf, off, len));
     }
 
     protected synchronized void flush(ByteBuffer buf) {
         log.trace("appendObject: oss://{}/{}?position={}&length={}", bucketName, key, position, buf.remaining());
+        flush(new ByteBufferReadableChannel(buf));
+    }
+
+    protected synchronized void flush(InputStream stream) {
+        if (position == 0) {
+            // 删除已有文件
+            log.trace("deleteObject: oss://{}/{}", bucketName, key);
+            oss.deleteObject(bucketName, key);
+        }
         position = oss.appendObject(
-                new AppendObjectRequest(bucketName, key, new ByteBufferReadableChannel(buf))
+                new AppendObjectRequest(bucketName, key, stream)
                         .withPosition(position)).getNextPosition();
     }
 
@@ -265,11 +272,6 @@ public class AliyunOSSFileWritableChannel extends OutputStream implements FileWr
             buffer = new byte[bufferSize];
             readIndex = 0;
             writeIndex = 0;
-        }
-        if (position == 0) {
-            // 删除已有文件
-            log.trace("deleteObject: oss://{}/{}", bucketName, key);
-            oss.deleteObject(bucketName, key);
         }
     }
 }

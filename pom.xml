@@ -6,7 +6,7 @@
 
     <groupId>cc.whohow</groupId>
     <artifactId>commons-vfs2-kit</artifactId>
-    <version>3.0.4</version>
+    <version>3.0.5</version>
 
     <build>
         <plugins>
