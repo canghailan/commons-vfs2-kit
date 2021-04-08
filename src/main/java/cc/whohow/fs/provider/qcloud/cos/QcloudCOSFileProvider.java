@@ -2,9 +2,11 @@ package cc.whohow.fs.provider.qcloud.cos;
 
 import cc.whohow.fs.*;
 import cc.whohow.fs.provider.FileMetadata;
+import cc.whohow.fs.provider.qcloud.cdn.QcloudCDNConfiguration;
 import cc.whohow.fs.provider.s3.S3MountPoint;
 import cc.whohow.fs.provider.s3.S3Uri;
 import cc.whohow.fs.provider.s3.S3UriPath;
+import cc.whohow.fs.util.Files;
 import cc.whohow.fs.watch.PollingWatchService;
 import com.qcloud.cos.COS;
 import com.qcloud.cos.COSClient;
@@ -36,6 +38,7 @@ public class QcloudCOSFileProvider implements FileSystemProvider<S3UriPath, Qclo
     private volatile boolean automount;
     private volatile ClientConfig clientConfig;
     private volatile List<COSCredentials> credentialsConfiguration;
+    private volatile List<QcloudCDNConfiguration> cdnConfiguration;
     private volatile Duration watchInterval;
     private volatile PollingWatchService<S3UriPath, QcloudCOSFile, String> watchService;
 
@@ -77,6 +80,31 @@ public class QcloudCOSFileProvider implements FileSystemProvider<S3UriPath, Qclo
             }
         }
         log.debug("profiles: {}", credentialsConfiguration);
+
+        cdnConfiguration = new ArrayList<>();
+        File cdnConfigurations = metadata.getFileMetadata().resolve("cdn/");
+        if (cdnConfigurations.exists()) {
+            try (DirectoryStream<? extends File> list = cdnConfigurations.newDirectoryStream()) {
+                for (File configuration : list) {
+                    String origin = configuration.resolve("origin").readUtf8();
+                    String cdn = configuration.resolve("cdn").readUtf8();
+                    Optional<String> type = Files.optional(configuration.resolve("type"))
+                            .map(File::readUtf8);
+                    Optional<String> key = Files.optional(configuration.resolve("key"))
+                            .map(File::readUtf8);
+                    Optional<Duration> ttl = Files.optional(configuration.resolve("ttl"))
+                            .map(File::readUtf8)
+                            .map(Duration::parse);
+                    if (key.isPresent()) {
+                        cdnConfiguration.add(new QcloudCDNConfiguration(origin, cdn,
+                                type.orElse("TypeA"), key.get(), ttl.orElse(Duration.ofHours(2))));
+                    } else {
+                        cdnConfiguration.add(new QcloudCDNConfiguration(origin, cdn));
+                    }
+                }
+            }
+        }
+        log.debug("cdn: {}", cdnConfiguration);
     }
 
     protected void initializeWatchService() {
@@ -162,6 +190,13 @@ public class QcloudCOSFileProvider implements FileSystemProvider<S3UriPath, Qclo
 
         QcloudCOSFileSystem fileSystem = new QcloudCOSFileSystem(uri, fileSystemAttributes, cos);
         fileSystem.setWatchService(watchService);
+        for (QcloudCDNConfiguration configuration : cdnConfiguration) {
+            S3Uri origin = new S3Uri(configuration.getOrigin());
+            if (origin.getBucketName().equals(uri.getBucketName())) {
+                fileSystem.addCdn(configuration);
+            }
+        }
+
         return fileSystem;
     }
 

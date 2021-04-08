@@ -1,6 +1,7 @@
 package cc.whohow.fs.provider.qcloud.cos;
 
 import cc.whohow.fs.*;
+import cc.whohow.fs.provider.qcloud.cdn.QcloudCDNConfiguration;
 import cc.whohow.fs.provider.s3.S3Uri;
 import cc.whohow.fs.provider.s3.S3UriPath;
 import cc.whohow.fs.util.FileTree;
@@ -24,6 +25,8 @@ public class QcloudCOSFileSystem implements FileSystem<S3UriPath, QcloudCOSFile>
     protected final S3Uri uri;
     protected final QcloudCOSFileSystemAttributes attributes;
     protected final COS cos;
+    // key -> [cdn]
+    protected final Map<String, List<QcloudCDNConfiguration>> cdnIndex = new LinkedHashMap<>();
     protected volatile FileWatchService<S3UriPath, QcloudCOSFile> watchService;
 
     public QcloudCOSFileSystem(S3Uri uri, QcloudCOSFileSystemAttributes attributes, COS cos) {
@@ -40,6 +43,15 @@ public class QcloudCOSFileSystem implements FileSystem<S3UriPath, QcloudCOSFile>
         this.cos = cos;
     }
 
+    public void addCdn(QcloudCDNConfiguration configuration) {
+        S3Uri origin = new S3Uri(URI.create(configuration.getOrigin()));
+        if (!origin.getBucketName().equals(uri.getBucketName())) {
+            throw new IllegalArgumentException(configuration.getOrigin());
+        }
+        cdnIndex.computeIfAbsent(origin.getKey(), key -> new ArrayList<>())
+                .add(configuration);
+    }
+
     public COS getCOS() {
         return cos;
     }
@@ -51,6 +63,12 @@ public class QcloudCOSFileSystem implements FileSystem<S3UriPath, QcloudCOSFile>
 
     @Override
     public String getPublicUri(S3UriPath path) {
+        for (Map.Entry<String, List<QcloudCDNConfiguration>> e : cdnIndex.entrySet()) {
+            if (path.getKey().startsWith(e.getKey())) {
+                QcloudCDNConfiguration cdn = e.getValue().get(0);
+                return cdn.getCdn() + path.getKey().substring(e.getKey().length());
+            }
+        }
         return "https://" + attributes.getBucketName() + ".cos." + attributes.getLocation() + ".myqcloud.com/" + path.getKey();
     }
 
@@ -69,6 +87,15 @@ public class QcloudCOSFileSystem implements FileSystem<S3UriPath, QcloudCOSFile>
     @Override
     public Collection<String> getUris(S3UriPath path) {
         Set<String> uris = new LinkedHashSet<>();
+        for (Map.Entry<String, List<QcloudCDNConfiguration>> e : cdnIndex.entrySet()) {
+            if (path.getKey().startsWith(e.getKey())) {
+                for (QcloudCDNConfiguration cdn : e.getValue()) {
+                    String uri = cdn.getCdn() + path.getKey().substring(e.getKey().length());
+                    uris.add(uri);
+                    uris.add(toHttp(uri));
+                }
+            }
+        }
         String http = getPublicUri(path);
         uris.add(http);
         uris.add(toHttp(http));
