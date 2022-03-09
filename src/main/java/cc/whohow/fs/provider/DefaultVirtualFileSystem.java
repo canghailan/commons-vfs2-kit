@@ -55,11 +55,11 @@ public class DefaultVirtualFileSystem implements VirtualFileSystem {
         }
 
         int corePoolSize = metadata.getInteger("executor/corePoolSize")
-                .orElse(Runtime.getRuntime().availableProcessors());
+                .orElse(Runtime.getRuntime().availableProcessors() * 2);
         log.debug("executor/corePoolSize: {}", corePoolSize);
 
         int maximumPoolSize = metadata.getInteger("executor/maximumPoolSize")
-                .orElse(corePoolSize * 8);
+                .orElse(corePoolSize * 4);
         log.debug("executor/maximumPoolSize: {}", maximumPoolSize);
 
         Duration keepAliveTime = metadata.getDuration("executor/keepAliveTime")
